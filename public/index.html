@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#6366f1" />
+  <meta name="description" content="Approval queue for agent suggestions" />
+  <title>topornot</title>
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <header class="app-header">
+    <h1>topornot</h1>
+    <div class="queue-count" id="queue-count">0 pending</div>
+  </header>
+
+  <main class="app-main">
+    <div class="card-stack" id="card-stack">
+      <div class="empty-state" id="empty-state" hidden>
+        <div class="empty-icon">✓</div>
+        <p>All caught up!</p>
+        <p class="empty-sub">No pending suggestions.</p>
+      </div>
+
+      <div class="card" id="current-card" hidden>
+        <div class="card-header">
+          <span class="card-agent" id="card-agent"></span>
+          <span class="card-time" id="card-time"></span>
+        </div>
+        <h2 class="card-title" id="card-title"></h2>
+        <p class="card-description" id="card-description"></p>
+        <div class="card-context" id="card-context-wrap">
+          <details>
+            <summary>Context</summary>
+            <pre id="card-context"></pre>
+          </details>
+        </div>
+        <div class="card-position">
+          <span id="card-pos"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="action-bar" id="action-bar" hidden>
+      <button class="btn btn-reject" id="btn-reject" aria-label="Reject">
+        <span class="btn-icon">✗</span>
+        <span class="btn-label">Reject</span>
+      </button>
+      <button class="btn btn-defer" id="btn-defer" aria-label="Defer">
+        <span class="btn-icon">↩</span>
+        <span class="btn-label">Defer</span>
+      </button>
+      <button class="btn btn-approve" id="btn-approve" aria-label="Approve">
+        <span class="btn-icon">✓</span>
+        <span class="btn-label">Approve</span>
+      </button>
+    </div>
+  </main>
+
+  <div class="toast" id="toast" aria-live="polite"></div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
