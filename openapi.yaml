@@ -1,0 +1,284 @@
+openapi: 3.0.3
+info:
+  title: topornot API
+  description: REST API for the topornot approval queue. Agents submit suggestions; humans approve, reject, or defer them via the UI or directly through this API.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3000
+    description: Local development server
+
+tags:
+  - name: suggestions
+    description: Operations on suggestions
+
+paths:
+  /api/suggestions:
+    get:
+      tags:
+        - suggestions
+      summary: List suggestions
+      description: >
+        Returns suggestions from the queue. By default only `pending`
+        suggestions are returned, ordered by creation time (oldest first).
+        Pass `status=all` to retrieve suggestions in every state.
+      operationId: listSuggestions
+      parameters:
+        - name: status
+          in: query
+          required: false
+          description: >
+            When set to `all`, returns suggestions in every status.
+            Omit (or use any other value) to return only `pending` suggestions.
+          schema:
+            type: string
+            enum:
+              - all
+      responses:
+        "200":
+          description: A list of suggestions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Suggestion"
+              examples:
+                pending:
+                  summary: Pending suggestions only (default)
+                  value:
+                    - id: 1
+                      title: "Add caching layer"
+                      description: "Improve API response times with Redis"
+                      context: "Currently p95 latency is 400 ms"
+                      agent: "perf-agent"
+                      status: "pending"
+                      created_at: "2024-01-15 10:30:45"
+                      updated_at: "2024-01-15 10:30:45"
+                all:
+                  summary: All suggestions
+                  value:
+                    - id: 1
+                      title: "Add caching layer"
+                      description: "Improve API response times with Redis"
+                      context: "Currently p95 latency is 400 ms"
+                      agent: "perf-agent"
+                      status: "approved"
+                      created_at: "2024-01-15 10:30:45"
+                      updated_at: "2024-01-15 11:00:00"
+                    - id: 2
+                      title: "Refactor auth module"
+                      description: "Simplify token validation logic"
+                      context: null
+                      agent: null
+                      status: "pending"
+                      created_at: "2024-01-15 11:05:00"
+                      updated_at: "2024-01-15 11:05:00"
+
+    post:
+      tags:
+        - suggestions
+      summary: Create a suggestion
+      description: >
+        Submit a new suggestion to the approval queue. The new suggestion is
+        created with `status: pending`. Both `title` and `description` are
+        required; `context` and `agent` are optional.
+      operationId: createSuggestion
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SuggestionInput"
+            examples:
+              minimal:
+                summary: Required fields only
+                value:
+                  title: "Add caching layer"
+                  description: "Improve API response times with Redis"
+              full:
+                summary: All fields
+                value:
+                  title: "Add caching layer"
+                  description: "Improve API response times with Redis"
+                  context: "Currently p95 latency is 400 ms"
+                  agent: "perf-agent"
+      responses:
+        "201":
+          description: Suggestion created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Suggestion"
+              example:
+                id: 3
+                title: "Add caching layer"
+                description: "Improve API response times with Redis"
+                context: "Currently p95 latency is 400 ms"
+                agent: "perf-agent"
+                status: "pending"
+                created_at: "2024-01-15 12:00:00"
+                updated_at: "2024-01-15 12:00:00"
+        "400":
+          description: Missing required fields
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "title and description are required"
+
+  /api/suggestions/{id}/{action}:
+    patch:
+      tags:
+        - suggestions
+      summary: Act on a suggestion
+      description: >
+        Approve, reject, or defer a suggestion. The action maps to a new
+        status as follows:
+
+        | Action  | Resulting status |
+        |---------|-----------------|
+        | approve | approved        |
+        | reject  | rejected        |
+        | defer   | pending         |
+
+        Deferring a suggestion keeps it in `pending` state so it reappears at
+        the back of the queue.
+      operationId: actOnSuggestion
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Numeric ID of the suggestion
+          schema:
+            type: integer
+            example: 1
+        - name: action
+          in: path
+          required: true
+          description: Action to perform on the suggestion
+          schema:
+            type: string
+            enum:
+              - approve
+              - reject
+              - defer
+      responses:
+        "200":
+          description: Suggestion updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Suggestion"
+              example:
+                id: 1
+                title: "Add caching layer"
+                description: "Improve API response times with Redis"
+                context: "Currently p95 latency is 400 ms"
+                agent: "perf-agent"
+                status: "approved"
+                created_at: "2024-01-15 10:30:45"
+                updated_at: "2024-01-15 12:05:00"
+        "400":
+          description: Invalid action
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "Invalid action. Must be one of: approve, reject, defer"
+        "404":
+          description: Suggestion not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "Suggestion not found"
+
+components:
+  schemas:
+    Suggestion:
+      type: object
+      required:
+        - id
+        - title
+        - description
+        - status
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: integer
+          description: Auto-incrementing unique identifier
+          example: 1
+        title:
+          type: string
+          description: Short title for the suggestion
+          example: "Add caching layer"
+        description:
+          type: string
+          description: Detailed description of what is being suggested
+          example: "Improve API response times with Redis"
+        context:
+          type: string
+          nullable: true
+          description: Optional additional context provided by the submitting agent
+          example: "Currently p95 latency is 400 ms"
+        agent:
+          type: string
+          nullable: true
+          description: Identifier of the agent that submitted the suggestion
+          example: "perf-agent"
+        status:
+          type: string
+          enum:
+            - pending
+            - approved
+            - rejected
+          description: Current status of the suggestion
+          example: "pending"
+        created_at:
+          type: string
+          description: Creation timestamp (YYYY-MM-DD HH:MM:SS)
+          example: "2024-01-15 10:30:45"
+        updated_at:
+          type: string
+          description: Last-updated timestamp (YYYY-MM-DD HH:MM:SS)
+          example: "2024-01-15 10:30:45"
+
+    SuggestionInput:
+      type: object
+      required:
+        - title
+        - description
+      properties:
+        title:
+          type: string
+          description: Short title for the suggestion
+          example: "Add caching layer"
+        description:
+          type: string
+          description: Detailed description of what is being suggested
+          example: "Improve API response times with Redis"
+        context:
+          type: string
+          nullable: true
+          description: Optional additional context
+          example: "Currently p95 latency is 400 ms"
+        agent:
+          type: string
+          nullable: true
+          description: Identifier of the submitting agent
+          example: "perf-agent"
+
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Human-readable error message
+          example: "title and description are required"
