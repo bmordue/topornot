@@ -1,0 +1,324 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --color-bg: #f8fafc;
+  --color-surface: #ffffff;
+  --color-primary: #6366f1;
+  --color-approve: #22c55e;
+  --color-reject: #ef4444;
+  --color-defer: #f59e0b;
+  --color-text: #1e293b;
+  --color-text-muted: #64748b;
+  --color-border: #e2e8f0;
+  --radius: 16px;
+  --shadow: 0 4px 24px rgba(0,0,0,0.10);
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  overscroll-behavior: none;
+}
+
+/* Header */
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: var(--color-primary);
+  color: white;
+  box-shadow: var(--shadow-sm);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.app-header h1 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.queue-count {
+  font-size: 0.85rem;
+  background: rgba(255,255,255,0.2);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-weight: 600;
+}
+
+/* Main */
+.app-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 24px 16px 0;
+  gap: 20px;
+  max-width: 480px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* Card stack */
+.card-stack {
+  width: 100%;
+  position: relative;
+  flex: 1;
+}
+
+/* Card */
+.card {
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 24px 20px 20px;
+  width: 100%;
+  animation: slideIn 0.25s ease;
+  position: relative;
+  touch-action: pan-y;
+  user-select: none;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes swipeRight {
+  to { opacity: 0; transform: translateX(120%) rotate(12deg); }
+}
+
+@keyframes swipeLeft {
+  to { opacity: 0; transform: translateX(-120%) rotate(-12deg); }
+}
+
+@keyframes swipeUp {
+  to { opacity: 0; transform: translateY(-80px) scale(0.9); }
+}
+
+.card.exiting-approve { animation: swipeRight 0.35s ease forwards; }
+.card.exiting-reject  { animation: swipeLeft  0.35s ease forwards; }
+.card.exiting-defer   { animation: swipeUp    0.3s  ease forwards; }
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.card-agent {
+  font-size: 0.78rem;
+  font-weight: 600;
+  background: var(--color-primary);
+  color: white;
+  padding: 3px 10px;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.card-time {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.card-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.3;
+  margin-bottom: 10px;
+  color: var(--color-text);
+}
+
+.card-description {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--color-text-muted);
+  margin-bottom: 16px;
+}
+
+.card-context {
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin-top: 8px;
+  padding: 8px;
+  background: var(--color-bg);
+  border-radius: 8px;
+}
+
+.card-context-wrap details summary {
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.card-position {
+  text-align: center;
+  margin-top: 16px;
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+}
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--color-text-muted);
+}
+
+.empty-icon {
+  font-size: 3rem;
+  color: var(--color-approve);
+  margin-bottom: 16px;
+}
+
+.empty-state p {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.empty-sub {
+  font-size: 0.9rem !important;
+  font-weight: 400 !important;
+}
+
+/* Action bar */
+.action-bar {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 0 28px;
+  justify-content: center;
+}
+
+.btn {
+  flex: 1;
+  max-width: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 14px 8px;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: white;
+  transition: transform 0.12s, box-shadow 0.12s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn:active {
+  transform: scale(0.94);
+}
+
+.btn-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.btn-approve { background: var(--color-approve); }
+.btn-reject  { background: var(--color-reject); }
+.btn-defer   { background: var(--color-defer); }
+
+/* Toast notification */
+.toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--color-text);
+  color: white;
+  padding: 10px 22px;
+  border-radius: 24px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s, transform 0.2s;
+  white-space: nowrap;
+  z-index: 100;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Swipe indicator overlays */
+.card .swipe-hint {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 2rem;
+  font-weight: 900;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.1s;
+  border-radius: 12px;
+  padding: 6px 16px;
+}
+
+.card .swipe-hint-right {
+  right: 16px;
+  color: var(--color-approve);
+  border: 3px solid var(--color-approve);
+}
+
+.card .swipe-hint-left {
+  left: 16px;
+  color: var(--color-reject);
+  border: 3px solid var(--color-reject);
+}
+
+/* Loading state */
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: var(--color-text-muted);
+}
+
+/* Offline banner */
+.offline-banner {
+  display: none;
+  background: var(--color-defer);
+  color: white;
+  text-align: center;
+  padding: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+}
+
+.offline-banner.visible { display: block; }
+
+@media (min-width: 480px) {
+  .app-main { padding-top: 40px; }
+}
