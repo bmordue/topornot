@@ -143,8 +143,9 @@ paths:
         | reject  | rejected        |
         | defer   | pending         |
 
-        Deferring a suggestion keeps it in `pending` state so it reappears at
-        the back of the queue.
+        Deferring a suggestion keeps it in `pending` state. In the UI this may
+        cause other suggestions to be shown next, but it does not by itself
+        guarantee persisted reordering of pending suggestions.
       operationId: actOnSuggestion
       parameters:
         - name: id
@@ -241,12 +242,14 @@ components:
           example: "pending"
         created_at:
           type: string
-          description: Creation timestamp (YYYY-MM-DD HH:MM:SS)
-          example: "2024-01-15 10:30:45"
+          format: date-time
+          description: Creation timestamp in UTC (RFC3339 date-time)
+          example: "2024-01-15T10:30:45Z"
         updated_at:
           type: string
-          description: Last-updated timestamp (YYYY-MM-DD HH:MM:SS)
-          example: "2024-01-15 10:30:45"
+          format: date-time
+          description: Last-updated timestamp in UTC (RFC3339 date-time)
+          example: "2024-01-15T10:30:45Z"
 
     SuggestionInput:
       type: object
@@ -256,10 +259,12 @@ components:
       properties:
         title:
           type: string
+          minLength: 1
           description: Short title for the suggestion
           example: "Add caching layer"
         description:
           type: string
+          minLength: 1
           description: Detailed description of what is being suggested
           example: "Improve API response times with Redis"
         context:

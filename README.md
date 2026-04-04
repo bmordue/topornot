@@ -21,7 +21,7 @@ Approval queue for agent-generated suggestions. Agents submit suggestions via a 
 ## Features
 
 - Simple card-based review UI – one suggestion at a time
-- Keyboard shortcuts (`A` approve, `Z` reject, `D` defer; arrow keys also work)
+- Keyboard shortcuts (`a` approve, `z` reject, `d` defer; arrow keys also work)
 - Touch gestures – swipe right to approve, left to reject, up to defer
 - Offline-first PWA – works without a network connection and syncs when reconnected
 - Lightweight JSON file database – zero external dependencies to run locally
@@ -111,7 +111,7 @@ Environment variables can be set before starting the server:
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `PORT` | `3000` | TCP port the HTTP server listens on |
-| `DB_PATH` | `./suggestions.json` | Path to the JSON file used as the database |
+| `DB_PATH` | `suggestions.json` (in the repository/server directory) | Path to the JSON file used as the database |
 
 Example:
 
