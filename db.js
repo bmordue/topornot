@@ -4,6 +4,7 @@ const path = require('path');
 const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'suggestions.json');
 
 let _data = null;
+let _index = new Map();
 
 function _load() {
   if (_data) return _data;
@@ -16,11 +17,15 @@ function _load() {
   } else {
     _data = { nextId: 1, suggestions: [] };
   }
+  _index.clear();
+  for (const s of _data.suggestions) {
+    _index.set(s.id, s);
+  }
   return _data;
 }
 
 function _save() {
-  fs.writeFileSync(DB_PATH, JSON.stringify(_data, null, 2), 'utf8');
+  fs.writeFileSync(DB_PATH, JSON.stringify(_data), 'utf8');
 }
 
 function closeDb() {
@@ -28,16 +33,18 @@ function closeDb() {
 }
 
 function getPendingSuggestions() {
-  return _load().suggestions.filter(s => s.status === 'pending')
-    .sort((a, b) => a.created_at.localeCompare(b.created_at));
+  // Suggestions are already in chronological order by creation
+  return _load().suggestions.filter(s => s.status === 'pending');
 }
 
 function getAllSuggestions() {
-  return [..._load().suggestions].sort((a, b) => b.created_at.localeCompare(a.created_at));
+  // Return in reverse chronological order (newest first)
+  return [..._load().suggestions].reverse();
 }
 
 function getSuggestionById(id) {
-  return _load().suggestions.find(s => s.id === id) || null;
+  _load();
+  return _index.get(id) || null;
 }
 
 function createSuggestion({ title, description, context, agent }) {
@@ -54,13 +61,14 @@ function createSuggestion({ title, description, context, agent }) {
     updated_at: now
   };
   data.suggestions.push(suggestion);
+  _index.set(suggestion.id, suggestion);
   _save();
   return suggestion;
 }
 
 function updateStatus(id, status) {
-  const data = _load();
-  const suggestion = data.suggestions.find(s => s.id === id);
+  _load();
+  const suggestion = _index.get(id);
   if (!suggestion) return null;
   suggestion.status = status;
   suggestion.updated_at = new Date().toISOString().replace('T', ' ').slice(0, 19);
