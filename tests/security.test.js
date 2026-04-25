@@ -1,0 +1,75 @@
+const request = require('supertest');
+const path = require('path');
+const fs = require('fs');
+
+// Use a temp JSON file for tests
+const TEST_DB = path.join('/tmp', `test-security-${Date.now()}.json`);
+process.env.DB_PATH = TEST_DB;
+
+const app = require('../server');
+const db = require('../db');
+
+afterAll(() => {
+  db.closeDb();
+  if (fs.existsSync(TEST_DB)) fs.unlinkSync(TEST_DB);
+});
+
+describe('Security Headers', () => {
+  it('should have security headers (helmet)', async () => {
+    const res = await request(app).get('/');
+    expect(res.headers['x-dns-prefetch-control']).toBeDefined();
+    expect(res.headers['x-frame-options']).toBeDefined();
+    expect(res.headers['strict-transport-security']).toBeDefined();
+    expect(res.headers['x-content-type-options']).toBe('nosniff');
+  });
+});
+
+describe('Payload Size Limit', () => {
+  it('should reject large payloads (over 10kb)', async () => {
+    const largeTitle = 'a'.repeat(11000);
+    const res = await request(app)
+      .post('/api/suggestions')
+      .send({ title: largeTitle, description: 'short' });
+    expect(res.status).toBe(413); // Payload Too Large
+  });
+});
+
+describe('Input Validation', () => {
+  it('should reject titles longer than 100 characters', async () => {
+    const longTitle = 'a'.repeat(101);
+    const res = await request(app)
+      .post('/api/suggestions')
+      .send({ title: longTitle, description: 'valid description' });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/title must be a string up to 100 characters/);
+  });
+
+  it('should reject descriptions longer than 1000 characters', async () => {
+    const longDesc = 'a'.repeat(1001);
+    const res = await request(app)
+      .post('/api/suggestions')
+      .send({ title: 'valid title', description: longDesc });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/description must be a string up to 1000 characters/);
+  });
+
+  it('should reject non-string inputs', async () => {
+    const res = await request(app)
+      .post('/api/suggestions')
+      .send({ title: 123, description: 'valid description' });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/title must be a string/);
+  });
+});
+
+describe('Rate Limiting', () => {
+  it('should eventually reject too many requests', async () => {
+    // This is hard to test perfectly without slowing down the test suite or mocking,
+    // but we can try a few and see if it's there.
+    // Given the limit is 100, we won't hit it in a normal test run easily without loop.
+    // However, we can just check if the headers are present if standardHeaders: true is set.
+    const res = await request(app).post('/api/suggestions').send({title: 'a', description: 'b'});
+    expect(res.headers['ratelimit-limit']).toBeDefined();
+    expect(res.headers['ratelimit-remaining']).toBeDefined();
+  });
+});

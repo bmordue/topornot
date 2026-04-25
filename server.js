@@ -1,10 +1,25 @@
 const express = require('express');
 const path = require('path');
+const helmet = require('helmet');
+const { rateLimit } = require('express-rate-limit');
 const db = require('./db');
 
 const app = express();
-app.use(express.json());
+
+// Security headers
+app.use(helmet());
+
+app.use(express.json({ limit: '10kb' }));
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Rate limiter for new suggestions
+const suggestionLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  limit: 100, // Limit each IP to 100 requests per `window`
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many suggestions from this IP, please try again after 15 minutes' }
+});
 
 // GET pending suggestions (used by the UI)
 app.get('/api/suggestions', (req, res) => {
@@ -14,11 +29,27 @@ app.get('/api/suggestions', (req, res) => {
 });
 
 // POST a new suggestion (used by agents)
-app.post('/api/suggestions', (req, res) => {
+app.post('/api/suggestions', suggestionLimiter, (req, res) => {
   const { title, description, context, agent } = req.body;
+
   if (!title || !description) {
     return res.status(400).json({ error: 'title and description are required' });
   }
+
+  // Basic input validation
+  if (typeof title !== 'string' || title.length > 100) {
+    return res.status(400).json({ error: 'title must be a string up to 100 characters' });
+  }
+  if (typeof description !== 'string' || description.length > 1000) {
+    return res.status(400).json({ error: 'description must be a string up to 1000 characters' });
+  }
+  if (context && (typeof context !== 'string' || context.length > 5000)) {
+    return res.status(400).json({ error: 'context must be a string up to 5000 characters' });
+  }
+  if (agent && (typeof agent !== 'string' || agent.length > 100)) {
+    return res.status(400).json({ error: 'agent must be a string up to 100 characters' });
+  }
+
   const suggestion = db.createSuggestion({ title, description, context, agent });
   res.status(201).json(suggestion);
 });
