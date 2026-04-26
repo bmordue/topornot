@@ -3,7 +3,8 @@ const path = require('path');
 const db = require('./db');
 
 const app = express();
-app.use(express.json());
+// Security: Limit body size to prevent DoS
+app.use(express.json({ limit: '10kb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // GET pending suggestions (used by the UI)
@@ -19,6 +20,21 @@ app.post('/api/suggestions', (req, res) => {
   if (!title || !description) {
     return res.status(400).json({ error: 'title and description are required' });
   }
+
+  // Security: Enforce input length limits to prevent DoS and database bloat
+  if (title.length > 100) {
+    return res.status(400).json({ error: 'title must be 100 characters or less' });
+  }
+  if (description.length > 1000) {
+    return res.status(400).json({ error: 'description must be 1000 characters or less' });
+  }
+  if (context && context.length > 5000) {
+    return res.status(400).json({ error: 'context must be 5000 characters or less' });
+  }
+  if (agent && agent.length > 100) {
+    return res.status(400).json({ error: 'agent name must be 100 characters or less' });
+  }
+
   const suggestion = db.createSuggestion({ title, description, context, agent });
   res.status(201).json(suggestion);
 });
