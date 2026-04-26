@@ -12,7 +12,7 @@
   --color-reject: #ef4444;
   --color-defer: #f59e0b;
   --color-text: #1e293b;
-  --color-text-muted: #64748b;
+  --color-text-muted: #475569;
   --color-border: #e2e8f0;
   --radius: 16px;
   --shadow: 0 4px 24px rgba(0,0,0,0.10);
@@ -243,6 +243,24 @@ body {
 .btn-approve { background: var(--color-approve); }
 .btn-reject  { background: var(--color-reject); }
 .btn-defer   { background: var(--color-defer); }
+
+.btn:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 4px;
+  box-shadow: 0 0 0 6px rgba(99, 102, 241, 0.2);
+}
+
+kbd {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.7rem;
+  margin-left: 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.4);
+  vertical-align: middle;
+}
 
 /* Toast notification */
 .toast {

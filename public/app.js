@@ -228,9 +228,10 @@
 
   // -- Keyboard shortcuts (desktop) --
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'ArrowRight' || e.key === 'a') doAction('approve');
-    if (e.key === 'ArrowLeft'  || e.key === 'z') doAction('reject');
-    if (e.key === 'ArrowUp'    || e.key === 'd') doAction('defer');
+    const key = e.key.toLowerCase();
+    if (e.key === 'ArrowRight' || key === 'a') doAction('approve');
+    if (e.key === 'ArrowLeft'  || key === 'z') doAction('reject');
+    if (e.key === 'ArrowUp'    || key === 'd') doAction('defer');
   });
 
   // -- Register service worker --
