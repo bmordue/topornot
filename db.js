@@ -1,43 +1,58 @@
 const fs = require('fs');
 const path = require('path');
 
-const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'suggestions.json');
+const DEFAULT_DB_PATH = path.join(__dirname, 'suggestions.json');
 
 let _data = null;
+let _index = new Map();
 
 function _load() {
   if (_data) return _data;
-  if (fs.existsSync(DB_PATH)) {
+  const dbPath = process.env.DB_PATH || DEFAULT_DB_PATH;
+  if (fs.existsSync(dbPath)) {
     try {
-      _data = JSON.parse(fs.readFileSync(DB_PATH, 'utf8'));
+      _data = JSON.parse(fs.readFileSync(dbPath, 'utf8'));
     } catch {
       _data = { nextId: 1, suggestions: [] };
     }
   } else {
     _data = { nextId: 1, suggestions: [] };
   }
+
+  // Build index for O(1) lookups
+  _index.clear();
+  _data.suggestions.forEach(s => _index.set(s.id, s));
+
   return _data;
 }
 
 function _save() {
-  fs.writeFileSync(DB_PATH, JSON.stringify(_data, null, 2), 'utf8');
+  const dbPath = process.env.DB_PATH || DEFAULT_DB_PATH;
+  // Performance: Remove indentation to reduce file size and I/O
+  fs.writeFileSync(dbPath, JSON.stringify(_data), 'utf8');
 }
 
 function closeDb() {
   _data = null;
+  _index.clear();
 }
 
 function getPendingSuggestions() {
-  return _load().suggestions.filter(s => s.status === 'pending')
-    .sort((a, b) => a.created_at.localeCompare(b.created_at));
+  // Optimization: Data is stored chronologically by insertion order.
+  // Skipping redundant sort() since created_at follows insertion order.
+  return _load().suggestions.filter(s => s.status === 'pending');
 }
 
 function getAllSuggestions() {
-  return [..._load().suggestions].sort((a, b) => b.created_at.localeCompare(a.created_at));
+  // Optimization: Use reverse() to get latest first instead of full string-based sort().
+  // suggestions are already in chronological order.
+  return [..._load().suggestions].reverse();
 }
 
 function getSuggestionById(id) {
-  return _load().suggestions.find(s => s.id === id) || null;
+  _load();
+  // Performance: O(1) lookup via Map
+  return _index.get(id) || null;
 }
 
 function createSuggestion({ title, description, context, agent }) {
@@ -54,13 +69,15 @@ function createSuggestion({ title, description, context, agent }) {
     updated_at: now
   };
   data.suggestions.push(suggestion);
+  _index.set(suggestion.id, suggestion);
   _save();
   return suggestion;
 }
 
 function updateStatus(id, status) {
-  const data = _load();
-  const suggestion = data.suggestions.find(s => s.id === id);
+  _load();
+  // Performance: O(1) lookup via Map
+  const suggestion = _index.get(id);
   if (!suggestion) return null;
   suggestion.status = status;
   suggestion.updated_at = new Date().toISOString().replace('T', ' ').slice(0, 19);
