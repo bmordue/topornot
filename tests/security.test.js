@@ -60,6 +60,21 @@ describe('Input Validation', () => {
     expect(res.status).toBe(400);
     expect(res.body.error).toMatch(/title must be a string/);
   });
+
+  it('should not leak stack traces on invalid JSON', async () => {
+    const res = await request(app)
+      .post('/api/suggestions')
+      .set('Content-Type', 'application/json')
+      .send('{"invalid": json');
+
+    expect(res.status).toBe(400);
+    // Should not contain internal stack trace info
+    expect(res.text).not.toMatch(/SyntaxError/);
+    expect(res.text).not.toMatch(/node_modules/);
+    // Ideally it should be a JSON error response
+    expect(res.headers['content-type']).toMatch(/json/);
+    expect(res.body.error).toBeDefined();
+  });
 });
 
 describe('Rate Limiting', () => {
