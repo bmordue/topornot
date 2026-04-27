@@ -19,6 +19,8 @@
   const cardCtx      = document.getElementById('card-context');
   const cardPos      = document.getElementById('card-pos');
   const toastEl      = document.getElementById('toast');
+  const hintApprove  = document.getElementById('hint-approve');
+  const hintReject   = document.getElementById('hint-reject');
 
   // -- Toast --
   let toastTimer;
@@ -208,6 +210,11 @@
     const dy = e.touches[0].clientY - touchStartY;
     // Tilt the card slightly as user swipes
     cardEl.style.transform = `translateX(${dx * 0.4}px) rotate(${dx * 0.03}deg)`;
+
+    // Show swipe hints
+    const THRESHOLD = 60;
+    hintApprove.style.opacity = dx > THRESHOLD ? Math.min((dx - THRESHOLD) / 40, 1) : 0;
+    hintReject.style.opacity  = dx < -THRESHOLD ? Math.min((-dx - THRESHOLD) / 40, 1) : 0;
   }, { passive: true });
 
   cardEl.addEventListener('touchend', (e) => {
@@ -216,6 +223,8 @@
     const dx = e.changedTouches[0].clientX - touchStartX;
     const dy = e.changedTouches[0].clientY - touchStartY;
     cardEl.style.transform = '';
+    hintApprove.style.opacity = 0;
+    hintReject.style.opacity  = 0;
 
     const THRESHOLD = 80;
     if (Math.abs(dx) > Math.abs(dy)) {
@@ -228,9 +237,10 @@
 
   // -- Keyboard shortcuts (desktop) --
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'ArrowRight' || e.key === 'a') doAction('approve');
-    if (e.key === 'ArrowLeft'  || e.key === 'z') doAction('reject');
-    if (e.key === 'ArrowUp'    || e.key === 'd') doAction('defer');
+    const key = e.key.toLowerCase();
+    if (key === 'arrowright' || key === 'a') doAction('approve');
+    if (key === 'arrowleft'  || key === 'z') doAction('reject');
+    if (key === 'arrowup'    || key === 'd') doAction('defer');
   });
 
   // -- Register service worker --
