@@ -5,6 +5,7 @@ const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'suggestions.json');
 
 let _data = null;
 let _index = new Map();
+let _pending = new Map();
 
 function _load() {
   if (_data) return _data;
@@ -18,8 +19,12 @@ function _load() {
     _data = { nextId: 1, suggestions: [] };
   }
   _index.clear();
+  _pending.clear();
   for (const s of _data.suggestions) {
     _index.set(s.id, s);
+    if (s.status === 'pending') {
+      _pending.set(s.id, s);
+    }
   }
   return _data;
 }
@@ -33,8 +38,9 @@ function closeDb() {
 }
 
 function getPendingSuggestions() {
-  // Suggestions are already in chronological order by creation
-  return _load().suggestions.filter(s => s.status === 'pending');
+  _load();
+  // Return cached pending suggestions for O(1) retrieval instead of O(n) filter
+  return Array.from(_pending.values());
 }
 
 function getAllSuggestions() {
@@ -62,6 +68,7 @@ function createSuggestion({ title, description, context, agent }) {
   };
   data.suggestions.push(suggestion);
   _index.set(suggestion.id, suggestion);
+  _pending.set(suggestion.id, suggestion); // Cache as pending
   _save();
   return suggestion;
 }
@@ -70,8 +77,20 @@ function updateStatus(id, status) {
   _load();
   const suggestion = _index.get(id);
   if (!suggestion) return null;
+
+  // Performance: Early return if status is unchanged to avoid redundant disk I/O
+  if (suggestion.status === status) return suggestion;
+
   suggestion.status = status;
   suggestion.updated_at = new Date().toISOString().replace('T', ' ').slice(0, 19);
+
+  // Update pending cache
+  if (status === 'pending') {
+    _pending.set(id, suggestion);
+  } else {
+    _pending.delete(id);
+  }
+
   _save();
   return suggestion;
 }

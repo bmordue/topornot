@@ -1,3 +1,7 @@
 ## 2025-05-15 - [O(1) ID Lookups & Optimized Sorting]
 **Learning:** For simple file-based JSON DBs, maintain an in-memory `Map` index to avoid O(n) array searches on every update/read. Leveraging insertion order for sorting (`.reverse()` vs `.sort()`) can provide ~10-20x speedup on retrieval for large datasets.
 **Action:** Always check if a collection is already sorted by a key before applying a manual sort. Implement Map indexes for frequently accessed IDs.
+
+## 2025-05-16 - [O(1) Subset Caching & I/O Skip]
+**Learning:** Maintaining an in-memory Map for frequently filtered subsets (like 'pending' status) avoids O(N) filtering costs. Combining this with early returns for no-op updates significantly reduces blocking disk I/O in file-based databases.
+**Action:** For any "status" or "filtered view" that is frequently accessed, maintain a dedicated in-memory index. Always check for no-op state updates before performing expensive serialization/disk operations.
