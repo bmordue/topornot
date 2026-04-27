@@ -79,11 +79,13 @@
 
   // -- Render current card --
   function renderCard() {
-    const pending = suggestions.filter(s => s.status === 'pending');
+    // API already returns only pending suggestions by default, and we remove items
+    // from this array in doAction() as they are approved/rejected.
+    const pendingCount = suggestions.length;
 
-    queueCount.textContent = `${pending.length} pending`;
+    queueCount.textContent = `${pendingCount} pending`;
 
-    if (pending.length === 0) {
+    if (pendingCount === 0) {
       cardEl.hidden = true;
       actionBar.hidden = true;
       emptyEl.hidden = false;
@@ -94,7 +96,7 @@
     cardEl.hidden = false;
     actionBar.hidden = false;
 
-    const s = pending[currentIndex % pending.length];
+    const s = suggestions[currentIndex % pendingCount];
 
     cardAgent.textContent = s.agent || 'agent';
     cardTime.textContent  = relativeTime(s.created_at);
@@ -108,7 +110,7 @@
       cardCtxWrap.hidden = true;
     }
 
-    cardPos.textContent = `${currentIndex % pending.length + 1} of ${pending.length}`;
+    cardPos.textContent = `${currentIndex % pendingCount + 1} of ${pendingCount}`;
   }
 
   // -- Load suggestions from server (or cache) --
@@ -133,11 +135,10 @@
   // -- Perform action --
   async function doAction(action) {
     if (processing) return;
-    const pending = suggestions.filter(s => s.status === 'pending');
-    if (!pending.length) return;
+    if (!suggestions.length) return;
 
     processing = true;
-    const s = pending[currentIndex % pending.length];
+    const s = suggestions[currentIndex % suggestions.length];
 
     // Animate card out
     const animClass = action === 'approve' ? 'exiting-approve' :
@@ -149,12 +150,14 @@
 
     // Optimistic update for defer: it stays pending, just move to next
     if (action === 'defer') {
-      currentIndex = (currentIndex + 1) % Math.max(pending.length, 1);
+      currentIndex = (currentIndex + 1) % Math.max(suggestions.length, 1);
       showToast('Deferred — moved to back of queue');
     } else {
-      // Optimistically remove from pending view
-      s.status = action === 'approve' ? 'approved' : 'rejected';
-      if (currentIndex >= suggestions.filter(x => x.status === 'pending').length) {
+      // Optimistically remove from pending view by updating suggestions array
+      const sIdx = currentIndex % suggestions.length;
+      suggestions.splice(sIdx, 1);
+
+      if (suggestions.length === 0 || currentIndex >= suggestions.length) {
         currentIndex = 0;
       }
       showToast(action === 'approve' ? '✓ Approved' : '✗ Rejected');
