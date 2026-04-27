@@ -12,7 +12,16 @@ app.use(helmet());
 app.use(express.json({ limit: '10kb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Rate limiter for new suggestions
+// General rate limiter for all API routes
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  limit: 500, // Limit each IP to 500 requests per `window`
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests, please try again later' }
+});
+
+// Stricter rate limiter for new suggestions (POST)
 const suggestionLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   limit: 100, // Limit each IP to 100 requests per `window`
@@ -20,6 +29,9 @@ const suggestionLimiter = rateLimit({
   legacyHeaders: false,
   message: { error: 'Too many suggestions from this IP, please try again after 15 minutes' }
 });
+
+// Apply general limiter to all /api routes
+app.use('/api', apiLimiter);
 
 // GET pending suggestions (used by the UI)
 app.get('/api/suggestions', (req, res) => {
@@ -67,6 +79,23 @@ app.patch('/api/suggestions/:id/:action', (req, res) => {
     return res.status(404).json({ error: 'Suggestion not found' });
   }
   res.json(suggestion);
+});
+
+// Global error handler to prevent stack trace leaks
+app.use((err, req, res, next) => {
+  // If it's a JSON parsing error from express.json()
+  if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+    return res.status(400).json({ error: 'Invalid JSON payload' });
+  }
+
+  // Handle entity too large error
+  if (err.status === 413) {
+    return res.status(413).json({ error: 'Payload too large' });
+  }
+
+  // Generic error handler
+  console.error(err.stack);
+  res.status(500).json({ error: 'Internal Server Error' });
 });
 
 module.exports = app;
