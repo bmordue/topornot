@@ -12,7 +12,7 @@
   --color-reject: #ef4444;
   --color-defer: #f59e0b;
   --color-text: #1e293b;
-  --color-text-muted: #64748b;
+  --color-text-muted: #475569;
   --color-border: #e2e8f0;
   --radius: 16px;
   --shadow: 0 4px 24px rgba(0,0,0,0.10);
@@ -171,6 +171,13 @@ body {
   color: var(--color-text-muted);
   cursor: pointer;
   font-weight: 600;
+  border-radius: 4px;
+  padding: 2px;
+}
+
+.card-context-wrap details summary:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
 }
 
 .card-position {
@@ -233,6 +240,11 @@ body {
 
 .btn:active {
   transform: scale(0.94);
+}
+
+.btn:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
 }
 
 .btn-icon {
