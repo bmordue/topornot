@@ -3,11 +3,15 @@ const path = require('path');
 const helmet = require('helmet');
 const { rateLimit } = require('express-rate-limit');
 const db = require('./db');
+const { authMiddleware } = require('./auth');
 
 const app = express();
 
 // Security headers
 app.use(helmet());
+
+// Proxy-based identity – must come before routes
+app.use(authMiddleware);
 
 app.use(express.json({ limit: '10kb' }));
 app.use(express.static(path.join(__dirname, 'public')));
@@ -102,7 +106,8 @@ module.exports = app;
 
 if (require.main === module) {
   const PORT = process.env.PORT || 3000;
-  app.listen(PORT, () => {
-    console.log(`topornot server running on http://localhost:${PORT}`);
+  const HOST = process.env.HOST || '127.0.0.1';
+  app.listen(PORT, HOST, () => {
+    console.log(`topornot server running on http://${HOST}:${PORT}`);
   });
 }

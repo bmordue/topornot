@@ -1,0 +1,21 @@
+# Minimal Authelia configuration for protecting topornot.
+#
+# This file contains ONLY the access-control section.  Merge it into your
+# full Authelia configuration (which must also define the authentication
+# backend, session, storage, notifier, etc.).
+#
+# Docs: https://www.authelia.com/configuration/security/access-control/
+
+access_control:
+  default_policy: deny
+
+  rules:
+    # Allow any authenticated user to reach topornot
+    - domain: topornot.example.com
+      policy: one_factor
+
+    # Alternatively, restrict to a specific group:
+    # - domain: topornot.example.com
+    #   policy: two_factor
+    #   subject:
+    #     - "group:reviewers"
