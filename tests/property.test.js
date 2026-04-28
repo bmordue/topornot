@@ -38,15 +38,14 @@ describe('Property: createSuggestion', () => {
   });
 
   it('produces strictly increasing IDs', () => {
-    let lastId = 0;
     fc.assert(
       fc.property(
         fc.string({ minLength: 1, maxLength: 50 }),
         fc.string({ minLength: 1, maxLength: 50 }),
         (title, desc) => {
-          const s = db.createSuggestion({ title, description: desc });
-          expect(s.id).toBeGreaterThan(lastId);
-          lastId = s.id;
+          const s1 = db.createSuggestion({ title, description: desc });
+          const s2 = db.createSuggestion({ title, description: desc });
+          expect(s2.id).toBeGreaterThan(s1.id);
         }
       ),
       { numRuns: 30 }
