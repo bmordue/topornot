@@ -5,3 +5,7 @@
 ## 2025-01-24 - [Robust Keyboard Shortcuts]
 **Learning:** Keyboard event listeners that check for specific characters (like 'a' or 'z') are brittle if they don't account for case. Normalizing `e.key.toLowerCase()` ensures shortcuts work regardless of Caps Lock state or modifier keys, providing a more reliable experience.
 **Action:** Always normalize keyboard input to lowercase when implementing single-character shortcuts.
+
+## 2026-04-28 - [Visual Feedback for Keyboard Shortcuts]
+**Learning:** Keyboard shortcuts lack the tactile and visual feedback of physical button clicks. Adding a brief visual "flash" (e.g., a momentary CSS `scale` or `background` change) to the corresponding UI button when a shortcut is pressed bridges this gap and confirms the action to the user.
+**Action:** Implement a helper function like `flashButton()` to trigger an active state on UI buttons when their mapped keyboard shortcuts are used.

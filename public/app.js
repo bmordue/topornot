@@ -22,6 +22,13 @@
   const hintApprove  = document.getElementById('hint-approve');
   const hintReject   = document.getElementById('hint-reject');
 
+  function flashButton(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.add('pressed');
+    setTimeout(() => el.classList.remove('pressed'), 150);
+  }
+
   // -- Toast --
   let toastTimer;
   function showToast(msg) {
@@ -195,6 +202,10 @@
   document.getElementById('btn-approve').addEventListener('click', () => doAction('approve'));
   document.getElementById('btn-reject').addEventListener('click',  () => doAction('reject'));
   document.getElementById('btn-defer').addEventListener('click',   () => doAction('defer'));
+  document.getElementById('btn-refresh').addEventListener('click', () => {
+    showToast('Refreshing...');
+    loadSuggestions();
+  });
 
   // -- Swipe gestures --
   let touchStartX = 0;
@@ -241,9 +252,22 @@
   // -- Keyboard shortcuts (desktop) --
   document.addEventListener('keydown', (e) => {
     const key = e.key.toLowerCase();
-    if (key === 'arrowright' || key === 'a') doAction('approve');
-    if (key === 'arrowleft'  || key === 'z') doAction('reject');
-    if (key === 'arrowup'    || key === 'd') doAction('defer');
+    if (key === 'arrowright' || key === 'a') {
+      flashButton('btn-approve');
+      doAction('approve');
+    }
+    if (key === 'arrowleft'  || key === 'z') {
+      flashButton('btn-reject');
+      doAction('reject');
+    }
+    if (key === 'arrowup'    || key === 'd') {
+      flashButton('btn-defer');
+      doAction('defer');
+    }
+    if (key === 'c') {
+      const details = cardCtxWrap.querySelector('details');
+      if (details) details.open = !details.open;
+    }
   });
 
   // -- Register service worker --

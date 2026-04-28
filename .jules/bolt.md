@@ -5,3 +5,7 @@
 ## 2025-05-16 - [O(1) Subset Caching & I/O Skip]
 **Learning:** Maintaining an in-memory Map for frequently filtered subsets (like 'pending' status) avoids O(N) filtering costs. Combining this with early returns for no-op updates significantly reduces blocking disk I/O in file-based databases.
 **Action:** For any "status" or "filtered view" that is frequently accessed, maintain a dedicated in-memory index. Always check for no-op state updates before performing expensive serialization/disk operations.
+
+## 2025-05-17 - [Result Caching & Fast ETag Validation]
+**Learning:** Even with in-memory Maps, repeatedly converting values to arrays or reversing them can be O(N) and costly at high frequency. Pre-caching these result arrays and using a simple version counter for fast ETag validation allows the server to bypass JSON serialization entirely for unchanged data, significantly reducing CPU and latency.
+**Action:** Implement result-level caching for frequently accessed read views. Use a version counter to enable fast path ETag checks before performing any heavy lifting (like serialization or database queries).

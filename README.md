@@ -15,7 +15,6 @@ Approval queue for agent-generated suggestions. Agents submit suggestions via a 
 - [API reference](#api-reference)
 - [Authentication model](#authentication-model)
 - [Running tests](#running-tests)
-- [Project structure](#project-structure)
 
 ---
 
@@ -218,27 +217,3 @@ npm test
 Tests are written with [Jest](https://jestjs.io/) and [Supertest](https://github.com/ladjs/supertest) and cover all API endpoints.
 
 ---
-
-## Project structure
-
-```
-topornot/
-├── server.js          # Express app and API routes
-├── auth.js            # Proxy-based authentication middleware
-├── db.js              # JSON file persistence layer
-├── openapi.yaml       # OpenAPI 3.0 API specification
-├── plan.md            # Future development roadmap
-├── examples/
-│   ├── nginx.conf           # Example nginx reverse-proxy config
-│   └── authelia-config.yml  # Example Authelia access-control rules
-├── public/
-│   ├── index.html     # Application shell
-│   ├── app.js         # UI logic (card review, offline sync)
-│   ├── style.css      # Styles
-│   ├── sw.js          # Service Worker (PWA / offline support)
-│   └── manifest.json  # PWA manifest
-└── tests/
-    ├── api.test.js    # API integration tests
-    ├── auth.test.js   # Authentication middleware tests
-    └── security.test.js  # Security tests
-```

@@ -12,7 +12,7 @@
 <body>
   <header class="app-header">
     <h1>topornot</h1>
-    <div class="queue-count" id="queue-count">0 pending</div>
+    <div class="queue-count" id="queue-count" aria-live="polite">0 pending</div>
   </header>
 
   <main class="app-main">
@@ -21,6 +21,7 @@
         <div class="empty-icon">✓</div>
         <p>All caught up!</p>
         <p class="empty-sub">No pending suggestions.</p>
+        <button id="btn-refresh" class="btn btn-refresh">Check for updates</button>
       </div>
 
       <div class="card" id="current-card" hidden>
@@ -32,9 +33,9 @@
         </div>
         <h2 class="card-title" id="card-title"></h2>
         <p class="card-description" id="card-description"></p>
-        <div class="card-context" id="card-context-wrap">
+        <div class="card-context card-context-wrap" id="card-context-wrap">
           <details>
-            <summary>Context</summary>
+            <summary>Context <kbd>C</kbd></summary>
             <pre id="card-context"></pre>
           </details>
         </div>

@@ -238,7 +238,7 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
-.btn:active {
+.btn:active, .btn.pressed {
   transform: scale(0.94);
 }
 
@@ -256,17 +256,40 @@ body {
 .btn-reject  { background: var(--color-reject); }
 .btn-defer   { background: var(--color-defer); }
 
-.btn-label kbd {
-  background: rgba(0,0,0,0.15);
-  border: 1px solid rgba(255,255,255,0.3);
+kbd {
+  background: rgba(0,0,0,0.05);
+  border: 1px solid rgba(0,0,0,0.1);
   border-radius: 4px;
-  padding: 1px 4px;
+  padding: 1px 5px;
   font-family: inherit;
-  font-size: 0.7rem;
-  margin-left: 4px;
+  font-size: 0.8em;
+  font-weight: 600;
   display: inline-block;
   min-width: 1.2em;
   text-align: center;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.1);
+}
+
+.btn-label kbd {
+  background: rgba(0,0,0,0.15);
+  border-color: rgba(255,255,255,0.3);
+  color: white;
+  margin-left: 4px;
+  font-size: 0.7rem;
+  box-shadow: none;
+}
+
+.btn-refresh {
+  background: var(--color-primary);
+  margin: 16px auto 0;
+  max-width: 200px;
+  flex-direction: row;
+  justify-content: center;
+  padding: 10px 20px;
+}
+
+.btn-refresh:hover {
+  filter: brightness(1.1);
 }
 
 /* Toast notification */
