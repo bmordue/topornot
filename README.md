@@ -15,6 +15,7 @@ Approval queue for agent-generated suggestions. Agents submit suggestions via a 
 - [API reference](#api-reference)
 - [Running tests](#running-tests)
 - [Project structure](#project-structure)
+- [Task management](#task-management)
 
 ---
 
@@ -166,7 +167,8 @@ topornot/
 ├── server.js          # Express app and API routes
 ├── db.js              # JSON file persistence layer
 ├── openapi.yaml       # OpenAPI 3.0 API specification
-├── plan.md            # Future development roadmap
+├── .tssk.json         # tssk task management config
+├── .tsks/             # tssk task storage (JSONL + docs)
 ├── public/
 │   ├── index.html     # Application shell
 │   ├── app.js         # UI logic (card review, offline sync)
@@ -176,3 +178,58 @@ topornot/
 └── tests/
     └── api.test.js    # API integration tests
 ```
+
+---
+
+## Task management
+
+This project uses [tssk](https://github.com/bmordue/tssk) for task tracking. Tasks are stored in `.tsks/` alongside the code.
+
+### Prerequisites
+
+Install tssk by building from source (requires Go 1.24+):
+
+```bash
+git clone https://github.com/bmordue/tssk.git
+cd tssk
+go build -o build/tssk .
+mv build/tssk /usr/local/bin/
+```
+
+### Common commands
+
+```bash
+# List all tasks
+tssk list
+
+# List tasks by priority tag
+tssk list --tag near-term
+tssk list --tag medium-term
+tssk list --tag longer-term
+
+# Show task details
+tssk show <id>
+
+# Add a new task
+tssk add --title "Task title" --detail "Detailed description"
+
+# Update task status
+tssk status <id> in-progress
+tssk status <id> done
+
+# List tasks ready to start (no blocking dependencies)
+tssk ready
+
+# Visualize tasks in the browser
+tssk serve --open
+```
+
+### Task tags
+
+Tasks are tagged by development timeline:
+
+| Tag | Description |
+|-----|-------------|
+| `near-term` | High-priority items for the next development cycle |
+| `medium-term` | Features planned for upcoming releases |
+| `longer-term` | Future improvements and stretch goals |
