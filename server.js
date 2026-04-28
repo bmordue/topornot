@@ -69,6 +69,12 @@ app.post('/api/suggestions', suggestionLimiter, (req, res) => {
 // PATCH to update status: approve, reject, defer
 app.patch('/api/suggestions/:id/:action', (req, res) => {
   const { id, action } = req.params;
+
+  // Input validation: ensure ID is numeric
+  if (isNaN(id) || Number(id) <= 0) {
+    return res.status(400).json({ error: 'Invalid ID. Must be a positive number.' });
+  }
+
   const validActions = ['approve', 'reject', 'defer'];
   if (!validActions.includes(action)) {
     return res.status(400).json({ error: `Invalid action. Must be one of: ${validActions.join(', ')}` });
@@ -79,6 +85,11 @@ app.patch('/api/suggestions/:id/:action', (req, res) => {
     return res.status(404).json({ error: 'Suggestion not found' });
   }
   res.json(suggestion);
+});
+
+// Catch-all 404 for API routes to prevent leaking Express default HTML error pages
+app.use('/api', (req, res) => {
+  res.status(404).json({ error: 'API endpoint not found' });
 });
 
 // Global error handler to prevent stack trace leaks

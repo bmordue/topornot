@@ -88,3 +88,18 @@ describe('Rate Limiting', () => {
     expect(res.headers['ratelimit-remaining']).toBeDefined();
   });
 });
+
+describe('API Error Handling', () => {
+  it('should return JSON 404 for non-existent API routes', async () => {
+    const res = await request(app).get('/api/non-existent-route');
+    expect(res.status).toBe(404);
+    expect(res.headers['content-type']).toMatch(/json/);
+    expect(res.body.error).toBe('API endpoint not found');
+  });
+
+  it('should reject non-numeric IDs in PATCH route', async () => {
+    const res = await request(app).patch('/api/suggestions/invalid-id/approve');
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/Invalid ID/);
+  });
+});
