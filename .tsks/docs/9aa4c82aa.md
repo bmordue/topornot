@@ -1,0 +1,1 @@
+GitHub Actions workflow to run tests, lint, and optionally publish a container image on every push to main.
