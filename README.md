@@ -13,9 +13,8 @@ Approval queue for agent-generated suggestions. Agents submit suggestions via a 
 - [Running the application](#running-the-application)
 - [Configuration](#configuration)
 - [API reference](#api-reference)
+- [Authentication model](#authentication-model)
 - [Running tests](#running-tests)
-- [Project structure](#project-structure)
-- [Task management](#task-management)
 
 ---
 
@@ -112,6 +111,8 @@ Environment variables can be set before starting the server:
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `PORT` | `3000` | TCP port the HTTP server listens on |
+| `HOST` | `127.0.0.1` | Address the server binds to (use `0.0.0.0` to listen on all interfaces) |
+| `AUTH_MODE` | `dev` | `dev` – stub identity headers for local development; `proxy` – require upstream identity headers |
 | `DB_PATH` | `suggestions.json` (in the repository/server directory) | Path to the JSON file used as the database |
 
 Example:
@@ -150,6 +151,63 @@ curl -X PATCH http://localhost:3000/api/suggestions/1/approve
 
 ---
 
+## Authentication model
+
+> **topornot does not handle credentials.** It contains no password storage, hashing, login forms, MFA, session management, or OIDC/OAuth2 client code.
+
+Identity is provided exclusively by an upstream reverse proxy. In production the expected deployment topology is:
+
+```
+Client → nginx → Authelia (forward auth) → topornot
+```
+
+Optionally, [Dex](https://dexidp.io/) and [oauth2-proxy](https://oauth2-proxy.github.io/oauth2-proxy/) can be added for OIDC single-sign-on.
+
+### How it works
+
+1. nginx receives every request and issues an `auth_request` sub-request to Authelia.
+2. Authelia authenticates the user (portal, SSO, 2FA – whatever policy you configure) and injects identity headers into the response.
+3. nginx copies those headers into the upstream request to topornot.
+4. topornot trusts and consumes the following headers:
+
+   | Header | Description |
+   |--------|-------------|
+   | `Remote-User` | **Required.** The authenticated username. |
+   | `Remote-Groups` | Comma-separated list of groups the user belongs to. |
+   | `Remote-Email` | The user's email address. |
+   | `Remote-Name` | The user's display name. |
+
+5. In **proxy mode** (`AUTH_MODE=proxy`), requests that arrive *without* a `Remote-User` header are rejected with `401 Unauthorized`.
+6. The service binds to `127.0.0.1` by default so it cannot be reached without going through the proxy.
+
+### Threat assumptions
+
+- The proxy layer is the sole authentication boundary.
+- The service trusts identity headers unconditionally – they must not be forgeable. Bind the service to localhost or an internal network, and strip any client-supplied `Remote-*` headers in nginx before forwarding.
+- Authelia's access-control rules decide who can reach the service.
+
+### Running locally (dev mode)
+
+By default `AUTH_MODE=dev`, which injects stub identity headers (`dev-user` / `dev@localhost`) so the full auth stack is not needed during development:
+
+```bash
+npm run dev          # AUTH_MODE defaults to dev
+```
+
+### OIDC tokens for downstream API calls
+
+If the service needs an OIDC access token (e.g. to call downstream APIs), add Dex as the identity provider and oauth2-proxy in front of the service. oauth2-proxy will forward the token in the `X-Forwarded-Access-Token` header. Consult the [oauth2-proxy documentation](https://oauth2-proxy.github.io/oauth2-proxy/configuration/overview) for details.
+
+### Example nginx configuration
+
+See [`examples/nginx.conf`](./examples/nginx.conf) for a complete snippet showing `auth_request` against Authelia and header forwarding.
+
+### Example Authelia access-control rules
+
+See [`examples/authelia-config.yml`](./examples/authelia-config.yml) for minimal access-control rules for this service.
+
+---
+
 ## Running tests
 
 ```bash
@@ -159,77 +217,3 @@ npm test
 Tests are written with [Jest](https://jestjs.io/) and [Supertest](https://github.com/ladjs/supertest) and cover all API endpoints.
 
 ---
-
-## Project structure
-
-```
-topornot/
-├── server.js          # Express app and API routes
-├── db.js              # JSON file persistence layer
-├── openapi.yaml       # OpenAPI 3.0 API specification
-├── .tssk.json         # tssk task management config
-├── .tsks/             # tssk task storage (JSONL + docs)
-├── public/
-│   ├── index.html     # Application shell
-│   ├── app.js         # UI logic (card review, offline sync)
-│   ├── style.css      # Styles
-│   ├── sw.js          # Service Worker (PWA / offline support)
-│   └── manifest.json  # PWA manifest
-└── tests/
-    └── api.test.js    # API integration tests
-```
-
----
-
-## Task management
-
-This project uses [tssk](https://github.com/bmordue/tssk) for task tracking. Tasks are stored in `.tsks/` alongside the code.
-
-### Prerequisites
-
-Install tssk by building from source (requires Go 1.24+):
-
-```bash
-git clone https://github.com/bmordue/tssk.git
-cd tssk
-go build -o build/tssk .
-mv build/tssk /usr/local/bin/
-```
-
-### Common commands
-
-```bash
-# List all tasks
-tssk list
-
-# List tasks by priority tag
-tssk list --tag near-term
-tssk list --tag medium-term
-tssk list --tag longer-term
-
-# Show task details
-tssk show <id>
-
-# Add a new task
-tssk add --title "Task title" --detail "Detailed description"
-
-# Update task status
-tssk status <id> in-progress
-tssk status <id> done
-
-# List tasks ready to start (no blocking dependencies)
-tssk ready
-
-# Visualize tasks in the browser
-tssk serve --open
-```
-
-### Task tags
-
-Tasks are tagged by development timeline:
-
-| Tag | Description |
-|-----|-------------|
-| `near-term` | High-priority items for the next development cycle |
-| `medium-term` | Features planned for upcoming releases |
-| `longer-term` | Future improvements and stretch goals |
