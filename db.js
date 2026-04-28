@@ -6,6 +6,11 @@ const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'suggestions.json');
 let _data = null;
 let _index = new Map();
 let _pending = new Map();
+let _version = 0;
+
+// Result caches to avoid repeated O(N) conversions
+let _cachePending = null;
+let _cacheAll = null;
 
 function _load() {
   if (_data) return _data;
@@ -20,6 +25,8 @@ function _load() {
   }
   _index.clear();
   _pending.clear();
+  _cachePending = null;
+  _cacheAll = null;
   for (const s of _data.suggestions) {
     _index.set(s.id, s);
     if (s.status === 'pending') {
@@ -30,22 +37,39 @@ function _load() {
 }
 
 function _save() {
+  _version++; // Increment version on every write
+  _cachePending = null; // Invalidate result caches
+  _cacheAll = null;
   fs.writeFileSync(DB_PATH, JSON.stringify(_data), 'utf8');
 }
 
 function closeDb() {
   _data = null;
+  _cachePending = null;
+  _cacheAll = null;
+}
+
+function getVersion() {
+  _load();
+  return _version;
 }
 
 function getPendingSuggestions() {
   _load();
-  // Return cached pending suggestions for O(1) retrieval instead of O(n) filter
-  return Array.from(_pending.values());
+  if (!_cachePending) {
+    // Cache the array conversion
+    _cachePending = Array.from(_pending.values());
+  }
+  return _cachePending;
 }
 
 function getAllSuggestions() {
-  // Return in reverse chronological order (newest first)
-  return [..._load().suggestions].reverse();
+  _load();
+  if (!_cacheAll) {
+    // Cache the reversed copy
+    _cacheAll = [..._data.suggestions].reverse();
+  }
+  return _cacheAll;
 }
 
 function getSuggestionById(id) {
@@ -95,4 +119,4 @@ function updateStatus(id, status) {
   return suggestion;
 }
 
-module.exports = { closeDb, getPendingSuggestions, getAllSuggestions, getSuggestionById, createSuggestion, updateStatus };
+module.exports = { closeDb, getVersion, getPendingSuggestions, getAllSuggestions, getSuggestionById, createSuggestion, updateStatus };
