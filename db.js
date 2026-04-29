@@ -36,10 +36,14 @@ function _load() {
   return _data;
 }
 
-function _save() {
+/**
+ * Internal save helper.
+ * Performance: Supports granular cache invalidation to avoid redundant O(N) operations.
+ */
+function _save({ invalidatePending = true, invalidateAll = true } = {}) {
   _version++; // Increment version on every write
-  _cachePending = null; // Invalidate result caches
-  _cacheAll = null;
+  if (invalidatePending) _cachePending = null;
+  if (invalidateAll) _cacheAll = null;
   fs.writeFileSync(DB_PATH, JSON.stringify(_data), 'utf8');
 }
 
@@ -93,7 +97,7 @@ function createSuggestion({ title, description, context, agent }) {
   data.suggestions.push(suggestion);
   _index.set(suggestion.id, suggestion);
   _pending.set(suggestion.id, suggestion); // Cache as pending
-  _save();
+  _save(); // Invalidate all caches as membership changed
   return suggestion;
 }
 
@@ -115,7 +119,9 @@ function updateStatus(id, status) {
     _pending.delete(id);
   }
 
-  _save();
+  // Performance: Skip invalidating _cacheAll as membership and order are unchanged.
+  // The mutated suggestion object is already reflected in the cached array.
+  _save({ invalidateAll: false });
   return suggestion;
 }
 
