@@ -12,7 +12,13 @@
 <body>
   <header class="app-header">
     <h1>topornot</h1>
-    <div class="queue-count" id="queue-count" aria-live="polite">0 pending</div>
+    <div class="header-actions">
+      <button class="btn-header-refresh" id="btn-header-refresh" aria-label="Refresh (R)">
+        <span class="refresh-icon">↻</span>
+        <kbd>R</kbd>
+      </button>
+      <div class="queue-count" id="queue-count" aria-live="polite">0 pending</div>
+    </div>
   </header>
 
   <main class="app-main">
