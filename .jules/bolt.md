@@ -9,3 +9,7 @@
 ## 2025-05-17 - [Result Caching & Fast ETag Validation]
 **Learning:** Even with in-memory Maps, repeatedly converting values to arrays or reversing them can be O(N) and costly at high frequency. Pre-caching these result arrays and using a simple version counter for fast ETag validation allows the server to bypass JSON serialization entirely for unchanged data, significantly reducing CPU and latency.
 **Action:** Implement result-level caching for frequently accessed read views. Use a version counter to enable fast path ETag checks before performing any heavy lifting (like serialization or database queries).
+
+## 2025-05-18 - [Granular Cache Invalidation]
+**Learning:** When using result caching for multiple views (e.g., 'all' vs 'pending'), a write operation may only affect a subset of those views. In-place mutation of objects within cached arrays allows the 'all' view to remain valid during status updates, avoiding redundant O(N) copy/reverse operations.
+**Action:** Implement granular invalidation in the save path. Identify which result caches are truly invalidated by a specific change and preserve others to maximize cache hits and minimize CPU work.
