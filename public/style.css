@@ -53,6 +53,46 @@ body {
   letter-spacing: -0.5px;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.btn-header-refresh {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  border-radius: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.btn-header-refresh:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.btn-header-refresh:active {
+  transform: scale(0.95);
+}
+
+.btn-header-refresh kbd {
+  background: rgba(0, 0, 0, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: white;
+  font-size: 0.65rem;
+  margin-top: 1px;
+}
+
+.refresh-icon {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
 .queue-count {
   font-size: 0.85rem;
   background: rgba(255,255,255,0.2);

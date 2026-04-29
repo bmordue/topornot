@@ -199,13 +199,16 @@
   }
 
   // -- Button handlers --
+  const refreshHandler = () => {
+    showToast('Refreshing...');
+    loadSuggestions();
+  };
+
   document.getElementById('btn-approve').addEventListener('click', () => doAction('approve'));
   document.getElementById('btn-reject').addEventListener('click',  () => doAction('reject'));
   document.getElementById('btn-defer').addEventListener('click',   () => doAction('defer'));
-  document.getElementById('btn-refresh').addEventListener('click', () => {
-    showToast('Refreshing...');
-    loadSuggestions();
-  });
+  document.getElementById('btn-refresh').addEventListener('click', refreshHandler);
+  document.getElementById('btn-header-refresh').addEventListener('click', refreshHandler);
 
   // -- Swipe gestures --
   let touchStartX = 0;
@@ -263,6 +266,10 @@
     if (key === 'arrowup'    || key === 'd') {
       flashButton('btn-defer');
       doAction('defer');
+    }
+    if (key === 'r') {
+      flashButton(emptyEl.hidden ? 'btn-header-refresh' : 'btn-refresh');
+      refreshHandler();
     }
     if (key === 'c') {
       const details = cardCtxWrap.querySelector('details');
