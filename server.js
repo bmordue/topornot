@@ -7,6 +7,9 @@ const { authMiddleware } = require('./auth');
 
 const app = express();
 
+// Trust the first proxy in front of us
+app.set('trust proxy', 1);
+
 // Security headers
 app.use(helmet());
 
