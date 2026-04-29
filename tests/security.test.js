@@ -22,6 +22,10 @@ describe('Security Headers', () => {
     expect(res.headers['strict-transport-security']).toBeDefined();
     expect(res.headers['x-content-type-options']).toBe('nosniff');
   });
+
+  it('should trust proxy', () => {
+    expect(app.get('trust proxy')).toBe(1);
+  });
 });
 
 describe('Payload Size Limit', () => {
