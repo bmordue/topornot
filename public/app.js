@@ -219,7 +219,26 @@
   // -- Swipe gestures --
   let touchStartX = 0;
   let touchStartY = 0;
+  let lastDX = 0;
   let isDragging  = false;
+  let ticking = false;
+
+  function updateSwipe() {
+    if (!isDragging) {
+      ticking = false;
+      return;
+    }
+
+    // Tilt the card slightly as user swipes
+    cardEl.style.transform = `translateX(${lastDX * 0.4}px) rotate(${lastDX * 0.03}deg)`;
+
+    // Show swipe hints
+    const THRESHOLD = 60;
+    hintApprove.style.opacity = lastDX > THRESHOLD ? Math.min((lastDX - THRESHOLD) / 40, 1) : 0;
+    hintReject.style.opacity  = lastDX < -THRESHOLD ? Math.min((-lastDX - THRESHOLD) / 40, 1) : 0;
+
+    ticking = false;
+  }
 
   cardEl.addEventListener('touchstart', (e) => {
     touchStartX = e.touches[0].clientX;
@@ -229,15 +248,12 @@
 
   cardEl.addEventListener('touchmove', (e) => {
     if (!isDragging) return;
-    const dx = e.touches[0].clientX - touchStartX;
-    const dy = e.touches[0].clientY - touchStartY;
-    // Tilt the card slightly as user swipes
-    cardEl.style.transform = `translateX(${dx * 0.4}px) rotate(${dx * 0.03}deg)`;
+    lastDX = e.touches[0].clientX - touchStartX;
 
-    // Show swipe hints
-    const THRESHOLD = 60;
-    hintApprove.style.opacity = dx > THRESHOLD ? Math.min((dx - THRESHOLD) / 40, 1) : 0;
-    hintReject.style.opacity  = dx < -THRESHOLD ? Math.min((-dx - THRESHOLD) / 40, 1) : 0;
+    if (!ticking) {
+      requestAnimationFrame(updateSwipe);
+      ticking = true;
+    }
   }, { passive: true });
 
   cardEl.addEventListener('touchend', (e) => {

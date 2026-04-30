@@ -133,6 +133,7 @@ body {
   position: relative;
   touch-action: pan-y;
   user-select: none;
+  will-change: transform;
 }
 
 @keyframes slideIn {
@@ -382,6 +383,7 @@ kbd {
   transition: opacity 0.1s;
   border-radius: 12px;
   padding: 6px 16px;
+  will-change: opacity;
 }
 
 .card .swipe-hint-right {

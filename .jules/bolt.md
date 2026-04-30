@@ -13,3 +13,7 @@
 ## 2025-05-18 - [Granular Cache Invalidation]
 **Learning:** When using result caching for multiple views (e.g., 'all' vs 'pending'), a write operation may only affect a subset of those views. In-place mutation of objects within cached arrays allows the 'all' view to remain valid during status updates, avoiding redundant O(N) copy/reverse operations.
 **Action:** Implement granular invalidation in the save path. Identify which result caches are truly invalidated by a specific change and preserve others to maximize cache hits and minimize CPU work.
+
+## 2025-05-19 - [RAF Throttling & Layer Promotion]
+**Learning:** High-frequency input events like `touchmove` can trigger redundant DOM updates that exceed the screen's refresh rate, causing "jank" and wasted CPU cycles. Throttling these updates with `requestAnimationFrame` ensures we only render once per frame. Combining this with `will-change` layer promotion offloads transformations to the GPU, keeping the main thread free.
+**Action:** Use `requestAnimationFrame` to throttle DOM manipulations in response to high-frequency events (`scroll`, `resize`, `touchmove`). Apply `will-change` to elements that are frequently animated or transformed to leverage compositor optimization.
