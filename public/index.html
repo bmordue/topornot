@@ -27,7 +27,10 @@
         <div class="empty-icon">✓</div>
         <p>All caught up!</p>
         <p class="empty-sub">No pending suggestions.</p>
-        <button id="btn-refresh" class="btn btn-refresh">Check for updates</button>
+        <button id="btn-refresh" class="btn btn-refresh" aria-label="Refresh (R)">
+          <span class="refresh-icon">↻</span>
+          <span>Check for updates <kbd>R</kbd></span>
+        </button>
       </div>
 
       <div class="card" id="current-card" hidden>
@@ -41,7 +44,7 @@
         <p class="card-description" id="card-description"></p>
         <div class="card-context card-context-wrap" id="card-context-wrap">
           <details>
-            <summary>Context <kbd>C</kbd></summary>
+            <summary id="card-context-summary">Context <kbd>C</kbd></summary>
             <pre id="card-context"></pre>
           </details>
         </div>

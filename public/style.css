@@ -76,7 +76,7 @@ body {
   background: rgba(255, 255, 255, 0.25);
 }
 
-.btn-header-refresh:active {
+.btn-header-refresh:active, .btn-header-refresh.pressed {
   transform: scale(0.95);
 }
 
@@ -220,6 +220,11 @@ body {
   outline-offset: 1px;
 }
 
+.card-context-wrap details summary:active, .card-context-wrap details summary.pressed {
+  background: rgba(0, 0, 0, 0.05);
+  transform: scale(0.98);
+}
+
 .card-position {
   text-align: center;
   margin-top: 16px;
@@ -330,6 +335,15 @@ kbd {
 
 .btn-refresh:hover {
   filter: brightness(1.1);
+}
+
+.refresh-icon.spinning {
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
 }
 
 /* Toast notification */
