@@ -120,13 +120,23 @@ describe('API Error Handling', () => {
     expect(res.headers['injected-header']).toBeUndefined();
   });
 
-  it('should sanitize user header in logs', async () => {
+  it('should sanitize user identifier in logs (unit test)', () => {
+    const { authMiddleware } = require('../auth');
     const spy = jest.spyOn(console, 'log').mockImplementation();
-    await request(app)
-      .get('/api/suggestions')
-      .set('Remote-User', 'attacker\nInjected log line');
+    const req = {
+      method: 'GET',
+      path: '/api/suggestions',
+      headers: {
+        'remote-user': 'attacker\nInjected log line'
+      }
+    };
+    const res = {};
+    const next = jest.fn();
+
+    authMiddleware(req, res, next);
 
     expect(spy).toHaveBeenCalledWith(expect.stringContaining('user=attacker_Injected log line'));
+    expect(next).toHaveBeenCalled();
     spy.mockRestore();
   });
 });
