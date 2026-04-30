@@ -106,4 +106,37 @@ describe('API Error Handling', () => {
     expect(res.status).toBe(400);
     expect(res.body.error).toMatch(/Invalid ID/);
   });
+
+  it('should strictly validate status query param and prevent ETag injection', async () => {
+    // Malicious status value containing CRLF and a fake header
+    const maliciousStatus = 'all\r\nInjected-Header: evil';
+    const res = await request(app)
+      .get('/api/suggestions')
+      .query({ status: maliciousStatus });
+
+    expect(res.status).toBe(200);
+    // The status should have been normalized to 'pending'
+    expect(res.headers['etag']).toMatch(/-pending"$/);
+    expect(res.headers['injected-header']).toBeUndefined();
+  });
+
+  it('should sanitize user identifier in logs (unit test)', () => {
+    const { authMiddleware } = require('../auth');
+    const spy = jest.spyOn(console, 'log').mockImplementation();
+    const req = {
+      method: 'GET',
+      path: '/api/suggestions',
+      headers: {
+        'remote-user': 'attacker\nInjected log line'
+      }
+    };
+    const res = {};
+    const next = jest.fn();
+
+    authMiddleware(req, res, next);
+
+    expect(spy).toHaveBeenCalledWith(expect.stringContaining('user=attacker_Injected log line'));
+    expect(next).toHaveBeenCalled();
+    spy.mockRestore();
+  });
 });

@@ -42,7 +42,8 @@ app.use('/api', apiLimiter);
 
 // GET pending suggestions (used by the UI)
 app.get('/api/suggestions', (req, res) => {
-  const status = req.query.status || 'pending';
+  // Security: Strictly validate status to prevent header injection in ETag
+  const status = req.query.status === 'all' ? 'all' : 'pending';
 
   // Performance: Fast ETag validation using DB version and query status
   // This avoids full JSON serialization and hashing if data hasn't changed.

@@ -55,7 +55,9 @@ function authMiddleware(req, res, next) {
 
   // Audit log – principal only, never tokens
   if (user) {
-    console.log(`[auth] ${req.method} ${req.path} – user=${user}`);
+    // Security: Sanitize user for logging to prevent log injection
+    const safeUser = String(user).replace(/[\r\n]/g, '_');
+    console.log(`[auth] ${req.method} ${req.path} – user=${safeUser}`);
   }
 
   next();
