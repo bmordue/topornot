@@ -199,9 +199,15 @@
   }
 
   // -- Button handlers --
-  const refreshHandler = () => {
+  const refreshHandler = async () => {
     showToast('Refreshing...');
-    loadSuggestions();
+    const refreshIcons = document.querySelectorAll('.refresh-icon');
+    refreshIcons.forEach(icon => icon.classList.add('spinning'));
+    await loadSuggestions();
+    // Small delay to ensure animation is visible if load is near-instant
+    setTimeout(() => {
+      refreshIcons.forEach(icon => icon.classList.remove('spinning'));
+    }, 400);
   };
 
   document.getElementById('btn-approve').addEventListener('click', () => doAction('approve'));
@@ -272,6 +278,7 @@
       refreshHandler();
     }
     if (key === 'c') {
+      flashButton('card-context-summary');
       const details = cardCtxWrap.querySelector('details');
       if (details) details.open = !details.open;
     }
