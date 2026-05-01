@@ -52,56 +52,65 @@ app.get('/api/suggestions', (req, res) => {
     return res.status(304).send();
   }
 
-  const suggestions = status === 'all' ? db.getAllSuggestions() : db.getPendingSuggestions();
+  // Performance: Use pre-stringified JSON from DB cache to avoid O(N) serialization cost.
+  const suggestionsJson = status === 'all' ? db.getAllSuggestionsJson() : db.getPendingSuggestionsJson();
   res.set('ETag', etag);
-  res.json(suggestions);
+  res.type('json').send(suggestionsJson);
 });
 
 // POST a new suggestion (used by agents)
-app.post('/api/suggestions', suggestionLimiter, (req, res) => {
-  const { title, description, context, agent } = req.body;
+app.post('/api/suggestions', suggestionLimiter, async (req, res, next) => {
+  try {
+    const { title, description, context, agent } = req.body;
 
-  if (!title || !description) {
-    return res.status(400).json({ error: 'title and description are required' });
-  }
+    if (!title || !description) {
+      return res.status(400).json({ error: 'title and description are required' });
+    }
 
-  // Basic input validation
-  if (typeof title !== 'string' || title.length > 100) {
-    return res.status(400).json({ error: 'title must be a string up to 100 characters' });
-  }
-  if (typeof description !== 'string' || description.length > 1000) {
-    return res.status(400).json({ error: 'description must be a string up to 1000 characters' });
-  }
-  if (context && (typeof context !== 'string' || context.length > 5000)) {
-    return res.status(400).json({ error: 'context must be a string up to 5000 characters' });
-  }
-  if (agent && (typeof agent !== 'string' || agent.length > 100)) {
-    return res.status(400).json({ error: 'agent must be a string up to 100 characters' });
-  }
+    // Basic input validation
+    if (typeof title !== 'string' || title.length > 100) {
+      return res.status(400).json({ error: 'title must be a string up to 100 characters' });
+    }
+    if (typeof description !== 'string' || description.length > 1000) {
+      return res.status(400).json({ error: 'description must be a string up to 1000 characters' });
+    }
+    if (context && (typeof context !== 'string' || context.length > 5000)) {
+      return res.status(400).json({ error: 'context must be a string up to 5000 characters' });
+    }
+    if (agent && (typeof agent !== 'string' || agent.length > 100)) {
+      return res.status(400).json({ error: 'agent must be a string up to 100 characters' });
+    }
 
-  const suggestion = db.createSuggestion({ title, description, context, agent });
-  res.status(201).json(suggestion);
+    const suggestion = await db.createSuggestion({ title, description, context, agent });
+    res.status(201).json(suggestion);
+  } catch (err) {
+    next(err);
+  }
 });
 
 // PATCH to update status: approve, reject, defer
-app.patch('/api/suggestions/:id/:action', (req, res) => {
-  const { id, action } = req.params;
+app.patch('/api/suggestions/:id/:action', async (req, res, next) => {
+  try {
+    const { id, action } = req.params;
 
-  // Input validation: ensure ID is numeric
-  if (isNaN(id) || Number(id) <= 0) {
-    return res.status(400).json({ error: 'Invalid ID. Must be a positive number.' });
-  }
+    // Input validation: ensure ID is numeric
+    if (isNaN(id) || Number(id) <= 0) {
+      return res.status(400).json({ error: 'Invalid ID. Must be a positive number.' });
+    }
 
-  const validActions = ['approve', 'reject', 'defer'];
-  if (!validActions.includes(action)) {
-    return res.status(400).json({ error: `Invalid action. Must be one of: ${validActions.join(', ')}` });
+    const validActions = ['approve', 'reject', 'defer'];
+    if (!validActions.includes(action)) {
+      return res.status(400).json({ error: `Invalid action. Must be one of: ${validActions.join(', ')}` });
+    }
+    const statusMap = { approve: 'approved', reject: 'rejected', defer: 'pending' };
+    const suggestion = await db.updateStatus(Number(id), statusMap[action]);
+    if (!suggestion) {
+      return res.status(404).json({ error: 'Suggestion not found' });
+    }
+    res.json(suggestion);
+  } catch (err) {
+    next(err);
   }
-  const statusMap = { approve: 'approved', reject: 'rejected', defer: 'pending' };
-  const suggestion = db.updateStatus(Number(id), statusMap[action]);
-  if (!suggestion) {
-    return res.status(404).json({ error: 'Suggestion not found' });
-  }
-  res.json(suggestion);
 });
 
 // Catch-all 404 for API routes to prevent leaking Express default HTML error pages

@@ -17,3 +17,7 @@
 ## 2025-05-19 - [RAF Throttling & Layer Promotion]
 **Learning:** High-frequency input events like `touchmove` can trigger redundant DOM updates that exceed the screen's refresh rate, causing "jank" and wasted CPU cycles. Throttling these updates with `requestAnimationFrame` ensures we only render once per frame. Combining this with `will-change` layer promotion offloads transformations to the GPU, keeping the main thread free.
 **Action:** Use `requestAnimationFrame` to throttle DOM manipulations in response to high-frequency events (`scroll`, `resize`, `touchmove`). Apply `will-change` to elements that are frequently animated or transformed to leverage compositor optimization.
+
+## 2025-05-20 - [Lazy JSON Caching & Async I/O]
+**Learning:** For high-traffic APIs, pre-stringifying JSON responses and using asynchronous disk I/O can significantly improve server throughput. Lazy caching of JSON strings avoids redundant O(N) serialization costs on repeated GET requests.
+**Action:** Implement lazy JSON caching for frequently accessed read-only views. Use asynchronous I/O (e.g., `fs.promises.writeFile`) for persistence to avoid blocking the Node.js event loop.

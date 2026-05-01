@@ -22,9 +22,9 @@ describe('GET /api/suggestions', () => {
   });
 
   it('returns only pending suggestions by default', async () => {
-    const s1 = db.createSuggestion({ title: 'Pending one', description: 'desc' });
-    const s2 = db.createSuggestion({ title: 'Pending two', description: 'desc' });
-    db.updateStatus(s2.id, 'approved');
+    const s1 = await db.createSuggestion({ title: 'Pending one', description: 'desc' });
+    const s2 = await db.createSuggestion({ title: 'Pending two', description: 'desc' });
+    await db.updateStatus(s2.id, 'approved');
 
     const res = await request(app).get('/api/suggestions');
     expect(res.status).toBe(200);

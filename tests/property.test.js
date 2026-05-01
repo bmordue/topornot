@@ -19,12 +19,12 @@ afterAll(() => {
 
 describe('Property: createSuggestion', () => {
   it('always returns a suggestion with pending status and incremented id', () => {
-    fc.assert(
-      fc.property(
+    return fc.assert(
+      fc.asyncProperty(
         fc.string({ minLength: 1, maxLength: 100 }),
         fc.string({ minLength: 1, maxLength: 1000 }),
-        (title, description) => {
-          const s = db.createSuggestion({ title, description });
+        async (title, description) => {
+          const s = await db.createSuggestion({ title, description });
           expect(s.status).toBe('pending');
           expect(typeof s.id).toBe('number');
           expect(s.title).toBe(title);
@@ -38,13 +38,13 @@ describe('Property: createSuggestion', () => {
   });
 
   it('produces strictly increasing IDs', () => {
-    fc.assert(
-      fc.property(
+    return fc.assert(
+      fc.asyncProperty(
         fc.string({ minLength: 1, maxLength: 50 }),
         fc.string({ minLength: 1, maxLength: 50 }),
-        (title, desc) => {
-          const s1 = db.createSuggestion({ title, description: desc });
-          const s2 = db.createSuggestion({ title, description: desc });
+        async (title, desc) => {
+          const s1 = await db.createSuggestion({ title, description: desc });
+          const s2 = await db.createSuggestion({ title, description: desc });
           expect(s2.id).toBeGreaterThan(s1.id);
         }
       ),
@@ -53,14 +53,14 @@ describe('Property: createSuggestion', () => {
   });
 
   it('preserves optional context and agent fields', () => {
-    fc.assert(
-      fc.property(
+    return fc.assert(
+      fc.asyncProperty(
         fc.string({ minLength: 1, maxLength: 100 }),
         fc.string({ minLength: 1, maxLength: 1000 }),
         fc.option(fc.string({ minLength: 1, maxLength: 100 }), { nil: undefined }),
         fc.option(fc.string({ minLength: 1, maxLength: 100 }), { nil: undefined }),
-        (title, description, context, agent) => {
-          const s = db.createSuggestion({ title, description, context, agent });
+        async (title, description, context, agent) => {
+          const s = await db.createSuggestion({ title, description, context, agent });
           if (context) {
             expect(s.context).toBe(context);
           } else {
@@ -80,12 +80,12 @@ describe('Property: createSuggestion', () => {
 
 describe('Property: getSuggestionById', () => {
   it('returns the suggestion that was created', () => {
-    fc.assert(
-      fc.property(
+    return fc.assert(
+      fc.asyncProperty(
         fc.string({ minLength: 1, maxLength: 50 }),
         fc.string({ minLength: 1, maxLength: 50 }),
-        (title, desc) => {
-          const created = db.createSuggestion({ title, description: desc });
+        async (title, desc) => {
+          const created = await db.createSuggestion({ title, description: desc });
           const found = db.getSuggestionById(created.id);
           expect(found).not.toBeNull();
           expect(found.id).toBe(created.id);
@@ -111,12 +111,12 @@ describe('Property: getSuggestionById', () => {
 
 describe('Property: updateStatus', () => {
   it('status transitions are always reflected correctly', () => {
-    fc.assert(
-      fc.property(
+    return fc.assert(
+      fc.asyncProperty(
         fc.constantFrom('approved', 'rejected', 'pending'),
-        (newStatus) => {
-          const s = db.createSuggestion({ title: 'test', description: 'test' });
-          const updated = db.updateStatus(s.id, newStatus);
+        async (newStatus) => {
+          const s = await db.createSuggestion({ title: 'test', description: 'test' });
+          const updated = await db.updateStatus(s.id, newStatus);
           expect(updated.status).toBe(newStatus);
           // Verify getSuggestionById also reflects the change
           const fetched = db.getSuggestionById(s.id);
@@ -128,12 +128,12 @@ describe('Property: updateStatus', () => {
   });
 
   it('returns null when updating non-existent suggestion', () => {
-    fc.assert(
-      fc.property(
+    return fc.assert(
+      fc.asyncProperty(
         fc.integer({ min: -1000, max: -1 }),
         fc.constantFrom('approved', 'rejected', 'pending'),
-        (id, status) => {
-          expect(db.updateStatus(id, status)).toBeNull();
+        async (id, status) => {
+          expect(await db.updateStatus(id, status)).toBeNull();
         }
       ),
       { numRuns: 20 }
@@ -141,13 +141,13 @@ describe('Property: updateStatus', () => {
   });
 
   it('pending cache stays consistent through status transitions', () => {
-    fc.assert(
-      fc.property(
+    return fc.assert(
+      fc.asyncProperty(
         fc.array(fc.constantFrom('approved', 'rejected', 'pending'), { minLength: 1, maxLength: 5 }),
-        (statuses) => {
-          const s = db.createSuggestion({ title: 'cache-test', description: 'test' });
+        async (statuses) => {
+          const s = await db.createSuggestion({ title: 'cache-test', description: 'test' });
           for (const status of statuses) {
-            db.updateStatus(s.id, status);
+            await db.updateStatus(s.id, status);
           }
           const finalStatus = statuses[statuses.length - 1];
           const pending = db.getPendingSuggestions();

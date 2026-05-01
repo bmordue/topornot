@@ -12,6 +12,10 @@ let _version = 0;
 let _cachePending = null;
 let _cacheAll = null;
 
+// JSON caches to avoid repeated O(N) stringification
+let _cachePendingJson = null;
+let _cacheAllJson = null;
+
 function _load() {
   if (_data) return _data;
   if (fs.existsSync(DB_PATH)) {
@@ -40,17 +44,26 @@ function _load() {
  * Internal save helper.
  * Performance: Supports granular cache invalidation to avoid redundant O(N) operations.
  */
-function _save({ invalidatePending = true, invalidateAll = true } = {}) {
+async function _save({ invalidatePending = true, invalidateAll = true } = {}) {
   _version++; // Increment version on every write
   if (invalidatePending) _cachePending = null;
   if (invalidateAll) _cacheAll = null;
-  fs.writeFileSync(DB_PATH, JSON.stringify(_data), 'utf8');
+
+  // Performance: Always invalidate JSON caches on save as the underlying data has changed.
+  // We still preserve _cachePending/_cacheAll arrays if requested to avoid O(N) array ops.
+  _cachePendingJson = null;
+  _cacheAllJson = null;
+
+  // Performance: Use async writeFile to avoid blocking the event loop on I/O.
+  await fs.promises.writeFile(DB_PATH, JSON.stringify(_data), 'utf8');
 }
 
 function closeDb() {
   _data = null;
   _cachePending = null;
   _cacheAll = null;
+  _cachePendingJson = null;
+  _cacheAllJson = null;
 }
 
 function getVersion() {
@@ -76,12 +89,34 @@ function getAllSuggestions() {
   return _cacheAll;
 }
 
+/**
+ * Performance: Returns pre-stringified JSON of all suggestions to avoid O(N) serialization cost.
+ */
+function getAllSuggestionsJson() {
+  _load();
+  if (!_cacheAllJson) {
+    _cacheAllJson = JSON.stringify(getAllSuggestions());
+  }
+  return _cacheAllJson;
+}
+
+/**
+ * Performance: Returns pre-stringified JSON of pending suggestions to avoid O(N) serialization cost.
+ */
+function getPendingSuggestionsJson() {
+  _load();
+  if (!_cachePendingJson) {
+    _cachePendingJson = JSON.stringify(getPendingSuggestions());
+  }
+  return _cachePendingJson;
+}
+
 function getSuggestionById(id) {
   _load();
   return _index.get(id) || null;
 }
 
-function createSuggestion({ title, description, context, agent }) {
+async function createSuggestion({ title, description, context, agent }) {
   const data = _load();
   const now = new Date().toISOString().replace('T', ' ').slice(0, 19);
   const suggestion = {
@@ -97,11 +132,11 @@ function createSuggestion({ title, description, context, agent }) {
   data.suggestions.push(suggestion);
   _index.set(suggestion.id, suggestion);
   _pending.set(suggestion.id, suggestion); // Cache as pending
-  _save(); // Invalidate all caches as membership changed
+  await _save(); // Invalidate all caches as membership changed
   return suggestion;
 }
 
-function updateStatus(id, status) {
+async function updateStatus(id, status) {
   _load();
   const suggestion = _index.get(id);
   if (!suggestion) return null;
@@ -121,8 +156,18 @@ function updateStatus(id, status) {
 
   // Performance: Skip invalidating _cacheAll as membership and order are unchanged.
   // The mutated suggestion object is already reflected in the cached array.
-  _save({ invalidateAll: false });
+  await _save({ invalidateAll: false });
   return suggestion;
 }
 
-module.exports = { closeDb, getVersion, getPendingSuggestions, getAllSuggestions, getSuggestionById, createSuggestion, updateStatus };
+module.exports = {
+  closeDb,
+  getVersion,
+  getPendingSuggestions,
+  getAllSuggestions,
+  getPendingSuggestionsJson,
+  getAllSuggestionsJson,
+  getSuggestionById,
+  createSuggestion,
+  updateStatus
+};
