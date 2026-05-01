@@ -81,7 +81,7 @@ app.post('/api/suggestions', suggestionLimiter, async (req, res, next) => {
       return res.status(400).json({ error: 'agent must be a string up to 100 characters' });
     }
 
-    const suggestion = await db.createSuggestion({ title, description, context, agent });
+    const suggestion = await db.createSuggestion({ title, description, context, agent, user: req.identity.user });
     res.status(201).json(suggestion);
   } catch (err) {
     next(err);
