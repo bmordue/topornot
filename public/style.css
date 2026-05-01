@@ -398,6 +398,14 @@ kbd {
   border: 3px solid var(--color-reject);
 }
 
+.card .swipe-hint-top {
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%) translateY(0);
+  color: var(--color-defer);
+  border: 3px solid var(--color-defer);
+}
+
 /* Loading state */
 .loading {
   text-align: center;

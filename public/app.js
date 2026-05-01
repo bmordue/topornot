@@ -21,6 +21,7 @@
   const toastEl      = document.getElementById('toast');
   const hintApprove  = document.getElementById('hint-approve');
   const hintReject   = document.getElementById('hint-reject');
+  const hintDefer    = document.getElementById('hint-defer');
 
   function flashButton(id) {
     const el = document.getElementById(id);
@@ -220,6 +221,7 @@
   let touchStartX = 0;
   let touchStartY = 0;
   let lastDX = 0;
+  let lastDY = 0;
   let isDragging  = false;
   let ticking = false;
 
@@ -230,12 +232,13 @@
     }
 
     // Tilt the card slightly as user swipes
-    cardEl.style.transform = `translateX(${lastDX * 0.4}px) rotate(${lastDX * 0.03}deg)`;
+    cardEl.style.transform = `translateX(${lastDX * 0.4}px) translateY(${lastDY * 0.4}px) rotate(${lastDX * 0.03}deg)`;
 
     // Show swipe hints
     const THRESHOLD = 60;
     hintApprove.style.opacity = lastDX > THRESHOLD ? Math.min((lastDX - THRESHOLD) / 40, 1) : 0;
     hintReject.style.opacity  = lastDX < -THRESHOLD ? Math.min((-lastDX - THRESHOLD) / 40, 1) : 0;
+    hintDefer.style.opacity   = lastDY < -THRESHOLD ? Math.min((-lastDY - THRESHOLD) / 40, 1) : 0;
 
     ticking = false;
   }
@@ -249,6 +252,7 @@
   cardEl.addEventListener('touchmove', (e) => {
     if (!isDragging) return;
     lastDX = e.touches[0].clientX - touchStartX;
+    lastDY = e.touches[0].clientY - touchStartY;
 
     if (!ticking) {
       requestAnimationFrame(updateSwipe);
@@ -264,6 +268,7 @@
     cardEl.style.transform = '';
     hintApprove.style.opacity = 0;
     hintReject.style.opacity  = 0;
+    hintDefer.style.opacity   = 0;
 
     const THRESHOLD = 80;
     if (Math.abs(dx) > Math.abs(dy)) {
