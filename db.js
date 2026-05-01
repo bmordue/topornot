@@ -116,7 +116,7 @@ function getSuggestionById(id) {
   return _index.get(id) || null;
 }
 
-async function createSuggestion({ title, description, context, agent }) {
+async function createSuggestion({ title, description, context, agent, user }) {
   const data = _load();
   const now = new Date().toISOString().replace('T', ' ').slice(0, 19);
   const suggestion = {
@@ -127,7 +127,9 @@ async function createSuggestion({ title, description, context, agent }) {
     agent: agent || null,
     status: 'pending',
     created_at: now,
-    updated_at: now
+    updated_at: now,
+    created_by: user || null,
+    updated_by: user || null
   };
   data.suggestions.push(suggestion);
   _index.set(suggestion.id, suggestion);
@@ -136,7 +138,7 @@ async function createSuggestion({ title, description, context, agent }) {
   return suggestion;
 }
 
-async function updateStatus(id, status) {
+async function updateStatus(id, status, user) {
   _load();
   const suggestion = _index.get(id);
   if (!suggestion) return null;
@@ -146,6 +148,7 @@ async function updateStatus(id, status) {
 
   suggestion.status = status;
   suggestion.updated_at = new Date().toISOString().replace('T', ' ').slice(0, 19);
+  suggestion.updated_by = user || null;
 
   // Update pending cache
   if (status === 'pending') {
