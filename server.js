@@ -86,8 +86,6 @@ app.post('/api/suggestions', suggestionLimiter, async (req, res, next) => {
   } catch (err) {
     next(err);
   }
-  const suggestion = db.createSuggestion({ title, description, context, agent, user: req.identity.user });
-  res.status(201).json(suggestion);
 });
 
 app.patch('/api/suggestions/:id/:action', async (req, res, next) => {
