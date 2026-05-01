@@ -250,6 +250,16 @@ components:
           format: date-time
           description: Last-updated timestamp in UTC (RFC3339 date-time)
           example: "2024-01-15T10:30:45Z"
+        created_by:
+          type: string
+          nullable: true
+          description: Identifier of the user who created the suggestion
+          example: "dev-user"
+        updated_by:
+          type: string
+          nullable: true
+          description: Identifier of the user who last updated the suggestion
+          example: "dev-user"
 
     SuggestionInput:
       type: object

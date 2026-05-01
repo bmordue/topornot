@@ -79,7 +79,7 @@ app.post('/api/suggestions', suggestionLimiter, (req, res) => {
     return res.status(400).json({ error: 'agent must be a string up to 100 characters' });
   }
 
-  const suggestion = db.createSuggestion({ title, description, context, agent });
+  const suggestion = db.createSuggestion({ title, description, context, agent, user: req.identity.user });
   res.status(201).json(suggestion);
 });
 
@@ -97,7 +97,7 @@ app.patch('/api/suggestions/:id/:action', (req, res) => {
     return res.status(400).json({ error: `Invalid action. Must be one of: ${validActions.join(', ')}` });
   }
   const statusMap = { approve: 'approved', reject: 'rejected', defer: 'pending' };
-  const suggestion = db.updateStatus(Number(id), statusMap[action]);
+  const suggestion = db.updateStatus(Number(id), statusMap[action], req.identity.user);
   if (!suggestion) {
     return res.status(404).json({ error: 'Suggestion not found' });
   }
