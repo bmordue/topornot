@@ -1,0 +1,23 @@
+{
+  "$schema": "https://raw.githubusercontent.com/stryker-mutator/stryker/master/packages/core/schema/stryker-core.schema.json",
+  "mutate": [
+    "server.js",
+    "db.js"
+  ],
+  "testRunner": "jest",
+  "jest": {
+    "configFile": "package.json"
+  },
+  "reporters": [
+    "clear-text",
+    "html"
+  ],
+  "coverageAnalysis": "perTest",
+  "ignoreStatic": true,
+  "thresholds": {
+    "high": 90,
+    "low": 80,
+    "break": 80
+  },
+  "tempDirName": ".stryker-tmp"
+}
