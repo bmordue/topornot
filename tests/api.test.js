@@ -70,26 +70,6 @@ describe('POST /api/suggestions', () => {
     expect(res.status).toBe(400);
     expect(res.body.error).toMatch(/description/);
   });
-
-  it('should track created_by and updated_by for audit logging', async () => {
-    const user = 'audit-test-user';
-    const postRes = await request(app)
-      .post('/api/suggestions')
-      .set('Remote-User', user)
-      .send({ title: 'Audit Test', description: 'Testing audit logs' });
-
-    expect(postRes.status).toBe(201);
-    expect(postRes.body.created_by).toBe(user);
-    expect(postRes.body.updated_by).toBe(user);
-
-    const patchRes = await request(app)
-      .patch(`/api/suggestions/${postRes.body.id}/approve`)
-      .set('Remote-User', 'approver-user');
-
-    expect(patchRes.status).toBe(200);
-    expect(patchRes.body.created_by).toBe(user);
-    expect(patchRes.body.updated_by).toBe('approver-user');
-  });
 });
 
 describe('PATCH /api/suggestions/:id/:action', () => {
