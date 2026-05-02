@@ -101,6 +101,13 @@ describe('API Error Handling', () => {
     expect(res.body.error).toBe('API endpoint not found');
   });
 
+  it('should return plain text 404 for non-existent non-API routes', async () => {
+    const res = await request(app).get('/non-existent-route');
+    expect(res.status).toBe(404);
+    expect(res.headers['content-type']).toMatch(/text\/plain/);
+    expect(res.text).toBe('404 Not Found');
+  });
+
   it('should reject non-numeric IDs in PATCH route', async () => {
     const res = await request(app).patch('/api/suggestions/invalid-id/approve');
     expect(res.status).toBe(400);
@@ -120,14 +127,17 @@ describe('API Error Handling', () => {
     expect(res.headers['injected-header']).toBeUndefined();
   });
 
-  it('should sanitize user identifier in logs (unit test)', () => {
+  it('should sanitize all identity headers (unit test)', () => {
     const { authMiddleware } = require('../auth');
     const spy = jest.spyOn(console, 'log').mockImplementation();
     const req = {
       method: 'GET',
       path: '/api/suggestions',
       headers: {
-        'remote-user': 'attacker\nInjected log line'
+        'remote-user': 'attacker\nInjected log line',
+        'remote-groups': 'admin\r\nevil',
+        'remote-email': 'user@example.com\nInjected',
+        'remote-name': 'Joe\nBloggs'
       }
     };
     const res = {};
@@ -136,6 +146,10 @@ describe('API Error Handling', () => {
     authMiddleware(req, res, next);
 
     expect(spy).toHaveBeenCalledWith(expect.stringContaining('user=attacker_Injected log line'));
+    expect(req.identity.user).toBe('attacker_Injected log line');
+    expect(req.identity.groups).toBe('admin__evil');
+    expect(req.identity.email).toBe('user@example.com_Injected');
+    expect(req.identity.name).toBe('Joe_Bloggs');
     expect(next).toHaveBeenCalled();
     spy.mockRestore();
   });

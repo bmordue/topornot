@@ -14,3 +14,8 @@
 **Vulnerability:** Identity headers (Remote-User) were logged directly without sanitization, and query parameters (status) were reflected in ETag headers without strict validation.
 **Learning:** Even trust-worthy headers from an upstream proxy can contain malicious characters (like CRLF) if the proxy is misconfigured or bypassed. Query parameters reflected in response headers are high-risk sinks for injection.
 **Prevention:** Always sanitize any external input before it reaches a log or a response header sink. Use strict whitelisting for parameters that influence header values.
+
+## 2026-05-02 - Identity-Aware Rate Limiting and Global 404 Handling
+**Vulnerability:** IP-based rate limiting was easily bypassable in multi-user environments (NAT), and non-API routes leaked Express default HTML error pages.
+**Learning:** Authenticated user identifiers should take precedence over IP addresses for rate limiting keys to ensure fairness and prevent bypasses. Global catch-all handlers for 404s should use generic plain-text or JSON responses to minimize footprint.
+**Prevention:** Always prioritize principal identifiers for rate limiting and implement terminal 404 handlers to replace default server error pages.
