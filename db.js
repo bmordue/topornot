@@ -11,6 +11,8 @@ let _version = 0;
 // Result caches to avoid repeated O(N) conversions
 let _cachePending = null;
 let _cacheAll = null;
+let _cachePendingJson = null;
+let _cacheAllJson = null;
 
 function _load() {
   if (_data) return _data;
@@ -40,10 +42,12 @@ function _load() {
  * Internal save helper.
  * Performance: Supports granular cache invalidation to avoid redundant O(N) operations.
  */
-function _save({ invalidatePending = true, invalidateAll = true } = {}) {
+function _save({ invalidatePending = true, invalidateAll = true, invalidatePendingJson = true, invalidateAllJson = true } = {}) {
   _version++; // Increment version on every write
   if (invalidatePending) _cachePending = null;
   if (invalidateAll) _cacheAll = null;
+  if (invalidatePendingJson) _cachePendingJson = null;
+  if (invalidateAllJson) _cacheAllJson = null;
   fs.writeFileSync(DB_PATH, JSON.stringify(_data), 'utf8');
 }
 
@@ -51,6 +55,8 @@ function closeDb() {
   _data = null;
   _cachePending = null;
   _cacheAll = null;
+  _cachePendingJson = null;
+  _cacheAllJson = null;
 }
 
 function getVersion() {
@@ -76,6 +82,22 @@ function getAllSuggestions() {
   return _cacheAll;
 }
 
+function getPendingSuggestionsJson() {
+  _load();
+  if (!_cachePendingJson) {
+    _cachePendingJson = JSON.stringify(getPendingSuggestions());
+  }
+  return _cachePendingJson;
+}
+
+function getAllSuggestionsJson() {
+  _load();
+  if (!_cacheAllJson) {
+    _cacheAllJson = JSON.stringify(getAllSuggestions());
+  }
+  return _cacheAllJson;
+}
+
 function getSuggestionById(id) {
   _load();
   return _index.get(id) || null;
@@ -98,8 +120,14 @@ function createSuggestion({ title, description, context, agent, user }) {
   };
   data.suggestions.push(suggestion);
   _index.set(suggestion.id, suggestion);
-  _pending.set(suggestion.id, suggestion); // Cache as pending
-  _save(); // Invalidate all caches as membership changed
+  _pending.set(suggestion.id, suggestion);
+
+  // Performance: Incremental update of array caches to avoid O(N) rebuilds
+  if (_cacheAll) _cacheAll.unshift(suggestion);
+  if (_cachePending) _cachePending.push(suggestion);
+
+  // Invalidate JSON caches as membership changed
+  _save({ invalidatePending: false, invalidateAll: false });
   return suggestion;
 }
 
@@ -111,21 +139,43 @@ function updateStatus(id, status, user) {
   // Performance: Early return if status is unchanged to avoid redundant disk I/O
   if (suggestion.status === status) return suggestion;
 
+  const oldStatus = suggestion.status;
   suggestion.status = status;
   suggestion.updated_at = new Date().toISOString().replace('T', ' ').slice(0, 19);
   suggestion.updated_by = user || null;
 
-  // Update pending cache
+  // Update pending Map and incrementally update _cachePending array
+  let invalidatePending = false;
   if (status === 'pending') {
     _pending.set(id, suggestion);
+    if (_cachePending) _cachePending.push(suggestion);
   } else {
     _pending.delete(id);
+    if (_cachePending) {
+      const idx = _cachePending.findIndex(s => s.id === id);
+      if (idx !== -1) _cachePending.splice(idx, 1);
+    }
   }
 
   // Performance: Skip invalidating _cacheAll as membership and order are unchanged.
-  // The mutated suggestion object is already reflected in the cached array.
-  _save({ invalidateAll: false });
+  // Invalidate only JSON caches.
+  _save({
+    invalidateAll: false,
+    invalidatePending: false,
+    invalidatePendingJson: true,
+    invalidateAllJson: true
+  });
   return suggestion;
 }
 
-module.exports = { closeDb, getVersion, getPendingSuggestions, getAllSuggestions, getSuggestionById, createSuggestion, updateStatus };
+module.exports = {
+  closeDb,
+  getVersion,
+  getPendingSuggestions,
+  getAllSuggestions,
+  getPendingSuggestionsJson,
+  getAllSuggestionsJson,
+  getSuggestionById,
+  createSuggestion,
+  updateStatus
+};
