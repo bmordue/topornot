@@ -99,6 +99,7 @@
       cardEl.hidden = true;
       actionBar.hidden = true;
       emptyEl.hidden = false;
+      document.getElementById('btn-refresh').focus();
       return;
     }
 
@@ -109,7 +110,13 @@
     const s = suggestions[currentIndex % pendingCount];
 
     cardAgent.textContent = s.agent || 'agent';
-    cardTime.textContent  = relativeTime(s.created_at);
+    cardAgent.setAttribute('aria-label', `Suggested by: ${s.agent || 'unknown agent'}`);
+
+    const localTime = new Date(s.created_at + 'Z').toLocaleString();
+    cardTime.textContent = relativeTime(s.created_at);
+    cardTime.title = localTime;
+    cardTime.setAttribute('aria-label', `Suggested ${cardTime.textContent} (at ${localTime})`);
+
     cardTitle.textContent = s.title;
     cardDesc.textContent  = s.description;
 
@@ -120,7 +127,9 @@
       cardCtxWrap.hidden = true;
     }
 
-    cardPos.textContent = `${currentIndex % pendingCount + 1} of ${pendingCount}`;
+    const currentPos = (currentIndex % pendingCount) + 1;
+    cardPos.textContent = `${currentPos} of ${pendingCount}`;
+    cardPos.setAttribute('aria-label', `Suggestion ${currentPos} of ${pendingCount}`);
   }
 
   // -- Load suggestions from server (or cache) --

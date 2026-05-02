@@ -17,3 +17,7 @@
 ## 2026-05-01 - [Visual Feedback for All Swipe Directions]
 **Learning:** When an interface supports multi-directional gestures (like swiping left, right, and up), every direction must have consistent visual feedback. If only some directions show hints or card movement, the others feel broken or hidden. Enabling `translateY` alongside `translateX` and adding a corresponding "DEFER" hint completes the mental model of the card stack for the user.
 **Action:** Ensure all supported gestures have matching visual indicators and physical transformations to provide a cohesive experience.
+
+## 2026-05-02 - [Contextual Focus Management]
+**Learning:** In single-page applications or dynamic interfaces, deleting or clearing the last item in a list can leave keyboard focus in a "dead" state or revert it to the body. Programmatically moving focus to the next logical action (e.g., a 'Refresh' or 'Home' button) prevents this disorientation and keeps the user in their flow.
+**Action:** Always identify "terminal states" in a workflow (like an empty queue) and explicitly move focus to the most likely next interaction.
