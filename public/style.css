@@ -302,6 +302,10 @@ body {
 .btn-reject  { background: var(--color-reject); }
 .btn-defer   { background: var(--color-defer); }
 
+.btn-approve:hover, .btn-reject:hover, .btn-defer:hover {
+  filter: brightness(1.1);
+}
+
 kbd {
   background: rgba(0,0,0,0.05);
   border: 1px solid rgba(0,0,0,0.1);

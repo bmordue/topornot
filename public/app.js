@@ -99,6 +99,7 @@
       cardEl.hidden = true;
       actionBar.hidden = true;
       emptyEl.hidden = false;
+      document.getElementById('btn-refresh').focus();
       return;
     }
 
@@ -110,6 +111,10 @@
 
     cardAgent.textContent = s.agent || 'agent';
     cardTime.textContent  = relativeTime(s.created_at);
+    // suggestions.json dates are 'YYYY-MM-DD HH:mm:ss' without TZ, assume UTC
+    const dateStr = s.created_at.includes('Z') ? s.created_at : s.created_at.replace(' ', 'T') + 'Z';
+    const date = new Date(dateStr);
+    cardTime.title = isNaN(date) ? '' : date.toLocaleString();
     cardTitle.textContent = s.title;
     cardDesc.textContent  = s.description;
 

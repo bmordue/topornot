@@ -60,9 +60,10 @@ app.get('/api/suggestions', (req, res) => {
     return res.status(304).send();
   }
 
-  const suggestions = status === 'all' ? db.getAllSuggestions() : db.getPendingSuggestions();
+  const json = status === 'all' ? db.getAllSuggestionsJson() : db.getPendingSuggestionsJson();
   res.set('ETag', etag);
-  res.json(suggestions);
+  res.set('Content-Type', 'application/json');
+  res.send(json);
 });
 
 // POST a new suggestion (used by agents)

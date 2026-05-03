@@ -19,3 +19,7 @@
 **Vulnerability:** IP-based rate limiting was easily bypassable in multi-user environments (NAT), and non-API routes leaked Express default HTML error pages.
 **Learning:** Authenticated user identifiers should take precedence over IP addresses for rate limiting keys to ensure fairness and prevent bypasses. Global catch-all handlers for 404s should use generic plain-text or JSON responses to minimize footprint.
 **Prevention:** Always prioritize principal identifiers for rate limiting and implement terminal 404 handlers to replace default server error pages.
+## 2026-05-20 - Custom 404 Handler to Prevent Information Disclosure
+**Vulnerability:** Express default 404 pages leak information about the underlying technology stack (Express version, "Cannot GET /path" format) in HTML, which can be used for fingerprinting.
+**Learning:** While `/api` routes had a custom 404 handler, other routes fell back to the Express default. A terminal catch-all middleware is necessary to ensure consistent, secure, and minimal responses for all non-matching paths.
+**Prevention:** Implement a terminal catch-all middleware at the end of the middleware stack (before the error handler) that returns a plain-text '404 Not Found' response for any non-matching routes.
