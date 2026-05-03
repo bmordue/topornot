@@ -14,3 +14,8 @@
 **Vulnerability:** Identity headers (Remote-User) were logged directly without sanitization, and query parameters (status) were reflected in ETag headers without strict validation.
 **Learning:** Even trust-worthy headers from an upstream proxy can contain malicious characters (like CRLF) if the proxy is misconfigured or bypassed. Query parameters reflected in response headers are high-risk sinks for injection.
 **Prevention:** Always sanitize any external input before it reaches a log or a response header sink. Use strict whitelisting for parameters that influence header values.
+
+## 2026-05-20 - Custom 404 Handler to Prevent Information Disclosure
+**Vulnerability:** Express default 404 pages leak information about the underlying technology stack (Express version, "Cannot GET /path" format) in HTML, which can be used for fingerprinting.
+**Learning:** While `/api` routes had a custom 404 handler, other routes fell back to the Express default. A terminal catch-all middleware is necessary to ensure consistent, secure, and minimal responses for all non-matching paths.
+**Prevention:** Implement a terminal catch-all middleware at the end of the middleware stack (before the error handler) that returns a plain-text '404 Not Found' response for any non-matching routes.
