@@ -19,10 +19,16 @@ app.use(authMiddleware);
 app.use(express.json({ limit: '10kb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Security: Use authenticated user for rate limiting key if available.
+// When fallback to IP, it defaults to Express's req.ip.
+const rateLimitKey = (req) => req.identity?.user || req.ip;
+
 // General rate limiter for all API routes
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  limit: 500, // Limit each IP to 500 requests per `window`
+  limit: 500, // Limit each principal to 500 requests per `window`
+  keyGenerator: rateLimitKey,
+  validate: { keyGeneratorIpFallback: false }, // User identifier might be anything
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many requests, please try again later' }
@@ -31,10 +37,12 @@ const apiLimiter = rateLimit({
 // Stricter rate limiter for new suggestions (POST)
 const suggestionLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  limit: 100, // Limit each IP to 100 requests per `window`
+  limit: 100, // Limit each principal to 100 requests per `window`
+  keyGenerator: rateLimitKey,
+  validate: { keyGeneratorIpFallback: false },
   standardHeaders: true,
   legacyHeaders: false,
-  message: { error: 'Too many suggestions from this IP, please try again after 15 minutes' }
+  message: { error: 'Too many suggestions from this user/IP, please try again after 15 minutes' }
 });
 
 // Apply general limiter to all /api routes
@@ -110,9 +118,9 @@ app.use('/api', (req, res) => {
   res.status(404).json({ error: 'API endpoint not found' });
 });
 
-// Terminal 404 handler for all other routes
+// Global 404 handler for non-API routes to prevent leaking Express default HTML error pages
 app.use((req, res) => {
-  res.status(404).type('text').send('404 Not Found');
+  res.status(404).type('text/plain').send('404 Not Found');
 });
 
 // Global error handler to prevent stack trace leaks

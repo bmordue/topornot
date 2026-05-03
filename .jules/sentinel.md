@@ -15,6 +15,10 @@
 **Learning:** Even trust-worthy headers from an upstream proxy can contain malicious characters (like CRLF) if the proxy is misconfigured or bypassed. Query parameters reflected in response headers are high-risk sinks for injection.
 **Prevention:** Always sanitize any external input before it reaches a log or a response header sink. Use strict whitelisting for parameters that influence header values.
 
+## 2026-05-02 - Identity-Aware Rate Limiting and Global 404 Handling
+**Vulnerability:** IP-based rate limiting was easily bypassable in multi-user environments (NAT), and non-API routes leaked Express default HTML error pages.
+**Learning:** Authenticated user identifiers should take precedence over IP addresses for rate limiting keys to ensure fairness and prevent bypasses. Global catch-all handlers for 404s should use generic plain-text or JSON responses to minimize footprint.
+**Prevention:** Always prioritize principal identifiers for rate limiting and implement terminal 404 handlers to replace default server error pages.
 ## 2026-05-20 - Custom 404 Handler to Prevent Information Disclosure
 **Vulnerability:** Express default 404 pages leak information about the underlying technology stack (Express version, "Cannot GET /path" format) in HTML, which can be used for fingerprinting.
 **Learning:** While `/api` routes had a custom 404 handler, other routes fell back to the Express default. A terminal catch-all middleware is necessary to ensure consistent, secure, and minimal responses for all non-matching paths.

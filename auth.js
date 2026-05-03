@@ -25,6 +25,9 @@ const DEV_DEFAULTS = {
   'remote-name':   'Developer',
 };
 
+// Security: Helper to sanitize identity headers to prevent log/header injection
+const sanitize = (val) => val ? String(val).replace(/[\r\n]/g, '_') : null;
+
 /**
  * Express middleware – attaches req.identity and logs the principal.
  */
@@ -47,17 +50,15 @@ function authMiddleware(req, res, next) {
 
   // Attach parsed identity to the request for downstream handlers
   req.identity = {
-    user:   user || null,
-    groups: req.headers[IDENTITY_HEADERS.groups] || null,
-    email:  req.headers[IDENTITY_HEADERS.email] || null,
-    name:   req.headers[IDENTITY_HEADERS.name] || null,
+    user:   sanitize(user),
+    groups: sanitize(req.headers[IDENTITY_HEADERS.groups]),
+    email:  sanitize(req.headers[IDENTITY_HEADERS.email]),
+    name:   sanitize(req.headers[IDENTITY_HEADERS.name]),
   };
 
   // Audit log – principal only, never tokens
-  if (user) {
-    // Security: Sanitize user for logging to prevent log injection
-    const safeUser = String(user).replace(/[\r\n]/g, '_');
-    console.log(`[auth] ${req.method} ${req.path} – user=${safeUser}`);
+  if (req.identity.user) {
+    console.log(`[auth] ${req.method} ${req.path} – user=${req.identity.user}`);
   }
 
   next();
