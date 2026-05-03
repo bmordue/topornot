@@ -14,7 +14,7 @@
     <h1>topornot</h1>
     <div class="header-actions">
       <button class="btn-header-refresh" id="btn-header-refresh" aria-label="Refresh (R)">
-        <span class="refresh-icon">↻</span>
+        <span class="refresh-icon" aria-hidden="true">↻</span>
         <kbd>R</kbd>
       </button>
       <div class="queue-count" id="queue-count" aria-live="polite">0 pending</div>
@@ -24,11 +24,11 @@
   <main class="app-main">
     <div class="card-stack" id="card-stack">
       <div class="empty-state" id="empty-state" hidden>
-        <div class="empty-icon">✓</div>
+        <div class="empty-icon" aria-hidden="true">✓</div>
         <p>All caught up!</p>
         <p class="empty-sub">No pending suggestions.</p>
         <button id="btn-refresh" class="btn btn-refresh" aria-label="Refresh (R)">
-          <span class="refresh-icon">↻</span>
+          <span class="refresh-icon" aria-hidden="true">↻</span>
           <span>Check for updates <kbd>R</kbd></span>
         </button>
       </div>
@@ -57,15 +57,15 @@
 
     <div class="action-bar" id="action-bar" hidden>
       <button class="btn btn-reject" id="btn-reject" aria-label="Reject (Z)">
-        <span class="btn-icon">✗</span>
+        <span class="btn-icon" aria-hidden="true">✗</span>
         <span class="btn-label">Reject <kbd>Z</kbd></span>
       </button>
       <button class="btn btn-defer" id="btn-defer" aria-label="Defer (D)">
-        <span class="btn-icon">↩</span>
+        <span class="btn-icon" aria-hidden="true">↩</span>
         <span class="btn-label">Defer <kbd>D</kbd></span>
       </button>
       <button class="btn btn-approve" id="btn-approve" aria-label="Approve (A)">
-        <span class="btn-icon">✓</span>
+        <span class="btn-icon" aria-hidden="true">✓</span>
         <span class="btn-label">Approve <kbd>A</kbd></span>
       </button>
     </div>
