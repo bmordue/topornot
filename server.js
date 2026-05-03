@@ -110,6 +110,11 @@ app.use('/api', (req, res) => {
   res.status(404).json({ error: 'API endpoint not found' });
 });
 
+// Terminal 404 handler for all other routes
+app.use((req, res) => {
+  res.status(404).type('text').send('404 Not Found');
+});
+
 // Global error handler to prevent stack trace leaks
 app.use((err, req, res, next) => {
   // If it's a JSON parsing error from express.json()
