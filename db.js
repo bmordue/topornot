@@ -8,6 +8,10 @@ let _index = new Map();
 let _pending = new Map();
 let _version = 0;
 
+// Fragment caches for fast O(1) serialization
+let _fragments = [];
+let _fragmentMap = new Map(); // id -> index in _fragments
+
 // Result caches to avoid repeated O(N) conversions
 let _cachePending = null;
 let _cacheAll = null;
@@ -27,16 +31,20 @@ function _load() {
   }
   _index.clear();
   _pending.clear();
+  _fragmentMap.clear();
+  _fragments = [];
   _cachePending = null;
   _cacheAll = null;
   _cachePendingJson = null;
   _cacheAllJson = null;
-  for (const s of _data.suggestions) {
+  _data.suggestions.forEach((s, i) => {
     _index.set(s.id, s);
+    _fragmentMap.set(s.id, i);
+    _fragments.push(JSON.stringify(s));
     if (s.status === 'pending') {
       _pending.set(s.id, s);
     }
-  }
+  });
   return _data;
 }
 
@@ -54,7 +62,11 @@ function _save({ invalidatePending = true, invalidateAll = true } = {}) {
     _cacheAll = null;
     _cacheAllJson = null;
   }
-  fs.writeFileSync(DB_PATH, JSON.stringify(_data), 'utf8');
+
+  // Performance: Optimized serialization using fragment joining.
+  // This avoids full-array JSON.stringify(suggestions) which is O(N) and slow.
+  const json = `{"nextId":${_data.nextId},"suggestions":[${_fragments.join(',')}]}`;
+  fs.writeFileSync(DB_PATH, json, 'utf8');
 }
 
 function closeDb() {
@@ -128,7 +140,10 @@ function createSuggestion({ title, description, context, agent, user }) {
   _index.set(suggestion.id, suggestion);
   _pending.set(suggestion.id, suggestion); // Cache as pending
 
-  // Performance: Incremental array cache updates
+  // Performance: Incremental fragment and array cache updates
+  _fragmentMap.set(suggestion.id, _fragments.length);
+  _fragments.push(JSON.stringify(suggestion));
+
   if (_cacheAll) {
     _cacheAll.unshift(suggestion); // Suggestions are reversed in _cacheAll
   }
@@ -156,6 +171,12 @@ function updateStatus(id, status, user) {
   suggestion.status = status;
   suggestion.updated_at = new Date().toISOString().replace('T', ' ').slice(0, 19);
   suggestion.updated_by = user || null;
+
+  // Performance: Incremental fragment update
+  const fIdx = _fragmentMap.get(id);
+  if (fIdx !== undefined) {
+    _fragments[fIdx] = JSON.stringify(suggestion);
+  }
 
   // Update pending Map
   if (status === 'pending') {
