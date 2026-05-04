@@ -25,8 +25,9 @@ const DEV_DEFAULTS = {
   'remote-name':   'Developer',
 };
 
-// Security: Helper to sanitize identity headers to prevent log/header injection
-const sanitize = (val) => val ? String(val).replace(/[\r\n]/g, '_') : null;
+// Security: Helper to sanitize identity headers to prevent log/header injection.
+// Truncates to maxLen to prevent resource exhaustion/log bloat.
+const sanitize = (val, maxLen = 255) => val ? String(val).replace(/[\r\n]/g, '_').slice(0, maxLen) : null;
 
 /**
  * Express middleware – attaches req.identity and logs the principal.
@@ -48,10 +49,11 @@ function authMiddleware(req, res, next) {
     return res.status(401).json({ error: 'Missing upstream identity header (Remote-User)' });
   }
 
-  // Attach parsed identity to the request for downstream handlers
+  // Attach parsed identity to the request for downstream handlers.
+  // Groups are typically longer (comma-separated), so we allow 1024 chars.
   req.identity = {
     user:   sanitize(user),
-    groups: sanitize(req.headers[IDENTITY_HEADERS.groups]),
+    groups: sanitize(req.headers[IDENTITY_HEADERS.groups], 1024),
     email:  sanitize(req.headers[IDENTITY_HEADERS.email]),
     name:   sanitize(req.headers[IDENTITY_HEADERS.name]),
   };

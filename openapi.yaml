@@ -252,11 +252,13 @@ components:
           example: "2024-01-15T10:30:45Z"
         created_by:
           type: string
+          maxLength: 255
           nullable: true
           description: Identifier of the user who created the suggestion
           example: "dev-user"
         updated_by:
           type: string
+          maxLength: 255
           nullable: true
           description: Identifier of the user who last updated the suggestion
           example: "dev-user"
