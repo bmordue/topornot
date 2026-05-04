@@ -5,9 +5,11 @@
   let suggestions = [];
   let currentIndex = 0;
   let processing = false;
+  let loading = false;
 
   // -- DOM refs --
   const cardEl       = document.getElementById('current-card');
+  const loadingEl    = document.getElementById('loading-state');
   const emptyEl      = document.getElementById('empty-state');
   const actionBar    = document.getElementById('action-bar');
   const queueCount   = document.getElementById('queue-count');
@@ -42,6 +44,8 @@
   // -- Offline banner --
   const offlineBanner = document.createElement('div');
   offlineBanner.className = 'offline-banner';
+  offlineBanner.setAttribute('role', 'status');
+  offlineBanner.setAttribute('aria-live', 'polite');
   offlineBanner.textContent = '⚠ You are offline. Actions will sync when reconnected.';
   document.body.prepend(offlineBanner);
 
@@ -89,6 +93,15 @@
 
   // -- Render current card --
   function renderCard() {
+    if (loading) {
+      loadingEl.hidden = false;
+      cardEl.hidden = true;
+      actionBar.hidden = true;
+      emptyEl.hidden = true;
+      return;
+    }
+    loadingEl.hidden = true;
+
     // API already returns only pending suggestions by default, and we remove items
     // from this array in doAction() as they are approved/rejected.
     const pendingCount = suggestions.length;
@@ -130,6 +143,8 @@
 
   // -- Load suggestions from server (or cache) --
   async function loadSuggestions() {
+    loading = true;
+    renderCard();
     try {
       const res = await fetch('/api/suggestions');
       if (!res.ok) throw new Error('Network error');
@@ -144,6 +159,7 @@
       }
     }
     currentIndex = 0;
+    loading = false;
     renderCard();
   }
 
@@ -213,6 +229,7 @@
     // Small delay to ensure animation is visible if load is near-instant
     setTimeout(() => {
       refreshIcons.forEach(icon => icon.classList.remove('spinning'));
+      showToast('Queue up to date');
     }, 400);
   };
 
