@@ -23,3 +23,8 @@
 **Vulnerability:** Express default 404 pages leak information about the underlying technology stack (Express version, "Cannot GET /path" format) in HTML, which can be used for fingerprinting.
 **Learning:** While `/api` routes had a custom 404 handler, other routes fell back to the Express default. A terminal catch-all middleware is necessary to ensure consistent, secure, and minimal responses for all non-matching paths.
 **Prevention:** Implement a terminal catch-all middleware at the end of the middleware stack (before the error handler) that returns a plain-text '404 Not Found' response for any non-matching routes.
+
+## 2026-05-25 - Upstream Identity Header Truncation
+**Vulnerability:** Identity headers (Remote-User, etc.) were sanitized for CRLF but not for length, potentially allowing resource exhaustion (DoS) or log bloat via oversized values.
+**Learning:** Even when using an upstream proxy for authentication, we must treat injected headers as untrusted input. Oversized headers can consume excessive memory during parsing or cause disk space issues in audit logs.
+**Prevention:** Always enforce strict length limits on identity headers in the authentication middleware, truncating values to sensible defaults (e.g., 255 for identifiers, 1024 for group lists).

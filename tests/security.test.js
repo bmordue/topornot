@@ -153,4 +153,30 @@ describe('API Error Handling', () => {
     expect(next).toHaveBeenCalled();
     spy.mockRestore();
   });
+
+  it('should truncate overly long identity headers (unit test)', () => {
+    const { authMiddleware } = require('../auth');
+    const req = {
+      method: 'GET',
+      path: '/api/suggestions',
+      headers: {
+        'remote-user': 'a'.repeat(300),
+        'remote-groups': 'g'.repeat(1200),
+        'remote-email': 'e'.repeat(300),
+        'remote-name': 'n'.repeat(300)
+      }
+    };
+    const res = {};
+    const next = jest.fn();
+
+    authMiddleware(req, res, next);
+
+    expect(req.identity.user).toHaveLength(255);
+    expect(req.identity.email).toHaveLength(255);
+    expect(req.identity.name).toHaveLength(255);
+    expect(req.identity.groups).toHaveLength(1024);
+    expect(req.identity.user).toBe('a'.repeat(255));
+    expect(req.identity.groups).toBe('g'.repeat(1024));
+    expect(next).toHaveBeenCalled();
+  });
 });
