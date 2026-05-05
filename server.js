@@ -11,7 +11,19 @@ const app = express();
 app.set('trust proxy', 1);
 
 // Security headers
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+      "script-src": ["'self'"],
+      "style-src": ["'self'"],
+      "img-src": ["'self'"],
+      "connect-src": ["'self'"],
+      "object-src": ["'none'"],
+      "upgrade-insecure-requests": [],
+    },
+  },
+}));
 
 // Proxy-based identity – must come before routes
 app.use(authMiddleware);
