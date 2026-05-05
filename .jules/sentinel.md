@@ -28,3 +28,8 @@
 **Vulnerability:** Identity headers (Remote-User, etc.) were sanitized for CRLF but not for length, potentially allowing resource exhaustion (DoS) or log bloat via oversized values.
 **Learning:** Even when using an upstream proxy for authentication, we must treat injected headers as untrusted input. Oversized headers can consume excessive memory during parsing or cause disk space issues in audit logs.
 **Prevention:** Always enforce strict length limits on identity headers in the authentication middleware, truncating values to sensible defaults (e.g., 255 for identifiers, 1024 for group lists).
+
+## 2026-05-05 - Strict CSP without unsafe-inline styles
+**Vulnerability:** Default CSP from `helmet` allowed `unsafe-inline` for styles and `data:` for images, which are common vectors for XSS and data exfiltration.
+**Learning:** Modern SPAs can often run without `unsafe-inline` styles even if they use JavaScript to manipulate CSS (like `element.style.transform`). Direct style manipulation via JS properties is allowed by most browsers under `style-src 'self'` if the script itself is trusted.
+**Prevention:** Always aim for the strictest possible CSP. Test without 'unsafe-inline' styles first; only enable it if third-party libraries or legacy code absolutely require it.
