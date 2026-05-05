@@ -107,6 +107,7 @@
     const pendingCount = suggestions.length;
 
     queueCount.textContent = `${pendingCount} pending`;
+    document.title = pendingCount > 0 ? `(${pendingCount}) topornot` : 'topornot';
 
     if (pendingCount === 0) {
       cardEl.hidden = true;

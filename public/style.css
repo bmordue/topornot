@@ -221,6 +221,10 @@ body {
   padding: 2px;
 }
 
+.card-context-wrap details summary:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
 .card-context-wrap details summary:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 1px;
@@ -257,9 +261,9 @@ body {
   margin-bottom: 6px;
 }
 
-.empty-sub {
-  font-size: 0.9rem !important;
-  font-weight: 400 !important;
+.empty-state .empty-sub {
+  font-size: 0.9rem;
+  font-weight: 400;
 }
 
 /* Action bar */
@@ -420,6 +424,12 @@ kbd {
   text-align: center;
   padding: 40px;
   color: var(--color-text-muted);
+}
+
+.loading .refresh-icon {
+  display: block;
+  margin-bottom: 12px;
+  font-size: 1.5rem;
 }
 
 /* Offline banner */
