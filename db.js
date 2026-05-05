@@ -103,7 +103,16 @@ function getAllSuggestions() {
 function getPendingSuggestionsJson() {
   _load();
   if (!_cachePendingJson) {
-    _cachePendingJson = JSON.stringify(getPendingSuggestions());
+    // Performance: Optimized fragment joining for API response.
+    // Avoids O(N) object graph traversal of JSON.stringify.
+    const pendingFragments = [];
+    for (const id of _pending.keys()) {
+      const fIdx = _fragmentMap.get(id);
+      if (fIdx !== undefined) {
+        pendingFragments.push(_fragments[fIdx]);
+      }
+    }
+    _cachePendingJson = `[${pendingFragments.join(',')}]`;
   }
   return _cachePendingJson;
 }
@@ -111,7 +120,13 @@ function getPendingSuggestionsJson() {
 function getAllSuggestionsJson() {
   _load();
   if (!_cacheAllJson) {
-    _cacheAllJson = JSON.stringify(getAllSuggestions());
+    // Performance: Optimized fragment joining for API response.
+    // Joins pre-stringified fragments in reverse order to match getAllSuggestions().
+    const reversed = [];
+    for (let i = _fragments.length - 1; i >= 0; i--) {
+      reversed.push(_fragments[i]);
+    }
+    _cacheAllJson = `[${reversed.join(',')}]`;
   }
   return _cacheAllJson;
 }
