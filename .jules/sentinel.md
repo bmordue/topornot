@@ -33,3 +33,8 @@
 **Vulnerability:** Default CSP from `helmet` allowed `unsafe-inline` for styles and `data:` for images, which are common vectors for XSS and data exfiltration.
 **Learning:** Modern SPAs can often run without `unsafe-inline` styles even if they use JavaScript to manipulate CSS (like `element.style.transform`). Direct style manipulation via JS properties is allowed by most browsers under `style-src 'self'` if the script itself is trusted.
 **Prevention:** Always aim for the strictest possible CSP. Test without 'unsafe-inline' styles first; only enable it if third-party libraries or legacy code absolutely require it.
+
+## 2026-05-06 - Transitive Dependency Hardening and Action Rate Limiting
+**Vulnerability:** Vulnerable transitive dependencies (ip-address) and lack of rate limiting on state-changing API endpoints (PATCH).
+**Learning:** Upgrading a top-level package doesn't always resolve vulnerabilities in its dependencies if they use restrictive version ranges. Using the 'overrides' field in package.json is an effective way to force-patch these vulnerabilities. Additionally, high-integrity operations like approving/rejecting suggestions should have stricter rate limits than general GET requests.
+**Prevention:** Regularly audit transitive dependencies and apply overrides for unpatched sub-dependencies. Ensure all state-changing endpoints have specific rate limiters.
