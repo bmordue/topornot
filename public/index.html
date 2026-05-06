@@ -13,9 +13,9 @@
   <header class="app-header">
     <h1>topornot</h1>
     <div class="header-actions">
-      <button class="btn-header-refresh" id="btn-header-refresh" aria-label="Refresh (R)">
+      <button class="btn-header-refresh" id="btn-header-refresh" aria-label="Refresh" aria-keyshortcuts="R">
         <span class="refresh-icon" aria-hidden="true">↻</span>
-        <kbd>R</kbd>
+        <kbd aria-hidden="true">R</kbd>
       </button>
       <div class="queue-count" id="queue-count" aria-live="polite">0 pending</div>
     </div>
@@ -31,9 +31,9 @@
         <div class="empty-icon" aria-hidden="true">✓</div>
         <p>All caught up!</p>
         <p class="empty-sub">No pending suggestions.</p>
-        <button id="btn-refresh" class="btn btn-refresh" aria-label="Refresh (R)">
+        <button id="btn-refresh" class="btn btn-refresh" aria-label="Refresh" aria-keyshortcuts="R">
           <span class="refresh-icon" aria-hidden="true">↻</span>
-          <span>Check for updates <kbd>R</kbd></span>
+          <span>Check for updates <kbd aria-hidden="true">R</kbd></span>
         </button>
       </div>
 
@@ -49,7 +49,7 @@
         <p class="card-description" id="card-description"></p>
         <div class="card-context card-context-wrap" id="card-context-wrap">
           <details>
-            <summary id="card-context-summary">Context <kbd>C</kbd></summary>
+            <summary id="card-context-summary" aria-keyshortcuts="C">Context <kbd aria-hidden="true">C</kbd></summary>
             <pre id="card-context"></pre>
           </details>
         </div>
@@ -60,17 +60,17 @@
     </div>
 
     <nav class="action-bar" id="action-bar" aria-label="Suggestion actions" hidden>
-      <button class="btn btn-reject" id="btn-reject" aria-label="Reject (Z)">
+      <button class="btn btn-reject" id="btn-reject" aria-label="Reject" aria-keyshortcuts="Z">
         <span class="btn-icon" aria-hidden="true">✗</span>
-        <span class="btn-label">Reject <kbd>Z</kbd></span>
+        <span class="btn-label">Reject <kbd aria-hidden="true">Z</kbd></span>
       </button>
-      <button class="btn btn-defer" id="btn-defer" aria-label="Defer (D)">
+      <button class="btn btn-defer" id="btn-defer" aria-label="Defer" aria-keyshortcuts="D">
         <span class="btn-icon" aria-hidden="true">↩</span>
-        <span class="btn-label">Defer <kbd>D</kbd></span>
+        <span class="btn-label">Defer <kbd aria-hidden="true">D</kbd></span>
       </button>
-      <button class="btn btn-approve" id="btn-approve" aria-label="Approve (A)">
+      <button class="btn btn-approve" id="btn-approve" aria-label="Approve" aria-keyshortcuts="A">
         <span class="btn-icon" aria-hidden="true">✓</span>
-        <span class="btn-label">Approve <kbd>A</kbd></span>
+        <span class="btn-label">Approve <kbd aria-hidden="true">A</kbd></span>
       </button>
     </nav>
   </main>

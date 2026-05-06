@@ -193,6 +193,7 @@
     if (processing) return;
     if (!suggestions.length) return;
 
+    if (navigator.vibrate) navigator.vibrate(10);
     processing = true;
     const s = suggestions[currentIndex % suggestions.length];
 
@@ -247,6 +248,7 @@
 
   // -- Button handlers --
   const refreshHandler = async () => {
+    if (navigator.vibrate) navigator.vibrate(10);
     showToast('Refreshing...');
     const refreshIcons = document.querySelectorAll('.refresh-icon');
     refreshIcons.forEach(icon => icon.classList.add('spinning'));
