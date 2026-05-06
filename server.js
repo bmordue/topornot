@@ -57,6 +57,17 @@ const suggestionLimiter = rateLimit({
   message: { error: 'Too many suggestions from this user/IP, please try again after 15 minutes' }
 });
 
+// Stricter rate limiter for acting on suggestions (PATCH)
+const actionLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  limit: 100, // Limit each principal to 100 requests per `window`
+  keyGenerator: rateLimitKey,
+  validate: { keyGeneratorIpFallback: false },
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many actions from this user/IP, please try again after 15 minutes' }
+});
+
 // Apply general limiter to all /api routes
 app.use('/api', apiLimiter);
 
@@ -105,7 +116,7 @@ app.post('/api/suggestions', suggestionLimiter, (req, res) => {
 });
 
 // PATCH to update status: approve, reject, defer
-app.patch('/api/suggestions/:id/:action', (req, res) => {
+app.patch('/api/suggestions/:id/:action', actionLimiter, (req, res) => {
   const { id, action } = req.params;
 
   // Input validation: ensure ID is numeric

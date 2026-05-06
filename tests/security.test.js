@@ -91,6 +91,12 @@ describe('Rate Limiting', () => {
     expect(res.headers['ratelimit-limit']).toBeDefined();
     expect(res.headers['ratelimit-remaining']).toBeDefined();
   });
+
+  it('should include rate limiting headers on PATCH route', async () => {
+    const res = await request(app).patch('/api/suggestions/1/approve');
+    expect(res.headers['ratelimit-limit']).toBeDefined();
+    expect(res.headers['ratelimit-remaining']).toBeDefined();
+  });
 });
 
 describe('API Error Handling', () => {
