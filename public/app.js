@@ -144,22 +144,46 @@
 
   // -- Load suggestions from server (or cache) --
   async function loadSuggestions() {
-    loading = true;
-    renderCard();
+    // Performance: Immediate cache-first load to eliminate loading screen
     try {
-      const res = await fetch('/api/suggestions');
-      if (!res.ok) throw new Error('Network error');
-      suggestions = await res.json();
-      localStorage.setItem('cachedSuggestions', JSON.stringify(suggestions));
+      suggestions = JSON.parse(localStorage.getItem('cachedSuggestions') || '[]');
     } catch {
-      // Fallback to cache when offline
-      try {
-        suggestions = JSON.parse(localStorage.getItem('cachedSuggestions') || '[]');
-      } catch {
-        suggestions = [];
-      }
+      suggestions = [];
     }
-    currentIndex = 0;
+
+    // Show whatever we have immediately
+    if (suggestions.length > 0) {
+      loading = false;
+      renderCard();
+    } else {
+      loading = true;
+      renderCard();
+    }
+
+    try {
+      const etag = localStorage.getItem('suggestionsEtag');
+      const headers = etag ? { 'If-None-Match': etag } : {};
+      const res = await fetch('/api/suggestions', { headers });
+
+      if (res.status === 304) {
+        // Performance: Data hasn't changed, skip parsing and re-rendering.
+        // We already rendered the cached data above.
+        loading = false;
+        return;
+      }
+
+      if (!res.ok) throw new Error('Network error');
+
+      suggestions = await res.json();
+      const newEtag = res.headers.get('ETag');
+
+      localStorage.setItem('cachedSuggestions', JSON.stringify(suggestions));
+      if (newEtag) localStorage.setItem('suggestionsEtag', newEtag);
+      currentIndex = 0;
+    } catch (err) {
+      console.warn('Sync failed, using cached data:', err);
+    }
+
     loading = false;
     renderCard();
   }

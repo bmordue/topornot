@@ -1,15 +1,9 @@
-node:events:497
-      throw er; // Unhandled 'error' event
-      ^
 
-Error: listen EADDRINUSE: address already in use 127.0.0.1:3000
-    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
-    at listenInCluster (node:net:1997:12)
-    at node:net:2206:7
-    at process.processTicksAndRejections (node:internal/process/task_queues:89:21)
-Emitted 'error' event on Server instance at:
-    at emitErrorNT (node:net:1976:8)
-    a[auth] GET / – user=dev-user
+> topornot@1.0.0 start
+> node server.js
+
+topornot server running on http://127.0.0.1:3000
+[auth] GET / – user=dev-user
 [auth] GET /style.css – user=dev-user
 [auth] GET /app.js – user=dev-user
 [auth] GET /api/suggestions – user=dev-user
@@ -19,3 +13,9 @@ Emitted 'error' event on Server instance at:
 [auth] GET /style.css – user=dev-user
 [auth] GET /app.js – user=dev-user
 [auth] GET /manifest.json – user=dev-user
+[auth] GET /api/suggestions – user=dev-user
+[auth] POST /api/suggestions – user=dev-user
+[auth] GET /api/suggestions – user=dev-user
+[auth] GET /sw.js – user=dev-user
+[auth] GET /api/suggestions – user=dev-user
+[auth] GET /api/suggestions – user=dev-user
