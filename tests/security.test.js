@@ -8,6 +8,7 @@ process.env.DB_PATH = TEST_DB;
 
 const app = require('../server');
 const db = require('../db');
+const { authMiddleware } = require('../auth');
 
 afterAll(() => {
   db.closeDb();
@@ -134,7 +135,6 @@ describe('API Error Handling', () => {
   });
 
   it('should sanitize all identity headers (unit test)', () => {
-    const { authMiddleware } = require('../auth');
     const spy = jest.spyOn(console, 'log').mockImplementation();
     const req = {
       method: 'GET',
@@ -161,7 +161,6 @@ describe('API Error Handling', () => {
   });
 
   it('should sanitize req.method and req.path in the audit log (unit test)', () => {
-    const { authMiddleware } = require('../auth');
     const spy = jest.spyOn(console, 'log').mockImplementation();
     const req = {
       method: 'GET\nInjected-Method',
@@ -180,7 +179,6 @@ describe('API Error Handling', () => {
   });
 
   it('should truncate overly long identity headers (unit test)', () => {
-    const { authMiddleware } = require('../auth');
     const req = {
       method: 'GET',
       path: '/api/suggestions',
