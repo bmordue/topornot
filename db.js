@@ -40,12 +40,25 @@ function _load() {
   _data.suggestions.forEach((s, i) => {
     _index.set(s.id, s);
     _fragmentMap.set(s.id, i);
-    _fragments.push(JSON.stringify(s));
+    // Performance: Initialize fragment cache as null for lazy stringification.
+    // This avoids O(N) JSON.stringify calls during initial load.
+    _fragments.push(null);
     if (s.status === 'pending') {
       _pending.set(s.id, s);
     }
   });
   return _data;
+}
+
+/**
+ * Lazy fragment stringification helper.
+ * Returns a pre-stringified JSON fragment for a suggestion, stringifying it on demand if needed.
+ */
+function _getFragment(i) {
+  if (_fragments[i] === null) {
+    _fragments[i] = JSON.stringify(_data.suggestions[i]);
+  }
+  return _fragments[i];
 }
 
 /**
@@ -65,7 +78,11 @@ function _save({ invalidatePending = true, invalidateAll = true } = {}) {
 
   // Performance: Optimized serialization using fragment joining.
   // This avoids full-array JSON.stringify(suggestions) which is O(N) and slow.
-  const json = `{"nextId":${_data.nextId},"suggestions":[${_fragments.join(',')}]}`;
+  const fragments = [];
+  for (let i = 0; i < _fragments.length; i++) {
+    fragments.push(_getFragment(i));
+  }
+  const json = `{"nextId":${_data.nextId},"suggestions":[${fragments.join(',')}]}`;
   fs.writeFileSync(DB_PATH, json, 'utf8');
 }
 
@@ -109,7 +126,7 @@ function getPendingSuggestionsJson() {
     for (const id of _pending.keys()) {
       const fIdx = _fragmentMap.get(id);
       if (fIdx !== undefined) {
-        pendingFragments.push(_fragments[fIdx]);
+        pendingFragments.push(_getFragment(fIdx));
       }
     }
     _cachePendingJson = `[${pendingFragments.join(',')}]`;
@@ -124,7 +141,7 @@ function getAllSuggestionsJson() {
     // Joins pre-stringified fragments in reverse order to match getAllSuggestions().
     const reversed = [];
     for (let i = _fragments.length - 1; i >= 0; i--) {
-      reversed.push(_fragments[i]);
+      reversed.push(_getFragment(i));
     }
     _cacheAllJson = `[${reversed.join(',')}]`;
   }
