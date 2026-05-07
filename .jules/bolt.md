@@ -25,3 +25,7 @@
 ## 2025-05-21 - [Fragment Joining for Optimized Serialization]
 **Learning:** In read-heavy but write-active systems with large JSON datasets, `JSON.stringify` on the entire dataset during setiap save operation becomes a significant bottleneck (blocking the event loop). Maintaining a cache of pre-stringified "fragments" for each record and joining them during serialization reduces the cost from a full object graph traversal to a simple string join, providing ~50-100x speedup for large datasets.
 **Action:** When working with file-based persistence for large collections, use fragment joining to minimize the CPU impact of serialization. Maintain a mapping of record IDs to fragment indices for O(1) updates.
+
+## 2026-05-07 - [Lazy Fragment Stringification]
+**Learning:** Initializing large in-memory caches with eager `JSON.stringify` calls during database load can cause significant event loop blockage (e.g., ~50ms for 5000 items), even for requests that only need metadata (like ETag validation). Using a lazy pattern with `null` placeholders and on-demand stringification eliminates this cold-start penalty.
+**Action:** Use lazy initialization for expensive serialization tasks in read-heavy/cold-start paths.
