@@ -141,6 +141,10 @@ body {
   will-change: transform;
 }
 
+.card.slideIn {
+  animation: slideIn 0.25s ease forwards;
+}
+
 @keyframes slideIn {
   from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -436,6 +440,33 @@ kbd {
   display: block;
   margin-bottom: 12px;
   font-size: 1.5rem;
+}
+
+/* Skeleton Loader */
+.skeleton {
+  background: #e2e8f0;
+  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+  border-radius: 4px;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.skeleton-text { height: 0.9rem; margin-bottom: 0.6rem; width: 100%; }
+.skeleton-title { height: 1.2rem; margin-bottom: 1rem; width: 70%; }
+.skeleton-agent { height: 1.4rem; width: 70px; border-radius: 12px; }
+.skeleton-time { height: 0.8rem; width: 60px; }
+
+.loading-card {
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 24px 20px;
+  width: 100%;
 }
 
 /* Offline banner */
