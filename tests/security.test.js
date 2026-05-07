@@ -160,6 +160,25 @@ describe('API Error Handling', () => {
     spy.mockRestore();
   });
 
+  it('should sanitize req.method and req.path in the audit log (unit test)', () => {
+    const { authMiddleware } = require('../auth');
+    const spy = jest.spyOn(console, 'log').mockImplementation();
+    const req = {
+      method: 'GET\nInjected-Method',
+      path: '/api/suggestions\r\nInjected-Path',
+      headers: {
+        'remote-user': 'alice'
+      }
+    };
+    const res = {};
+    const next = jest.fn();
+
+    authMiddleware(req, res, next);
+
+    expect(spy).toHaveBeenCalledWith(expect.stringContaining('[auth] GET_Injected-Method /api/suggestions__Injected-Path – user=alice'));
+    spy.mockRestore();
+  });
+
   it('should truncate overly long identity headers (unit test)', () => {
     const { authMiddleware } = require('../auth');
     const req = {

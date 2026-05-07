@@ -58,9 +58,10 @@ function authMiddleware(req, res, next) {
     name:   sanitize(req.headers[IDENTITY_HEADERS.name]),
   };
 
-  // Audit log – principal only, never tokens
+  // Audit log – principal only, never tokens.
+  // Security: Sanitize method and path to prevent log injection.
   if (req.identity.user) {
-    console.log(`[auth] ${req.method} ${req.path} – user=${req.identity.user}`);
+    console.log(`[auth] ${sanitize(req.method)} ${sanitize(req.path)} – user=${req.identity.user}`);
   }
 
   next();

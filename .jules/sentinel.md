@@ -38,3 +38,8 @@
 **Vulnerability:** Vulnerable transitive dependencies (ip-address) and lack of rate limiting on state-changing API endpoints (PATCH).
 **Learning:** Upgrading a top-level package doesn't always resolve vulnerabilities in its dependencies if they use restrictive version ranges. Using the 'overrides' field in package.json is an effective way to force-patch these vulnerabilities. Additionally, high-integrity operations like approving/rejecting suggestions should have stricter rate limits than general GET requests.
 **Prevention:** Regularly audit transitive dependencies and apply overrides for unpatched sub-dependencies. Ensure all state-changing endpoints have specific rate limiters.
+
+## 2026-05-26 - Request Metadata Log Injection
+**Vulnerability:** Request method and path were logged directly without sanitization, potentially allowing log forging or corruption via URL-encoded control characters (e.g., %0A).
+**Learning:** Even though Express provides `req.path` as a convenience, it performs URL decoding, which can re-introduce malicious control characters into a string intended for a line-based log.
+**Prevention:** Always sanitize any request metadata (method, path, headers) before including it in a console log or an external logging system.
