@@ -9,3 +9,7 @@
 ## 2026-05-06 - [Accessible Shortcuts & Tactile Feedback]
 **Learning:** Hardcoding keyboard shortcuts in `aria-label` (e.g., "Refresh (R)") causes redundant or confusing announcements in some screen readers. Using `aria-keyshortcuts` combined with `aria-hidden="true"` on visual `<kbd>` elements provides a cleaner, more semantic experience. Adding a tiny 10ms haptic vibration (`navigator.vibrate`) provides a surprising "touch of delight" that confirms actions on mobile devices.
 **Action:** Prefer `aria-keyshortcuts` for keyboard interactions and consider micro-haptics for primary action confirmation.
+
+## 2026-05-08 - [Dark Mode & Threshold Haptics]
+**Learning:** Implementing Dark Mode requires careful attention to secondary components like skeleton loaders and toast notifications; simply inverting the main background isn't enough for a polished feel. Skeletons should use darker, more subtle gradients (e.g., `#334155` to `#475569`) to avoid jarring contrast. Additionally, triggering haptic feedback (`vibrate(10)`) exactly when a gesture crosses a decision threshold provides a critical "physical" confirmation that enhances user confidence during complex interactions.
+**Action:** Always refine skeleton loaders and toasts for dark themes; use haptics to mark interaction boundaries.

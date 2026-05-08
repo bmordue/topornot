@@ -273,6 +273,7 @@
   let lastDY = 0;
   let isDragging  = false;
   let ticking = false;
+  let thresholdReached = false;
 
   function updateSwipe() {
     if (!isDragging) {
@@ -285,9 +286,19 @@
 
     // Show swipe hints
     const THRESHOLD = 60;
+    const ACTION_THRESHOLD = 80;
     hintApprove.style.opacity = lastDX > THRESHOLD ? Math.min((lastDX - THRESHOLD) / 40, 1) : 0;
     hintReject.style.opacity  = lastDX < -THRESHOLD ? Math.min((-lastDX - THRESHOLD) / 40, 1) : 0;
     hintDefer.style.opacity   = lastDY < -THRESHOLD ? Math.min((-lastDY - THRESHOLD) / 40, 1) : 0;
+
+    // Tactile feedback when threshold is reached
+    const reached = Math.abs(lastDX) > ACTION_THRESHOLD || lastDY < -ACTION_THRESHOLD;
+    if (reached && !thresholdReached) {
+      if (navigator.vibrate) navigator.vibrate(10);
+      thresholdReached = true;
+    } else if (!reached && thresholdReached) {
+      thresholdReached = false;
+    }
 
     ticking = false;
   }
@@ -296,6 +307,7 @@
     touchStartX = e.touches[0].clientX;
     touchStartY = e.touches[0].clientY;
     isDragging = true;
+    thresholdReached = false;
   }, { passive: true });
 
   cardEl.addEventListener('touchmove', (e) => {
