@@ -29,3 +29,7 @@
 ## 2026-05-07 - [Lazy Fragment Stringification]
 **Learning:** Initializing large in-memory caches with eager `JSON.stringify` calls during database load can cause significant event loop blockage (e.g., ~50ms for 5000 items), even for requests that only need metadata (like ETag validation). Using a lazy pattern with `null` placeholders and on-demand stringification eliminates this cold-start penalty.
 **Action:** Use lazy initialization for expensive serialization tasks in read-heavy/cold-start paths.
+
+## 2026-05-08 - [Throttled Disk Persistence]
+**Learning:** Frequent synchronous disk I/O (e.g., `fs.writeFileSync`) in the request-response cycle is a massive bottleneck for event-loop responsiveness, especially for burst writes. Implementing a throttled save pattern with a debounce timer and a mandatory `flush()` on process exit improves burst throughput by several orders of magnitude (e.g., ~6000x) while maintaining acceptable durability.
+**Action:** Always decouple synchronous I/O from the critical path using batching/throttling. Ensure final persistence via process signal handlers (`SIGTERM`, `SIGINT`).

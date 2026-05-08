@@ -168,7 +168,22 @@ module.exports = app;
 if (require.main === module) {
   const PORT = process.env.PORT || 3000;
   const HOST = process.env.HOST || '127.0.0.1';
-  app.listen(PORT, HOST, () => {
+  const server = app.listen(PORT, HOST, () => {
     console.log(`topornot server running on http://${HOST}:${PORT}`);
   });
+
+  // Performance: Ensure all pending DB writes are flushed to disk before exit.
+  const shutdown = () => {
+    console.log('Shutting down...');
+    db.flush();
+    server.close(() => {
+      console.log('Server closed');
+      process.exit(0);
+    });
+    // Force exit if server.close hangs
+    setTimeout(() => process.exit(0), 1000).unref();
+  };
+
+  process.on('SIGTERM', shutdown);
+  process.on('SIGINT', shutdown);
 }
