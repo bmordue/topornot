@@ -22,6 +22,7 @@ describe('Security Headers', () => {
     expect(res.headers['x-frame-options']).toBeDefined();
     expect(res.headers['strict-transport-security']).toBeDefined();
     expect(res.headers['x-content-type-options']).toBe('nosniff');
+    expect(res.headers['permissions-policy']).toBe('camera=(), microphone=(), geolocation=(), interest-cohort=()');
   });
 
   it('should trust proxy', () => {
@@ -121,6 +122,14 @@ describe('API Error Handling', () => {
     expect(res.body.error).toMatch(/Invalid ID/);
   });
 
+  it('should reject unsafe integer IDs in PATCH route', async () => {
+    // A number that is larger than Number.MAX_SAFE_INTEGER
+    const unsafeId = '9007199254740992';
+    const res = await request(app).patch(`/api/suggestions/${unsafeId}/approve`);
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/Invalid ID/);
+  });
+
   it('should strictly validate status query param and prevent ETag injection', async () => {
     // Malicious status value containing CRLF and a fake header
     const maliciousStatus = 'all\r\nInjected-Header: evil';
@@ -134,13 +143,13 @@ describe('API Error Handling', () => {
     expect(res.headers['injected-header']).toBeUndefined();
   });
 
-  it('should sanitize all identity headers (unit test)', () => {
+  it('should sanitize all identity headers and handle arrays (unit test)', () => {
     const spy = jest.spyOn(console, 'log').mockImplementation();
     const req = {
       method: 'GET',
       path: '/api/suggestions',
       headers: {
-        'remote-user': 'attacker\nInjected log line',
+        'remote-user': ['attacker\nInjected log line', 'secondary-value'],
         'remote-groups': 'admin\r\nevil',
         'remote-email': 'user@example.com\nInjected',
         'remote-name': 'Joe\nBloggs'
@@ -152,7 +161,7 @@ describe('API Error Handling', () => {
     authMiddleware(req, res, next);
 
     expect(spy).toHaveBeenCalledWith(expect.stringContaining('user=attacker_Injected log line'));
-    expect(req.identity.user).toBe('attacker_Injected log line');
+    expect(req.identity.user).toBe('attacker_Injected log line'); // Should take only first value and sanitize
     expect(req.identity.groups).toBe('admin__evil');
     expect(req.identity.email).toBe('user@example.com_Injected');
     expect(req.identity.name).toBe('Joe_Bloggs');

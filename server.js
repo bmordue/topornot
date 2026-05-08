@@ -25,6 +25,12 @@ app.use(helmet({
   },
 }));
 
+// Security: Restrict unnecessary browser features via Permissions-Policy
+app.use((req, res, next) => {
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), interest-cohort=()');
+  next();
+});
+
 // Proxy-based identity – must come before routes
 app.use(authMiddleware);
 
@@ -119,9 +125,10 @@ app.post('/api/suggestions', suggestionLimiter, (req, res) => {
 app.patch('/api/suggestions/:id/:action', actionLimiter, (req, res) => {
   const { id, action } = req.params;
 
-  // Input validation: ensure ID is numeric
-  if (isNaN(id) || Number(id) <= 0) {
-    return res.status(400).json({ error: 'Invalid ID. Must be a positive number.' });
+  // Input validation: ensure ID is a safe numeric integer
+  const numId = Number(id);
+  if (!Number.isSafeInteger(numId) || numId <= 0) {
+    return res.status(400).json({ error: 'Invalid ID. Must be a positive safe integer.' });
   }
 
   const validActions = ['approve', 'reject', 'defer'];
