@@ -19,6 +19,40 @@
   --shadow-sm: 0 2px 8px rgba(0,0,0,0.06);
 }
 
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #0f172a;
+    --color-surface: #1e293b;
+    --color-primary: #818cf8;
+    --color-text: #f1f5f9;
+    --color-text-muted: #94a3b8;
+    --color-border: #334155;
+    --shadow: 0 4px 24px rgba(0,0,0,0.4);
+    --shadow-sm: 0 2px 8px rgba(0,0,0,0.2);
+  }
+
+  .skeleton {
+    background: #334155;
+    background: linear-gradient(90deg, #334155 25%, #475569 50%, #334155 75%);
+    background-size: 200% 100%;
+  }
+
+  kbd {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: var(--color-text);
+  }
+
+  .card-context-wrap details summary:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .toast {
+    background: #f1f5f9;
+    color: #0f172a;
+  }
+}
+
 html, body {
   height: 100%;
 }
