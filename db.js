@@ -12,6 +12,11 @@ let _version = 0;
 let _fragments = [];
 let _fragmentMap = new Map(); // id -> index in _fragments
 
+// Persistence throttling
+let _pendingSave = null;
+let _needsSave = false;
+const SAVE_INTERVAL = 1000; // 1 second batching
+
 // Result caches to avoid repeated O(N) conversions
 let _cachePending = null;
 let _cacheAll = null;
@@ -62,8 +67,33 @@ function _getFragment(i) {
 }
 
 /**
+ * Forces a write of any pending data to disk.
+ * Performance: Batches multiple writes into a single synchronous I/O operation.
+ */
+function flush() {
+  if (!_needsSave) return;
+
+  // Ensure data is loaded before serializing
+  _load();
+
+  // Performance: Optimized serialization using fragment joining.
+  const fragments = [];
+  for (let i = 0; i < _fragments.length; i++) {
+    fragments.push(_getFragment(i));
+  }
+  const json = `{"nextId":${_data.nextId},"suggestions":[${fragments.join(',')}]}`;
+  fs.writeFileSync(DB_PATH, json, 'utf8');
+
+  _needsSave = false;
+  if (_pendingSave) {
+    clearTimeout(_pendingSave);
+    _pendingSave = null;
+  }
+}
+
+/**
  * Internal save helper.
- * Performance: Supports granular cache invalidation to avoid redundant O(N) operations.
+ * Performance: Supports granular cache invalidation and throttled disk persistence.
  */
 function _save({ invalidatePending = true, invalidateAll = true } = {}) {
   _version++; // Increment version on every write
@@ -76,17 +106,17 @@ function _save({ invalidatePending = true, invalidateAll = true } = {}) {
     _cacheAllJson = null;
   }
 
-  // Performance: Optimized serialization using fragment joining.
-  // This avoids full-array JSON.stringify(suggestions) which is O(N) and slow.
-  const fragments = [];
-  for (let i = 0; i < _fragments.length; i++) {
-    fragments.push(_getFragment(i));
+  _needsSave = true;
+  if (!_pendingSave) {
+    _pendingSave = setTimeout(() => flush(), SAVE_INTERVAL);
+    // Unref allows the process to exit even if the timer is active.
+    // We handle final persistence via SIGTERM/SIGINT handlers in server.js.
+    if (_pendingSave.unref) _pendingSave.unref();
   }
-  const json = `{"nextId":${_data.nextId},"suggestions":[${fragments.join(',')}]}`;
-  fs.writeFileSync(DB_PATH, json, 'utf8');
 }
 
 function closeDb() {
+  flush(); // Ensure everything is saved before clearing
   _data = null;
   _cachePending = null;
   _cacheAll = null;
@@ -237,4 +267,4 @@ function updateStatus(id, status, user) {
   return suggestion;
 }
 
-module.exports = { closeDb, getVersion, getPendingSuggestions, getAllSuggestions, getPendingSuggestionsJson, getAllSuggestionsJson, getSuggestionById, createSuggestion, updateStatus };
+module.exports = { flush, closeDb, getVersion, getPendingSuggestions, getAllSuggestions, getPendingSuggestionsJson, getAllSuggestionsJson, getSuggestionById, createSuggestion, updateStatus };
