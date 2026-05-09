@@ -33,3 +33,11 @@
 ## 2026-05-08 - [Throttled Disk Persistence]
 **Learning:** Frequent synchronous disk I/O (e.g., `fs.writeFileSync`) in the request-response cycle is a massive bottleneck for event-loop responsiveness, especially for burst writes. Implementing a throttled save pattern with a debounce timer and a mandatory `flush()` on process exit improves burst throughput by several orders of magnitude (e.g., ~6000x) while maintaining acceptable durability.
 **Action:** Always decouple synchronous I/O from the critical path using batching/throttling. Ensure final persistence via process signal handlers (`SIGTERM`, `SIGINT`).
+
+## 2026-05-09 - [Idempotent Incremental Updates]
+**Learning:** When using string concatenation for incremental cache updates (e.g., ), it's critical to ensure the operation is logically necessary. Failing to check if an item was already present (e.g., ) can lead to duplicate entries in the serialized output, causing functional regressions.
+**Action:** Always verify state transitions before performing incremental string appends/prepends to caches.
+
+## 2026-05-09 - [Idempotent Incremental Updates]
+**Learning:** When using string concatenation for incremental cache updates (e.g., `_cachePendingJson`), it's critical to ensure the operation is logically necessary. Failing to check if an item was already present (e.g., `oldStatus === status`) can lead to duplicate entries in the serialized output, causing functional regressions.
+**Action:** Always verify state transitions before performing incremental string appends/prepends to caches.

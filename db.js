@@ -204,7 +204,8 @@ function createSuggestion({ title, description, context, agent, user }) {
 
   // Performance: Incremental fragment and array cache updates
   _fragmentMap.set(suggestion.id, _fragments.length);
-  _fragments.push(JSON.stringify(suggestion));
+  const frag = JSON.stringify(suggestion);
+  _fragments.push(frag);
 
   if (_cacheAll) {
     _cacheAll.unshift(suggestion); // Suggestions are reversed in _cacheAll
@@ -213,11 +214,17 @@ function createSuggestion({ title, description, context, agent, user }) {
     _cachePending.push(suggestion);
   }
 
+  // Performance: Incremental JSON cache updates
+  if (_cacheAllJson !== null) {
+    _cacheAllJson = _cacheAllJson === '[]' ? `[${frag}]` : `[${frag},${_cacheAllJson.slice(1)}`;
+  }
+  if (_cachePendingJson !== null) {
+    _cachePendingJson = _cachePendingJson === '[]' ? `[${frag}]` : `${_cachePendingJson.slice(0, -1)},${frag}]`;
+  }
+
   // Invalidate all caches as membership changed, but we updated arrays incrementally
-  // Invalidate JSON caches because the content has changed
+  // We also updated JSON caches incrementally above.
   _save({ invalidatePending: false, invalidateAll: false });
-  _cachePendingJson = null;
-  _cacheAllJson = null;
   return suggestion;
 }
 
@@ -236,8 +243,10 @@ function updateStatus(id, status, user) {
 
   // Performance: Incremental fragment update
   const fIdx = _fragmentMap.get(id);
+  let frag = null;
   if (fIdx !== undefined) {
-    _fragments[fIdx] = JSON.stringify(suggestion);
+    frag = JSON.stringify(suggestion);
+    _fragments[fIdx] = frag;
   }
 
   // Update pending Map
@@ -257,13 +266,23 @@ function updateStatus(id, status, user) {
     }
   }
 
+  // Performance: Incremental JSON cache updates
+  if (_cachePendingJson !== null) {
+    if (status === 'pending' && oldStatus !== 'pending') {
+      _cachePendingJson = _cachePendingJson === '[]' ? `[${frag}]` : `${_cachePendingJson.slice(0, -1)},${frag}]`;
+    } else if (status !== 'pending' && oldStatus === 'pending') {
+      _cachePendingJson = null; // Removal is O(N), invalidate
+    }
+  }
+  // _cacheAllJson is invalidated because an item was mutated.
+  // Although membership is the same, the content of one fragment changed.
+  // We could do O(N) string replace but it's risky and O(N).
+  // Invalidate it so it's rebuilt from updated _fragments (which is O(N) join, but still better than full stringify).
+  _cacheAllJson = null;
+
   // Performance: Skip invalidating _cacheAll as membership and order are unchanged.
   // The mutated suggestion object is already reflected in the cached array.
-  // Invalidate pending only if it wasn't updated incrementally.
-  // Invalidate JSON caches because the content has changed
   _save({ invalidatePending: false, invalidateAll: false });
-  _cachePendingJson = null;
-  _cacheAllJson = null;
   return suggestion;
 }
 
