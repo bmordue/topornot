@@ -13,3 +13,7 @@
 ## 2026-05-08 - [Dark Mode & Threshold Haptics]
 **Learning:** Implementing Dark Mode requires careful attention to secondary components like skeleton loaders and toast notifications; simply inverting the main background isn't enough for a polished feel. Skeletons should use darker, more subtle gradients (e.g., `#334155` to `#475569`) to avoid jarring contrast. Additionally, triggering haptic feedback (`vibrate(10)`) exactly when a gesture crosses a decision threshold provides a critical "physical" confirmation that enhances user confidence during complex interactions.
 **Action:** Always refine skeleton loaders and toasts for dark themes; use haptics to mark interaction boundaries.
+
+## 2024-05-15 - [Dynamic Card Focus & Color-Coded Feedback]
+**Learning:** In a card-stack UI where items are processed one-by-one, programmatically shifting focus to the new item's title (with `tabIndex="-1"`) ensures immediate screen reader feedback. Complementing this with color-coded toast notifications (using `border-left` cues) provides a non-intrusive yet effective way to confirm the nature of the action taken (success/warning/info).
+**Action:** Implement automatic focus management for dynamic content updates and use consistent color cues for status-based feedback.

@@ -428,6 +428,11 @@ kbd {
   transform: translateX(-50%) translateY(0);
 }
 
+.toast-approve, .toast-success { border-left: 4px solid var(--color-approve); }
+.toast-reject { border-left: 4px solid var(--color-reject); }
+.toast-defer { border-left: 4px solid var(--color-defer); }
+.toast-info { border-left: 4px solid var(--color-primary); }
+
 /* Swipe indicator overlays */
 .card .swipe-hint {
   position: absolute;

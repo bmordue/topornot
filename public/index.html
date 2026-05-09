@@ -36,7 +36,7 @@
           <div class="skeleton skeleton-text" style="width: 60%"></div>
         </div>
       </div>
-      <div class="empty-state" id="empty-state" hidden>
+      <div class="empty-state" id="empty-state" role="status" hidden>
         <div class="empty-icon" aria-hidden="true">✓</div>
         <p>All caught up!</p>
         <p class="empty-sub">No pending suggestions.</p>
@@ -47,9 +47,9 @@
       </div>
 
       <article class="card" id="current-card" aria-labelledby="card-title" aria-describedby="card-description" hidden>
-        <div class="swipe-hint swipe-hint-right" id="hint-approve">APPROVE</div>
-        <div class="swipe-hint swipe-hint-left" id="hint-reject">REJECT</div>
-        <div class="swipe-hint swipe-hint-top" id="hint-defer">DEFER</div>
+        <div class="swipe-hint swipe-hint-right" id="hint-approve" aria-hidden="true">APPROVE</div>
+        <div class="swipe-hint swipe-hint-left" id="hint-reject" aria-hidden="true">REJECT</div>
+        <div class="swipe-hint swipe-hint-top" id="hint-defer" aria-hidden="true">DEFER</div>
         <div class="card-header">
           <span class="card-agent" id="card-agent"></span>
           <span class="card-time" id="card-time"></span>
