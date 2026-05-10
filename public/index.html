@@ -47,14 +47,14 @@
       </div>
 
       <article class="card" id="current-card" aria-labelledby="card-title" aria-describedby="card-description" hidden>
-        <div class="swipe-hint swipe-hint-right" id="hint-approve">APPROVE</div>
-        <div class="swipe-hint swipe-hint-left" id="hint-reject">REJECT</div>
-        <div class="swipe-hint swipe-hint-top" id="hint-defer">DEFER</div>
+        <div class="swipe-hint swipe-hint-right" id="hint-approve" aria-hidden="true">APPROVE</div>
+        <div class="swipe-hint swipe-hint-left" id="hint-reject" aria-hidden="true">REJECT</div>
+        <div class="swipe-hint swipe-hint-top" id="hint-defer" aria-hidden="true">DEFER</div>
         <div class="card-header">
           <span class="card-agent" id="card-agent"></span>
           <span class="card-time" id="card-time"></span>
         </div>
-        <h2 class="card-title" id="card-title"></h2>
+        <h2 class="card-title" id="card-title" tabindex="-1"></h2>
         <p class="card-description" id="card-description"></p>
         <div class="card-context card-context-wrap" id="card-context-wrap">
           <details>

@@ -34,10 +34,11 @@
 
   // -- Toast --
   let toastTimer;
-  function showToast(msg) {
+  function showToast(msg, type = 'info') {
     clearTimeout(toastTimer);
     toastEl.textContent = msg;
-    toastEl.classList.add('show');
+    toastEl.classList.remove('toast-approve', 'toast-reject', 'toast-defer', 'toast-info');
+    toastEl.classList.add('show', `toast-${type}`);
     toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2200);
   }
 
@@ -120,6 +121,14 @@
     emptyEl.hidden = true;
     cardEl.hidden = false;
     actionBar.hidden = false;
+
+    // Reset animation
+    cardEl.classList.remove('slideIn');
+    void cardEl.offsetWidth;
+    cardEl.classList.add('slideIn');
+
+    // Programmatic focus for screen readers
+    cardTitle.focus();
 
     const s = suggestions[currentIndex % pendingCount];
 
@@ -208,7 +217,7 @@
     // Optimistic update for defer: it stays pending, just move to next
     if (action === 'defer') {
       currentIndex = (currentIndex + 1) % Math.max(suggestions.length, 1);
-      showToast('Deferred — moved to back of queue');
+      showToast('Deferred — moved to back of queue', 'defer');
     } else {
       // Optimistically remove from pending view by updating suggestions array
       const sIdx = currentIndex % suggestions.length;
@@ -217,7 +226,7 @@
       if (suggestions.length === 0 || currentIndex >= suggestions.length) {
         currentIndex = 0;
       }
-      showToast(action === 'approve' ? '✓ Approved' : '✗ Rejected');
+      showToast(action === 'approve' ? '✓ Approved' : '✗ Rejected', action);
     }
 
     renderCard();
@@ -249,14 +258,14 @@
   // -- Button handlers --
   const refreshHandler = async () => {
     if (navigator.vibrate) navigator.vibrate(10);
-    showToast('Refreshing...');
+    showToast('Refreshing...', 'info');
     const refreshIcons = document.querySelectorAll('.refresh-icon');
     refreshIcons.forEach(icon => icon.classList.add('spinning'));
     await loadSuggestions();
     // Small delay to ensure animation is visible if load is near-instant
     setTimeout(() => {
       refreshIcons.forEach(icon => icon.classList.remove('spinning'));
-      showToast('Queue up to date');
+      showToast('Queue up to date', 'info');
     }, 400);
   };
 
@@ -363,6 +372,10 @@
       flashButton('card-context-summary');
       const details = cardCtxWrap.querySelector('details');
       if (details) details.open = !details.open;
+    }
+    if (key === 'escape') {
+      const details = cardCtxWrap.querySelector('details');
+      if (details && details.open) details.open = false;
     }
   });
 
