@@ -20,6 +20,7 @@
   const cardCtxWrap  = document.getElementById('card-context-wrap');
   const cardCtx      = document.getElementById('card-context');
   const cardPos      = document.getElementById('card-pos');
+  const cardProgress = document.getElementById('card-progress');
   const toastEl      = document.getElementById('toast');
   const hintApprove  = document.getElementById('hint-approve');
   const hintReject   = document.getElementById('hint-reject');
@@ -148,7 +149,10 @@
       cardCtxWrap.hidden = true;
     }
 
-    cardPos.textContent = `${currentIndex % pendingCount + 1} of ${pendingCount}`;
+    const currentPos = (currentIndex % pendingCount) + 1;
+    cardPos.textContent = `${currentPos} of ${pendingCount}`;
+    cardPos.setAttribute('aria-label', `Suggestion ${currentPos} of ${pendingCount}`);
+    cardProgress.style.width = `${(currentPos / pendingCount) * 100}%`;
   }
 
   // -- Load suggestions from server (or cache) --
