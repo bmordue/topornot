@@ -77,11 +77,11 @@ function flush() {
   _load();
 
   // Performance: Optimized serialization using fragment joining.
-  const fragments = [];
+  // We ensure all fragments are stringified first.
   for (let i = 0; i < _fragments.length; i++) {
-    fragments.push(_getFragment(i));
+    _getFragment(i);
   }
-  const json = `{"nextId":${_data.nextId},"suggestions":[${fragments.join(',')}]}`;
+  const json = `{"nextId":${_data.nextId},"suggestions":[${_fragments.join(',')}]}`;
   fs.writeFileSync(DB_PATH, json, 'utf8');
 
   _needsSave = false;
@@ -261,20 +261,9 @@ function updateStatus(id, status, user) {
   }
 
   // Performance: Incremental JSON cache updates (O(1))
-  if (_cacheAllJson && oldFragment) {
-    _cacheAllJson = _cacheAllJson.replace(oldFragment, newFragment);
-  }
-  if (_cachePendingJson && oldFragment) {
-    if (status === 'pending') {
-      if (oldStatus === 'pending') {
-        _cachePendingJson = _cachePendingJson.replace(oldFragment, newFragment);
-      } else {
-        _cachePendingJson = _cachePendingJson.slice(0, -1) + (_cachePendingJson.length > 2 ? ',' : '') + newFragment + ']';
-      }
-    } else if (oldStatus === 'pending') {
-      _cachePendingJson = _removeFromCache(_cachePendingJson, oldFragment);
-    }
-  }
+  // We invalidate the JSON caches because string replacement is risky.
+  _cacheAllJson = null;
+  _cachePendingJson = null;
 
   // Update pending Map
   if (status === 'pending') {
