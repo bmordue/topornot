@@ -43,3 +43,8 @@
 **Vulnerability:** Request method and path were logged directly without sanitization, potentially allowing log forging or corruption via URL-encoded control characters (e.g., %0A).
 **Learning:** Even though Express provides `req.path` as a convenience, it performs URL decoding, which can re-introduce malicious control characters into a string intended for a line-based log.
 **Prevention:** Always sanitize any request metadata (method, path, headers) before including it in a console log or an external logging system.
+
+## 2026-06-05 - Comprehensive Control Character Sanitization for Logs
+**Vulnerability:** Sanitization that only targets CRLF leaves logs vulnerable to terminal manipulation (e.g., ANSI escape sequences) which can be used to hide, spoof, or overwrite log entries in a terminal emulator.
+**Learning:** Log injection isn't just about line breaks for line-based parsers; it also encompasses terminal control codes that can maliciously alter the visual presentation of log streams.
+**Prevention:** Use a broad character class like `[\x00-\x1F\x7F]` to strip all C0 control characters and the DEL character from any untrusted input (including headers and IP addresses) before it reaches a log sink.

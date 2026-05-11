@@ -26,12 +26,13 @@ const DEV_DEFAULTS = {
 };
 
 // Security: Helper to sanitize identity headers to prevent log/header injection.
+// Strips all C0 control characters and DEL to prevent terminal manipulation.
 // Truncates to maxLen to prevent resource exhaustion/log bloat.
 // Robustly handles array inputs from Express headers.
 const sanitize = (val, maxLen = 255) => {
   if (!val) return null;
   const str = Array.isArray(val) ? String(val[0]) : String(val);
-  return str.replace(/[\r\n]/g, '_').slice(0, maxLen);
+  return str.replace(/[\x00-\x1F\x7F]/g, '_').slice(0, maxLen);
 };
 
 /**
@@ -52,7 +53,8 @@ function authMiddleware(req, res, next) {
   // In proxy mode, reject requests without the required identity header
   if (AUTH_MODE === 'proxy' && !user) {
     // Security: Log unauthorized access attempts for auditability.
-    console.warn(`[auth] Unauthorized access attempt: Missing Remote-User from ${req.ip}`);
+    // Sanitize req.ip to prevent log injection if proxy headers are spoofed.
+    console.warn(`[auth] Unauthorized access attempt: Missing Remote-User from ${sanitize(req.ip)}`);
     return res.status(401).json({ error: 'Missing upstream identity header (Remote-User)' });
   }
 
