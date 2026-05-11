@@ -18,7 +18,7 @@
         <span class="refresh-icon" aria-hidden="true">↻</span>
         <kbd aria-hidden="true">R</kbd>
       </button>
-      <div class="queue-count" id="queue-count" aria-live="polite">0 pending</div>
+      <div class="queue-count" id="queue-count" aria-live="polite" aria-atomic="true">0 pending</div>
     </div>
   </header>
 
@@ -47,6 +47,7 @@
       </div>
 
       <article class="card" id="current-card" aria-labelledby="card-title" aria-describedby="card-description" hidden>
+        <div class="card-progress" id="card-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100"></div>
         <div class="swipe-hint swipe-hint-right" id="hint-approve" aria-hidden="true">APPROVE</div>
         <div class="swipe-hint swipe-hint-left" id="hint-reject" aria-hidden="true">REJECT</div>
         <div class="swipe-hint swipe-hint-top" id="hint-defer" aria-hidden="true">DEFER</div>
@@ -69,15 +70,15 @@
     </div>
 
     <nav class="action-bar" id="action-bar" aria-label="Suggestion actions" hidden>
-      <button class="btn btn-reject" id="btn-reject" aria-label="Reject" aria-keyshortcuts="Z">
+      <button class="btn btn-reject" id="btn-reject" aria-label="Reject" aria-keyshortcuts="Z" title="Reject (Z)">
         <span class="btn-icon" aria-hidden="true">✗</span>
         <span class="btn-label">Reject <kbd aria-hidden="true">Z</kbd></span>
       </button>
-      <button class="btn btn-defer" id="btn-defer" aria-label="Defer" aria-keyshortcuts="D">
+      <button class="btn btn-defer" id="btn-defer" aria-label="Defer" aria-keyshortcuts="D" title="Defer (D)">
         <span class="btn-icon" aria-hidden="true">↩</span>
         <span class="btn-label">Defer <kbd aria-hidden="true">D</kbd></span>
       </button>
-      <button class="btn btn-approve" id="btn-approve" aria-label="Approve" aria-keyshortcuts="A">
+      <button class="btn btn-approve" id="btn-approve" aria-label="Approve" aria-keyshortcuts="A" title="Approve (A)">
         <span class="btn-icon" aria-hidden="true">✓</span>
         <span class="btn-label">Approve <kbd aria-hidden="true">A</kbd></span>
       </button>

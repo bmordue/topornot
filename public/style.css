@@ -173,6 +173,18 @@ body {
   touch-action: pan-y;
   user-select: none;
   will-change: transform;
+  overflow: hidden;
+}
+
+.card-progress {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 4px;
+  background: var(--color-primary);
+  transition: width 0.3s ease;
+  width: 0%;
+  opacity: 0.6;
 }
 
 .card.slideIn {
