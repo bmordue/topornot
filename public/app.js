@@ -187,10 +187,11 @@
 
       if (!res.ok) throw new Error('Network error');
 
-      suggestions = await res.json();
+      const text = await res.text();
+      suggestions = JSON.parse(text);
       const newEtag = res.headers.get('ETag');
 
-      localStorage.setItem('cachedSuggestions', JSON.stringify(suggestions));
+      localStorage.setItem('cachedSuggestions', text);
       if (newEtag) localStorage.setItem('suggestionsEtag', newEtag);
       currentIndex = 0;
     } catch (err) {
