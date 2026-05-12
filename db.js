@@ -195,9 +195,13 @@ function getSuggestionById(id) {
   return _index.get(id) || null;
 }
 
+function _getNow() {
+  return new Date().toISOString().replace('T', ' ').slice(0, 19);
+}
+
 function createSuggestion({ title, description, context, agent, user }) {
   const data = _load();
-  const now = new Date().toISOString().replace('T', ' ').slice(0, 19);
+  const now = _getNow();
   const suggestion = {
     id: data.nextId++,
     title,
@@ -248,10 +252,9 @@ function updateStatus(id, status, user) {
 
   const oldStatus = suggestion.status;
   const fIdx = _fragmentMap.get(id);
-  const oldFragment = fIdx !== undefined ? _getFragment(fIdx) : null;
 
   suggestion.status = status;
-  suggestion.updated_at = new Date().toISOString().replace('T', ' ').slice(0, 19);
+  suggestion.updated_at = _getNow();
   suggestion.updated_by = user || null;
 
   // Performance: Incremental fragment update
