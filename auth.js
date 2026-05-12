@@ -50,8 +50,9 @@ function authMiddleware(req, res, next) {
 
   const user = req.headers[IDENTITY_HEADERS.user];
 
-  // In proxy mode, reject requests without the required identity header
-  if (AUTH_MODE === 'proxy' && !user) {
+  // Default to requiring authentication unless explicitly in dev mode.
+  // This ensures a fail-closed posture if AUTH_MODE is misconfigured.
+  if (AUTH_MODE !== 'dev' && !user) {
     // Security: Log unauthorized access attempts for auditability.
     // Sanitize req.ip to prevent log injection if proxy headers are spoofed.
     console.warn(`[auth] Unauthorized access attempt: Missing Remote-User from ${sanitize(req.ip)}`);
