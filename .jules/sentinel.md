@@ -48,3 +48,8 @@
 **Vulnerability:** Sanitization that only targets CRLF leaves logs vulnerable to terminal manipulation (e.g., ANSI escape sequences) which can be used to hide, spoof, or overwrite log entries in a terminal emulator.
 **Learning:** Log injection isn't just about line breaks for line-based parsers; it also encompasses terminal control codes that can maliciously alter the visual presentation of log streams.
 **Prevention:** Use a broad character class like `[\x00-\x1F\x7F]` to strip all C0 control characters and the DEL character from any untrusted input (including headers and IP addresses) before it reaches a log sink.
+
+## 2026-05-12 - Fail-Closed Authentication Configuration
+**Vulnerability:** The authentication middleware was using a "fail-open" pattern where it only enforced identity header checks if `AUTH_MODE` was explicitly set to 'proxy'. Any other value (due to typos or misconfiguration) would allow unauthenticated access.
+**Learning:** Defaulting to a bypass state for unknown configurations is dangerous. Security-sensitive middleware should always default to its most restrictive state.
+**Prevention:** Use "fail-closed" logic by checking for the bypass condition (e.g., `AUTH_MODE === 'dev'`) and requiring authentication for all other values.
