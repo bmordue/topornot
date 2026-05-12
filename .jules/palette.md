@@ -17,3 +17,7 @@
 ## 2024-05-11 - [Visual Progress and Descriptive Position Announcements]
 **Learning:** A visual progress bar at the top of a card-based interface provides immediate, non-intrusive feedback on task progress. Combining this with `aria-atomic` on dynamic counts and explicit `aria-label` for position (e.g., "Suggestion 1 of 10") significantly improves the experience for both visual and assistive technology users.
 **Action:** Use unobtrusive progress indicators for sequential tasks and ensure dynamic counters use `aria-atomic` for complete context updates.
+
+## 2026-05-12 - [Contrast Compliance & Interaction Safeguards]
+**Learning:** WCAG AA compliance for white text on colored backgrounds often requires darker "600/700" shades (e.g., Indigo #4f46e5) than default branding. Enabling text selection (`user-select: auto`) is a vital usability baseline for information-heavy cards. Additionally, global keyboard shortcuts MUST include safeguards against triggering when the user is focused on an input or textarea to prevent disruptive interactions.
+**Action:** Audit color variables for AA contrast; avoid `user-select: none` on content; always verify `e.target` in global key listeners.
