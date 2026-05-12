@@ -1,0 +1,16 @@
+
+> topornot@1.0.0 start
+> node server.js
+
+topornot server running on http://127.0.0.1:3000
+[auth] POST /api/suggestions – user=dev-user
+[auth] GET / – user=dev-user
+[auth] GET /style.css – user=dev-user
+[auth] GET /app.js – user=dev-user
+[auth] GET /api/suggestions – user=dev-user
+[auth] GET /sw.js – user=dev-user
+[auth] GET / – user=dev-user
+[auth] GET /index.html – user=dev-user
+[auth] GET /style.css – user=dev-user
+[auth] GET /app.js – user=dev-user
+[auth] GET /manifest.json – user=dev-user

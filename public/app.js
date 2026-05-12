@@ -260,6 +260,20 @@
     }
   }
 
+  // -- Copy functionality --
+  function copyToClipboard() {
+    const s = suggestions[currentIndex % suggestions.length];
+    if (!s) return;
+    const text = `${s.title}\n${s.description}`;
+    navigator.clipboard.writeText(text).then(() => {
+      showToast('Copied to clipboard', 'info');
+      if (navigator.vibrate) navigator.vibrate(10);
+    }).catch(err => {
+      console.error('Failed to copy: ', err);
+      showToast('Copy failed', 'reject');
+    });
+  }
+
   // -- Button handlers --
   const refreshHandler = async () => {
     if (navigator.vibrate) navigator.vibrate(10);
@@ -277,6 +291,10 @@
   document.getElementById('btn-approve').addEventListener('click', () => doAction('approve'));
   document.getElementById('btn-reject').addEventListener('click',  () => doAction('reject'));
   document.getElementById('btn-defer').addEventListener('click',   () => doAction('defer'));
+  document.getElementById('btn-copy').addEventListener('click',    () => {
+    flashButton('btn-copy');
+    copyToClipboard();
+  });
   document.getElementById('btn-refresh').addEventListener('click', refreshHandler);
   document.getElementById('btn-header-refresh').addEventListener('click', refreshHandler);
 
@@ -356,6 +374,9 @@
 
   // -- Keyboard shortcuts (desktop) --
   document.addEventListener('keydown', (e) => {
+    // Safeguard: Don't trigger shortcuts if user is typing in an input
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
+
     const key = e.key.toLowerCase();
     if (key === 'arrowright' || key === 'a') {
       flashButton('btn-approve');
@@ -381,6 +402,10 @@
     if (key === 'escape') {
       const details = cardCtxWrap.querySelector('details');
       if (details && details.open) details.open = false;
+    }
+    if (key === 's') {
+      flashButton('btn-copy');
+      copyToClipboard();
     }
   });
 
