@@ -21,3 +21,7 @@
 ## 2026-05-12 - [Contrast Compliance & Interaction Safeguards]
 **Learning:** WCAG AA compliance for white text on colored backgrounds often requires darker "600/700" shades (e.g., Indigo #4f46e5) than default branding. Enabling text selection (`user-select: auto`) is a vital usability baseline for information-heavy cards. Additionally, global keyboard shortcuts MUST include safeguards against triggering when the user is focused on an input or textarea to prevent disruptive interactions.
 **Action:** Audit color variables for AA contrast; avoid `user-select: none` on content; always verify `e.target` in global key listeners.
+
+## 2026-05-13 - [Stateful Button Feedback & Sequential Focus]
+**Learning:** Providing immediate visual confirmation on buttons for transient actions (like "Copy") by temporarily changing the icon and label is more effective than a toast alone, as it keeps the user's focus on the interaction point. Additionally, programmatic focus for screen readers (`focus()`) must be the absolute final step in a rendering function to ensure all dynamic attributes (like `aria-valuenow` or text updates) are fully committed and available to the accessibility tree.
+**Action:** Use "temporary state" patterns for one-off actions; always defer `focus()` calls to the end of the render cycle.
