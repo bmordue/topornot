@@ -278,4 +278,23 @@ describe('API Error Handling', () => {
     expect(req.identity.groups).toBe('g'.repeat(1024));
     expect(next).toHaveBeenCalled();
   });
+
+  it('should sanitize control characters in suggestion inputs', async () => {
+    const payload = {
+      title: 'Title\nwith\nnewlines',
+      description: 'Description\twith\ttabs',
+      context: 'Context\x1b[31mwith\x1b[0mANSI',
+      agent: 'Agent\0with\0nulls'
+    };
+
+    const res = await request(app)
+      .post('/api/suggestions')
+      .send(payload);
+
+    expect(res.status).toBe(201);
+    expect(res.body.title).toBe('Title_with_newlines');
+    expect(res.body.description).toBe('Description_with_tabs');
+    expect(res.body.context).toBe('Context_[31mwith_[0mANSI');
+    expect(res.body.agent).toBe('Agent_with_nulls');
+  });
 });
