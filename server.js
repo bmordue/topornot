@@ -3,7 +3,7 @@ const path = require('path');
 const helmet = require('helmet');
 const { rateLimit } = require('express-rate-limit');
 const db = require('./db');
-const { authMiddleware } = require('./auth');
+const { authMiddleware, sanitize } = require('./auth');
 
 const app = express();
 
@@ -117,7 +117,13 @@ app.post('/api/suggestions', suggestionLimiter, (req, res) => {
     return res.status(400).json({ error: 'agent must be a string up to 100 characters' });
   }
 
-  const suggestion = db.createSuggestion({ title, description, context, agent, user: req.identity.user });
+  const suggestion = db.createSuggestion({
+    title: sanitize(title, 100),
+    description: sanitize(description, 1000),
+    context: sanitize(context, 5000),
+    agent: sanitize(agent, 100),
+    user: req.identity.user
+  });
   res.status(201).json(suggestion);
 });
 

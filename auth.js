@@ -77,4 +77,4 @@ function authMiddleware(req, res, next) {
   next();
 }
 
-module.exports = { authMiddleware, AUTH_MODE, IDENTITY_HEADERS, DEV_DEFAULTS };
+module.exports = { authMiddleware, AUTH_MODE, IDENTITY_HEADERS, DEV_DEFAULTS, sanitize };
