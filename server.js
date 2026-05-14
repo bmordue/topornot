@@ -20,6 +20,9 @@ app.use(helmet({
       "img-src": ["'self'"],
       "connect-src": ["'self'"],
       "object-src": ["'none'"],
+      "frame-ancestors": ["'none'"],
+      "base-uri": ["'none'"],
+      "form-action": ["'none'"],
       "upgrade-insecure-requests": [],
     },
   },
@@ -124,6 +127,8 @@ app.post('/api/suggestions', suggestionLimiter, (req, res) => {
     agent: sanitize(agent, 100),
     user: req.identity.user
   });
+  // Security: Audit log for new suggestion
+  console.log(`[audit] SUGGESTION_CREATE: id=${suggestion.id} user=${req.identity.user}`);
   res.status(201).json(suggestion);
 });
 
@@ -146,6 +151,8 @@ app.patch('/api/suggestions/:id/:action', actionLimiter, (req, res) => {
   if (!suggestion) {
     return res.status(404).json({ error: 'Suggestion not found' });
   }
+  // Security: Audit log for status change
+  console.log(`[audit] SUGGESTION_UPDATE: id=${suggestion.id} action=${sanitize(action)} user=${req.identity.user} status=${suggestion.status}`);
   res.json(suggestion);
 });
 

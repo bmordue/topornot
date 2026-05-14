@@ -23,6 +23,11 @@ describe('Security Headers', () => {
     expect(res.headers['strict-transport-security']).toBeDefined();
     expect(res.headers['x-content-type-options']).toBe('nosniff');
     expect(res.headers['permissions-policy']).toBe('camera=(), microphone=(), geolocation=(), interest-cohort=()');
+
+    const csp = res.headers['content-security-policy'];
+    expect(csp).toMatch(/frame-ancestors 'none'/);
+    expect(csp).toMatch(/base-uri 'none'/);
+    expect(csp).toMatch(/form-action 'none'/);
   });
 
   it('should trust proxy', () => {
@@ -296,5 +301,39 @@ describe('API Error Handling', () => {
     expect(res.body.description).toBe('Description_with_tabs');
     expect(res.body.context).toBe('Context_[31mwith_[0mANSI');
     expect(res.body.agent).toBe('Agent_with_nulls');
+  });
+});
+
+describe('Audit Logging', () => {
+  let logSpy;
+
+  beforeEach(() => {
+    logSpy = jest.spyOn(console, 'log').mockImplementation();
+  });
+
+  afterEach(() => {
+    logSpy.mockRestore();
+  });
+
+  it('should log an audit entry when creating a suggestion', async () => {
+    await request(app)
+      .post('/api/suggestions')
+      .send({ title: 'Audit Test', description: 'Testing logs' });
+
+    expect(logSpy).toHaveBeenCalledWith(expect.stringMatching(/\[audit\] SUGGESTION_CREATE: id=\d+ user=dev-user/));
+  });
+
+  it('should log an audit entry when updating a suggestion status', async () => {
+    // First create one
+    const createRes = await request(app)
+      .post('/api/suggestions')
+      .send({ title: 'Update Test', description: 'Testing logs' });
+
+    const id = createRes.body.id;
+    logSpy.mockClear();
+
+    await request(app).patch(`/api/suggestions/${id}/approve`);
+
+    expect(logSpy).toHaveBeenCalledWith(expect.stringMatching(/\[audit\] SUGGESTION_UPDATE: id=\d+ action=approve user=dev-user status=approved/));
   });
 });
