@@ -53,3 +53,8 @@
 **Vulnerability:** The authentication middleware was using a "fail-open" pattern where it only enforced identity header checks if `AUTH_MODE` was explicitly set to 'proxy'. Any other value (due to typos or misconfiguration) would allow unauthenticated access.
 **Learning:** Defaulting to a bypass state for unknown configurations is dangerous. Security-sensitive middleware should always default to its most restrictive state.
 **Prevention:** Use "fail-closed" logic by checking for the bypass condition (e.g., `AUTH_MODE === 'dev'`) and requiring authentication for all other values.
+
+## 2026-05-14 - Hardened CSP for Standalone API Applications
+**Vulnerability:** Default CSP from `helmet` allows embedding in frames (clickjacking) and doesn't restrict `base-uri` or `form-action`, which can be exploited if an XSS or HTML injection vulnerability is present.
+**Learning:** For standalone PWAs that interact exclusively via `fetch` and do not use traditional HTML forms or `<base>` tags, CSP can be significantly tightened beyond defaults to provide defense-in-depth against clickjacking and data exfiltration.
+**Prevention:** Always explicitly set `frame-ancestors 'none'`, `base-uri 'none'`, and `form-action 'none'` for single-page applications that do not require these features.
