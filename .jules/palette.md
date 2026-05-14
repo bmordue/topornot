@@ -25,3 +25,7 @@
 ## 2026-05-13 - [Stateful Button Feedback & Sequential Focus]
 **Learning:** Providing immediate visual confirmation on buttons for transient actions (like "Copy") by temporarily changing the icon and label is more effective than a toast alone, as it keeps the user's focus on the interaction point. Additionally, programmatic focus for screen readers (`focus()`) must be the absolute final step in a rendering function to ensure all dynamic attributes (like `aria-valuenow` or text updates) are fully committed and available to the accessibility tree.
 **Action:** Use "temporary state" patterns for one-off actions; always defer `focus()` calls to the end of the render cycle.
+
+## 2026-05-14 - [Contrast Compliance & Media Query Specificity]
+**Learning:** WCAG AA compliance in dark mode often requires overriding text colors on primary-colored elements when the primary color shifts to a lighter shade (e.g., Indigo #818cf8). These overrides must be placed after base rules or use higher specificity to avoid being ignored.
+**Action:** Always verify computed styles in dark mode to ensure contrast overrides are correctly applied and not shadowed by base declarations.

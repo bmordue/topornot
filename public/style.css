@@ -229,6 +229,12 @@ body {
   letter-spacing: 0.5px;
 }
 
+@media (prefers-color-scheme: dark) {
+  .card-agent {
+    color: #0f172a;
+  }
+}
+
 .card-time {
   font-size: 0.75rem;
   color: var(--color-text-muted);
@@ -367,6 +373,12 @@ body {
 .btn-defer   { background: var(--color-defer); }
 .btn-copy    { background: var(--color-primary); }
 
+@media (prefers-color-scheme: dark) {
+  .btn-copy, .btn-copy kbd {
+    color: #0f172a;
+  }
+}
+
 .btn-approve:hover, .btn-reject:hover, .btn-defer:hover, .btn-copy:hover {
   filter: brightness(1.1);
 }
@@ -392,6 +404,12 @@ kbd {
   margin-left: 4px;
   font-size: 0.7rem;
   box-shadow: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  .btn-label kbd {
+    color: inherit;
+  }
 }
 
 .btn-refresh {
