@@ -22,7 +22,8 @@ describe('Security Headers', () => {
     expect(res.headers['x-frame-options']).toBeDefined();
     expect(res.headers['strict-transport-security']).toBeDefined();
     expect(res.headers['x-content-type-options']).toBe('nosniff');
-    expect(res.headers['permissions-policy']).toBe('camera=(), microphone=(), geolocation=(), interest-cohort=()');
+    expect(res.headers['x-permitted-cross-domain-policies']).toBe('none');
+    expect(res.headers['permissions-policy']).toBe('camera=(), microphone=(), geolocation=(), interest-cohort=(), browsing-topics=(), run-ad-auction=(), join-ad-interest-group=()');
 
     const csp = res.headers['content-security-policy'];
     expect(csp).toMatch(/frame-ancestors 'none'/);
@@ -103,6 +104,13 @@ describe('Rate Limiting', () => {
     const res = await request(app).patch('/api/suggestions/1/approve');
     expect(res.headers['ratelimit-limit']).toBeDefined();
     expect(res.headers['ratelimit-remaining']).toBeDefined();
+  });
+});
+
+describe('API Cache Control', () => {
+  it('should set private, no-cache on /api/suggestions', async () => {
+    const res = await request(app).get('/api/suggestions');
+    expect(res.headers['cache-control']).toBe('private, no-cache, must-revalidate');
   });
 });
 

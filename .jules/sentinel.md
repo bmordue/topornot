@@ -58,3 +58,8 @@
 **Vulnerability:** Default CSP from `helmet` allows embedding in frames (clickjacking) and doesn't restrict `base-uri` or `form-action`, which can be exploited if an XSS or HTML injection vulnerability is present.
 **Learning:** For standalone PWAs that interact exclusively via `fetch` and do not use traditional HTML forms or `<base>` tags, CSP can be significantly tightened beyond defaults to provide defense-in-depth against clickjacking and data exfiltration.
 **Prevention:** Always explicitly set `frame-ancestors 'none'`, `base-uri 'none'`, and `form-action 'none'` for single-page applications that do not require these features.
+
+## 2026-06-15 - Privacy Hardening and Sensitive API Cache Control
+**Vulnerability:** Default `Permissions-Policy` lacks modern privacy-focused directives, and sensitive API responses may be cached by intermediaries if `Cache-Control` is not explicitly set.
+**Learning:** Modern browser features like Topics API can be used for tracking even if standard cookies are blocked. Additionally, sensitive data delivered via API should always be marked as `private` and `no-cache` to prevent leaks in shared caches (CDNs, proxies).
+**Prevention:** Explicitly disable privacy-tracking features (`browsing-topics`, `run-ad-auction`, `join-ad-interest-group`) in `Permissions-Policy` and always set restrictive `Cache-Control` headers for all authenticated API endpoints.
