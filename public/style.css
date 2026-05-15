@@ -529,6 +529,13 @@ kbd {
 .skeleton-title { height: 1.2rem; margin-bottom: 1rem; width: 70%; }
 .skeleton-agent { height: 1.4rem; width: 70px; border-radius: 12px; }
 .skeleton-time { height: 0.8rem; width: 60px; }
+.skeleton-pos { height: 0.8rem; width: 40px; margin: 0 auto; }
+
+.skeleton-footer {
+  margin-top: 16px;
+  display: flex;
+  justify-content: center;
+}
 
 .loading-card {
   background: var(--color-surface);

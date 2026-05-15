@@ -29,3 +29,11 @@
 ## 2026-05-14 - [Contrast Compliance & Media Query Specificity]
 **Learning:** WCAG AA compliance in dark mode often requires overriding text colors on primary-colored elements when the primary color shifts to a lighter shade (e.g., Indigo #818cf8). These overrides must be placed after base rules or use higher specificity to avoid being ignored.
 **Action:** Always verify computed styles in dark mode to ensure contrast overrides are correctly applied and not shadowed by base declarations.
+
+## 2026-05-15 - [Stateful Action Feedback & Ambient State]
+**Learning:** Providing immediate, stateful feedback on the interaction point (e.g., changing a button's label to "Copied!") is significantly more effective than detached toast notifications alone. Additionally, utilizing the document title for "all clear" states (e.g., "✓ All clear") provides valuable ambient feedback for users monitoring the application from other browser tabs.
+**Action:** Use temporary state changes for localized action confirmation and document title for global status changes.
+
+## 2026-05-15 - [Accessible Progress & Skeleton Fidelity]
+**Learning:** Screen readers benefit from standard progress attributes like `aria-valuenow` even on simple visual bars. Furthermore, skeleton loaders should match the final content's layout as closely as possible, including smaller secondary elements like position indicators, to minimize perceived layout shift and improve the "premium" feel of the interface.
+**Action:** Always include `aria-valuenow` on progress bars and audit skeletons for missing layout elements.

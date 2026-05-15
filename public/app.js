@@ -109,7 +109,7 @@
     const pendingCount = suggestions.length;
 
     queueCount.textContent = `${pendingCount} pending`;
-    document.title = pendingCount > 0 ? `(${pendingCount}) topornot` : 'topornot';
+    document.title = pendingCount > 0 ? `(${pendingCount}) topornot` : '✓ All clear - topornot';
 
     if (pendingCount === 0) {
       cardEl.hidden = true;
@@ -152,7 +152,9 @@
     const currentPos = (currentIndex % pendingCount) + 1;
     cardPos.textContent = `${currentPos} of ${pendingCount}`;
     cardPos.setAttribute('aria-label', `Suggestion ${currentPos} of ${pendingCount}`);
-    cardProgress.style.width = `${(currentPos / pendingCount) * 100}%`;
+    const progressPercent = Math.round((currentPos / pendingCount) * 100);
+    cardProgress.style.width = `${progressPercent}%`;
+    cardProgress.setAttribute('aria-valuenow', progressPercent);
   }
 
   // -- Load suggestions from server (or cache) --
@@ -264,10 +266,23 @@
   function copyToClipboard() {
     const s = suggestions[currentIndex % suggestions.length];
     if (!s) return;
+    const btn = document.getElementById('btn-copy');
+    const label = btn.querySelector('.btn-label');
+    const icon = btn.querySelector('.btn-icon');
+    const originalLabel = label.innerHTML;
+    const originalIcon = icon.textContent;
+
     const text = `${s.title}\n${s.description}`;
     navigator.clipboard.writeText(text).then(() => {
       showToast('Copied to clipboard', 'info');
       if (navigator.vibrate) navigator.vibrate(10);
+
+      label.textContent = 'Copied!';
+      icon.textContent = '✓';
+      setTimeout(() => {
+        label.innerHTML = originalLabel;
+        icon.textContent = originalIcon;
+      }, 1500);
     }).catch(err => {
       console.error('Failed to copy: ', err);
       showToast('Copy failed', 'reject');
