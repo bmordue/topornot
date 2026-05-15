@@ -26,11 +26,12 @@ app.use(helmet({
       "upgrade-insecure-requests": [],
     },
   },
+  permittedCrossDomainPolicies: { policy: 'none' },
 }));
 
 // Security: Restrict unnecessary browser features via Permissions-Policy
 app.use((req, res, next) => {
-  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), interest-cohort=()');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), interest-cohort=(), browsing-topics=(), run-ad-auction=(), join-ad-interest-group=()');
   next();
 });
 
@@ -82,6 +83,9 @@ app.use('/api', apiLimiter);
 
 // GET pending suggestions (used by the UI)
 app.get('/api/suggestions', (req, res) => {
+  // Security: Ensure sensitive suggestion data isn't cached by intermediaries
+  res.setHeader('Cache-Control', 'private, no-cache, must-revalidate');
+
   // Security: Strictly validate status to prevent header injection in ETag
   const status = req.query.status === 'all' ? 'all' : 'pending';
 
