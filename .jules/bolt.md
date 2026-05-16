@@ -33,3 +33,7 @@
 ## 2026-05-08 - [Throttled Disk Persistence]
 **Learning:** Frequent synchronous disk I/O (e.g., `fs.writeFileSync`) in the request-response cycle is a massive bottleneck for event-loop responsiveness, especially for burst writes. Implementing a throttled save pattern with a debounce timer and a mandatory `flush()` on process exit improves burst throughput by several orders of magnitude (e.g., ~6000x) while maintaining acceptable durability.
 **Action:** Always decouple synchronous I/O from the critical path using batching/throttling. Ensure final persistence via process signal handlers (`SIGTERM`, `SIGINT`).
+
+## 2026-05-16 - [Incremental Array-Based JSON Caching]
+**Learning:** Maintaining JSON caches as arrays of pre-stringified fragments instead of monolithic strings enables O(1) or O(P) incremental updates. For LIFO views, the reverse index can be mapped in O(1) via `length - 1 - fIdx`. This avoids O(N) rebuild loops and reduces string allocation overhead.
+**Action:** Use array-of-fragments for JSON caches that require partial updates. Ensure state transitions (e.g., pending -> pending) are handled via in-place replacement to prevent duplication.

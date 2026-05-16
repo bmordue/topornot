@@ -92,18 +92,6 @@ function flush() {
 }
 
 /**
- * Internal helper to remove a JSON fragment from a stringified array.
- */
-function _removeFromCache(json, fragment) {
-  if (!json || json === '[]') return json;
-  let next = json.replace(',' + fragment, '');
-  if (next !== json) return next;
-  next = json.replace(fragment + ',', '');
-  if (next !== json) return next;
-  return json.replace(fragment, '');
-}
-
-/**
  * Internal save helper.
  * Performance: Supports granular cache invalidation and throttled disk persistence.
  */
@@ -171,9 +159,9 @@ function getPendingSuggestionsJson() {
         pendingFragments.push(_getFragment(fIdx));
       }
     }
-    _cachePendingJson = `[${pendingFragments.join(',')}]`;
+    _cachePendingJson = pendingFragments;
   }
-  return _cachePendingJson;
+  return `[${_cachePendingJson.join(',')}]`;
 }
 
 function getAllSuggestionsJson() {
@@ -185,9 +173,9 @@ function getAllSuggestionsJson() {
     for (let i = _fragments.length - 1; i >= 0; i--) {
       reversed.push(_getFragment(i));
     }
-    _cacheAllJson = `[${reversed.join(',')}]`;
+    _cacheAllJson = reversed;
   }
-  return _cacheAllJson;
+  return `[${_cacheAllJson.join(',')}]`;
 }
 
 function getSuggestionById(id) {
@@ -230,12 +218,12 @@ function createSuggestion({ title, description, context, agent, user }) {
     _cachePending.push(suggestion);
   }
 
-  // Performance: Incremental JSON cache updates (O(1))
+  // Performance: Incremental JSON fragment cache updates
   if (_cacheAllJson) {
-    _cacheAllJson = '[' + newFragment + (_cacheAllJson.length > 2 ? ',' : '') + _cacheAllJson.slice(1);
+    _cacheAllJson.unshift(newFragment); // Prepend for LIFO order
   }
   if (_cachePendingJson) {
-    _cachePendingJson = _cachePendingJson.slice(0, -1) + (_cachePendingJson.length > 2 ? ',' : '') + newFragment + ']';
+    _cachePendingJson.push(newFragment);
   }
 
   _save({ invalidatePending: false, invalidateAll: false });
@@ -252,6 +240,7 @@ function updateStatus(id, status, user) {
 
   const oldStatus = suggestion.status;
   const fIdx = _fragmentMap.get(id);
+  const oldFragment = fIdx !== undefined ? _getFragment(fIdx) : null;
 
   suggestion.status = status;
   suggestion.updated_at = _getNow();
@@ -263,10 +252,14 @@ function updateStatus(id, status, user) {
     _fragments[fIdx] = newFragment;
   }
 
-  // Performance: Incremental JSON cache updates (O(1))
-  // We invalidate the JSON caches because string replacement is risky.
-  _cacheAllJson = null;
-  _cachePendingJson = null;
+  // Performance: Incremental JSON cache updates
+  // Update _cacheAllJson in O(1) by calculating the reversed index
+  if (_cacheAllJson && fIdx !== undefined) {
+    const allIdx = _fragments.length - 1 - fIdx;
+    if (allIdx >= 0 && allIdx < _cacheAllJson.length) {
+      _cacheAllJson[allIdx] = newFragment;
+    }
+  }
 
   // Update pending Map
   if (status === 'pending') {
@@ -275,13 +268,31 @@ function updateStatus(id, status, user) {
     _pending.delete(id);
   }
 
-  // Performance: Incremental _cachePending update
-  if (_cachePending) {
-    if (status === 'pending') {
-      _cachePending.push(suggestion);
-    } else if (oldStatus === 'pending') {
-      const idx = _cachePending.findIndex(s => s.id === id);
-      if (idx !== -1) _cachePending.splice(idx, 1);
+  // Performance: Incremental array and JSON fragment cache updates
+  if (status === 'pending' && oldStatus === 'pending') {
+    // pending -> pending: Update in-place
+    if (_cachePending) {
+      const idx = _cachePending.indexOf(suggestion);
+      if (idx !== -1 && _cachePendingJson) _cachePendingJson[idx] = newFragment;
+    } else if (_cachePendingJson) {
+      const idx = _cachePendingJson.indexOf(oldFragment);
+      if (idx !== -1) _cachePendingJson[idx] = newFragment;
+    }
+  } else if (status === 'pending') {
+    // non-pending -> pending: Append
+    if (_cachePending) _cachePending.push(suggestion);
+    if (_cachePendingJson) _cachePendingJson.push(newFragment);
+  } else if (oldStatus === 'pending') {
+    // pending -> non-pending: Remove
+    if (_cachePending) {
+      const idx = _cachePending.indexOf(suggestion);
+      if (idx !== -1) {
+        _cachePending.splice(idx, 1);
+        if (_cachePendingJson) _cachePendingJson.splice(idx, 1);
+      }
+    } else if (_cachePendingJson) {
+      const idx = _cachePendingJson.indexOf(oldFragment);
+      if (idx !== -1) _cachePendingJson.splice(idx, 1);
     }
   }
 
