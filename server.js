@@ -27,11 +27,14 @@ app.use(helmet({
     },
   },
   permittedCrossDomainPolicies: { policy: 'none' },
+  crossOriginOpenerPolicy: { policy: 'same-origin' },
+  crossOriginEmbedderPolicy: { policy: 'require-corp' },
+  crossOriginResourcePolicy: { policy: 'same-origin' },
 }));
 
 // Security: Restrict unnecessary browser features via Permissions-Policy
 app.use((req, res, next) => {
-  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), interest-cohort=(), browsing-topics=(), run-ad-auction=(), join-ad-interest-group=()');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), interest-cohort=(), browsing-topics=(), run-ad-auction=(), join-ad-interest-group=(), fullscreen=(), payment=(), usb=(), publickey-credentials-get=(), screen-wake-lock=(), sync-xhr=(), xr-spatial-tracking=()');
   next();
 });
 

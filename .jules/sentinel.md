@@ -63,3 +63,8 @@
 **Vulnerability:** Default `Permissions-Policy` lacks modern privacy-focused directives, and sensitive API responses may be cached by intermediaries if `Cache-Control` is not explicitly set.
 **Learning:** Modern browser features like Topics API can be used for tracking even if standard cookies are blocked. Additionally, sensitive data delivered via API should always be marked as `private` and `no-cache` to prevent leaks in shared caches (CDNs, proxies).
 **Prevention:** Explicitly disable privacy-tracking features (`browsing-topics`, `run-ad-auction`, `join-ad-interest-group`) in `Permissions-Policy` and always set restrictive `Cache-Control` headers for all authenticated API endpoints.
+
+## 2026-06-20 - Cross-Origin Isolation and Service Worker Security Parity
+**Vulnerability:** Lack of modern cross-origin isolation headers (COOP, COEP, CORP) and missing security headers on synthetic Service Worker responses.
+**Learning:** Security hardening must extend to the Service Worker's synthetic responses to ensure defense-in-depth parity when the application is offline or when the network fails. Additionally, explicitly enabling COOP, COEP, and CORP provides essential protection against side-channel attacks like Spectre by enabling cross-origin isolation.
+**Prevention:** Always include basic security headers (like `X-Content-Type-Options` and `X-Frame-Options`) in Service Worker-generated responses and regularly update server-side headers to include modern cross-origin isolation policies.
