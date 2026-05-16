@@ -354,6 +354,7 @@
     touchStartX = e.touches[0].clientX;
     touchStartY = e.touches[0].clientY;
     isDragging = true;
+    cardEl.classList.add('dragging');
     thresholdReached = false;
   }, { passive: true });
 
@@ -371,6 +372,7 @@
   cardEl.addEventListener('touchend', (e) => {
     if (!isDragging) return;
     isDragging = false;
+    cardEl.classList.remove('dragging');
     const dx = e.changedTouches[0].clientX - touchStartX;
     const dy = e.changedTouches[0].clientY - touchStartY;
     cardEl.style.transform = '';
@@ -385,6 +387,15 @@
     } else {
       if (dy < -THRESHOLD) doAction('defer');
     }
+  }, { passive: true });
+
+  cardEl.addEventListener('touchcancel', () => {
+    isDragging = false;
+    cardEl.classList.remove('dragging');
+    cardEl.style.transform = '';
+    hintApprove.style.opacity = 0;
+    hintReject.style.opacity  = 0;
+    hintDefer.style.opacity   = 0;
   }, { passive: true });
 
   // -- Keyboard shortcuts (desktop) --
