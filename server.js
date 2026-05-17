@@ -7,6 +7,10 @@ const { authMiddleware, sanitize } = require('./auth');
 
 const app = express();
 
+// Security: Restrict unnecessary browser features via Permissions-Policy.
+// Explicitly disable features that the application does not require.
+const PERMISSIONS_POLICY = 'camera=(), microphone=(), geolocation=(), interest-cohort=(), browsing-topics=(), run-ad-auction=(), join-ad-interest-group=(), fullscreen=(), payment=(), usb=(), publickey-credentials-get=(), screen-wake-lock=(), sync-xhr=(), xr-spatial-tracking=()';
+
 // Trust the first proxy in front of us
 app.set('trust proxy', 1);
 
@@ -29,9 +33,9 @@ app.use(helmet({
   permittedCrossDomainPolicies: { policy: 'none' },
 }));
 
-// Security: Restrict unnecessary browser features via Permissions-Policy
+// Security: Apply restrictive Permissions-Policy
 app.use((req, res, next) => {
-  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), interest-cohort=(), browsing-topics=(), run-ad-auction=(), join-ad-interest-group=()');
+  res.setHeader('Permissions-Policy', PERMISSIONS_POLICY);
   next();
 });
 
@@ -188,6 +192,7 @@ app.use((err, req, res, next) => {
 });
 
 module.exports = app;
+module.exports.PERMISSIONS_POLICY = PERMISSIONS_POLICY;
 
 if (require.main === module) {
   const PORT = process.env.PORT || 3000;

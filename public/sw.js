@@ -35,7 +35,11 @@ self.addEventListener('fetch', (event) => {
       fetch(event.request).catch(() =>
         new Response(JSON.stringify({ error: 'Offline' }), {
           status: 503,
-          headers: { 'Content-Type': 'application/json' }
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Content-Type-Options': 'nosniff',
+            'X-Frame-Options': 'DENY'
+          }
         })
       )
     );
