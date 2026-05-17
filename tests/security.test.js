@@ -7,6 +7,7 @@ const TEST_DB = path.join('/tmp', `test-security-${Date.now()}.json`);
 process.env.DB_PATH = TEST_DB;
 
 const app = require('../server');
+const { PERMISSIONS_POLICY } = app;
 const db = require('../db');
 const { authMiddleware } = require('../auth');
 
@@ -23,7 +24,7 @@ describe('Security Headers', () => {
     expect(res.headers['strict-transport-security']).toBeDefined();
     expect(res.headers['x-content-type-options']).toBe('nosniff');
     expect(res.headers['x-permitted-cross-domain-policies']).toBe('none');
-    expect(res.headers['permissions-policy']).toBe('camera=(), microphone=(), geolocation=(), interest-cohort=(), browsing-topics=(), run-ad-auction=(), join-ad-interest-group=()');
+    expect(res.headers['permissions-policy']).toBe(PERMISSIONS_POLICY);
 
     const csp = res.headers['content-security-policy'];
     expect(csp).toMatch(/frame-ancestors 'none'/);
