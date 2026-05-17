@@ -131,6 +131,10 @@
     // Programmatic focus for screen readers
     cardTitle.focus();
 
+    // Reset details expansion state
+    const details = cardCtxWrap.querySelector('details');
+    if (details) details.open = false;
+
     const s = suggestions[currentIndex % pendingCount];
 
     cardAgent.textContent = s.agent || 'agent';
@@ -139,6 +143,7 @@
     const dateStr = s.created_at.includes('Z') ? s.created_at : s.created_at.replace(' ', 'T') + 'Z';
     const date = new Date(dateStr);
     cardTime.title = isNaN(date) ? '' : date.toLocaleString();
+    if (!isNaN(date)) cardTime.setAttribute('datetime', date.toISOString());
     cardTitle.textContent = s.title;
     cardDesc.textContent  = s.description;
 
@@ -272,7 +277,7 @@
     const originalLabel = label.innerHTML;
     const originalIcon = icon.textContent;
 
-    const text = `${s.title}\n${s.description}`;
+    const text = `Suggestion from ${s.agent || 'agent'}:\n\n${s.title}\n${s.description}${s.context ? '\n\nContext:\n' + s.context : ''}`;
     navigator.clipboard.writeText(text).then(() => {
       showToast('Copied to clipboard', 'info');
       if (navigator.vibrate) navigator.vibrate(10);
