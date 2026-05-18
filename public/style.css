@@ -173,11 +173,26 @@ body {
   touch-action: pan-y;
   will-change: transform;
   overflow: hidden;
-  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s;
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s, background-color 0.3s;
 }
 
 .card.dragging {
-  transition: none !important;
+  transition: background-color 0.2s, box-shadow 0.2s !important;
+}
+
+.card.threshold-approve {
+  box-shadow: 0 0 0 4px var(--color-approve), var(--shadow);
+  background-color: color-mix(in srgb, var(--color-surface), var(--color-approve) 5%);
+}
+
+.card.threshold-reject {
+  box-shadow: 0 0 0 4px var(--color-reject), var(--shadow);
+  background-color: color-mix(in srgb, var(--color-surface), var(--color-reject) 5%);
+}
+
+.card.threshold-defer {
+  box-shadow: 0 0 0 4px var(--color-defer), var(--shadow);
+  background-color: color-mix(in srgb, var(--color-surface), var(--color-defer) 5%);
 }
 
 .card-progress {

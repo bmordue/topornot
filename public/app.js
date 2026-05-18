@@ -343,12 +343,22 @@
     hintReject.style.opacity  = lastDX < -THRESHOLD ? Math.min((-lastDX - THRESHOLD) / 40, 1) : 0;
     hintDefer.style.opacity   = lastDY < -THRESHOLD ? Math.min((-lastDY - THRESHOLD) / 40, 1) : 0;
 
-    // Tactile feedback when threshold is reached
-    const reached = Math.abs(lastDX) > ACTION_THRESHOLD || lastDY < -ACTION_THRESHOLD;
-    if (reached && !thresholdReached) {
+    // Threshold state feedback
+    let activeThreshold = null;
+    if (Math.abs(lastDX) > Math.abs(lastDY)) {
+      if (lastDX > ACTION_THRESHOLD)       activeThreshold = 'threshold-approve';
+      else if (lastDX < -ACTION_THRESHOLD) activeThreshold = 'threshold-reject';
+    } else {
+      if (lastDY < -ACTION_THRESHOLD)      activeThreshold = 'threshold-defer';
+    }
+
+    if (activeThreshold && !cardEl.classList.contains(activeThreshold)) {
+      cardEl.classList.remove('threshold-approve', 'threshold-reject', 'threshold-defer');
+      cardEl.classList.add(activeThreshold);
       if (navigator.vibrate) navigator.vibrate(10);
       thresholdReached = true;
-    } else if (!reached && thresholdReached) {
+    } else if (!activeThreshold && thresholdReached) {
+      cardEl.classList.remove('threshold-approve', 'threshold-reject', 'threshold-defer');
       thresholdReached = false;
     }
 
@@ -377,7 +387,7 @@
   cardEl.addEventListener('touchend', (e) => {
     if (!isDragging) return;
     isDragging = false;
-    cardEl.classList.remove('dragging');
+    cardEl.classList.remove('dragging', 'threshold-approve', 'threshold-reject', 'threshold-defer');
     const dx = e.changedTouches[0].clientX - touchStartX;
     const dy = e.changedTouches[0].clientY - touchStartY;
     cardEl.style.transform = '';
@@ -396,7 +406,7 @@
 
   cardEl.addEventListener('touchcancel', () => {
     isDragging = false;
-    cardEl.classList.remove('dragging');
+    cardEl.classList.remove('dragging', 'threshold-approve', 'threshold-reject', 'threshold-defer');
     cardEl.style.transform = '';
     hintApprove.style.opacity = 0;
     hintReject.style.opacity  = 0;
