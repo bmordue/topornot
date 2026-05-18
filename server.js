@@ -18,11 +18,13 @@ app.set('trust proxy', 1);
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
-      ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+      "default-src": ["'none'"],
       "script-src": ["'self'"],
       "style-src": ["'self'"],
       "img-src": ["'self'"],
       "connect-src": ["'self'"],
+      "manifest-src": ["'self'"],
+      "worker-src": ["'self'"],
       "object-src": ["'none'"],
       "frame-ancestors": ["'none'"],
       "base-uri": ["'none'"],
@@ -30,6 +32,8 @@ app.use(helmet({
       "upgrade-insecure-requests": [],
     },
   },
+  frameguard: { action: 'deny' },
+  referrerPolicy: { policy: 'no-referrer' },
   permittedCrossDomainPolicies: { policy: 'none' },
 }));
 
@@ -43,7 +47,8 @@ app.use((req, res, next) => {
 app.use(authMiddleware);
 
 app.use(express.json({ limit: '10kb' }));
-app.use(express.static(path.join(__dirname, 'public')));
+// Security: Prevent access to dotfiles in public directory.
+app.use(express.static(path.join(__dirname, 'public'), { dotfiles: 'deny' }));
 
 // Security: Use authenticated user for rate limiting key if available.
 // When fallback to IP, it defaults to Express's req.ip.
@@ -136,7 +141,7 @@ app.post('/api/suggestions', suggestionLimiter, (req, res) => {
     user: req.identity.user
   });
   // Security: Audit log for new suggestion
-  console.log(`[audit] SUGGESTION_CREATE: id=${suggestion.id} user=${req.identity.user}`);
+  console.log(`[audit] SUGGESTION_CREATE: id=${suggestion.id} user=${req.identity.user} ip=${sanitize(req.ip)}`);
   res.status(201).json(suggestion);
 });
 
@@ -160,7 +165,7 @@ app.patch('/api/suggestions/:id/:action', actionLimiter, (req, res) => {
     return res.status(404).json({ error: 'Suggestion not found' });
   }
   // Security: Audit log for status change
-  console.log(`[audit] SUGGESTION_UPDATE: id=${suggestion.id} action=${sanitize(action)} user=${req.identity.user} status=${suggestion.status}`);
+  console.log(`[audit] SUGGESTION_UPDATE: id=${suggestion.id} action=${sanitize(action)} user=${req.identity.user} ip=${sanitize(req.ip)} status=${suggestion.status}`);
   res.json(suggestion);
 });
 
