@@ -20,13 +20,21 @@ describe('Security Headers', () => {
   it('should have security headers (helmet)', async () => {
     const res = await request(app).get('/');
     expect(res.headers['x-dns-prefetch-control']).toBeDefined();
-    expect(res.headers['x-frame-options']).toBeDefined();
+    expect(res.headers['x-frame-options']).toBe('DENY');
     expect(res.headers['strict-transport-security']).toBeDefined();
     expect(res.headers['x-content-type-options']).toBe('nosniff');
     expect(res.headers['x-permitted-cross-domain-policies']).toBe('none');
+    expect(res.headers['referrer-policy']).toBe('no-referrer');
     expect(res.headers['permissions-policy']).toBe(PERMISSIONS_POLICY);
 
     const csp = res.headers['content-security-policy'];
+    expect(csp).toMatch(/default-src 'none'/);
+    expect(csp).toMatch(/script-src 'self'/);
+    expect(csp).toMatch(/style-src 'self'/);
+    expect(csp).toMatch(/img-src 'self'/);
+    expect(csp).toMatch(/connect-src 'self'/);
+    expect(csp).toMatch(/manifest-src 'self'/);
+    expect(csp).toMatch(/worker-src 'self'/);
     expect(csp).toMatch(/frame-ancestors 'none'/);
     expect(csp).toMatch(/base-uri 'none'/);
     expect(csp).toMatch(/form-action 'none'/);
@@ -250,11 +258,12 @@ describe('API Error Handling', () => {
     process.env.AUTH_MODE = originalAuthMode;
   });
 
-  it('should sanitize req.method and req.path in the audit log (unit test)', () => {
+  it('should sanitize req.method, req.path and req.ip in the auth log (unit test)', () => {
     const spy = jest.spyOn(console, 'log').mockImplementation();
     const req = {
       method: 'GET\nInjected-Method',
       path: '/api/suggestions\r\nInjected-Path',
+      ip: '127.0.0.1\nInjected-IP',
       headers: {
         'remote-user': 'alice'
       }
@@ -264,7 +273,7 @@ describe('API Error Handling', () => {
 
     authMiddleware(req, res, next);
 
-    expect(spy).toHaveBeenCalledWith(expect.stringContaining('[auth] GET_Injected-Method /api/suggestions__Injected-Path – user=alice'));
+    expect(spy).toHaveBeenCalledWith(expect.stringContaining('[auth] GET_Injected-Method /api/suggestions__Injected-Path – user=alice ip=127.0.0.1_Injected-IP'));
     spy.mockRestore();
   });
 
@@ -324,15 +333,15 @@ describe('Audit Logging', () => {
     logSpy.mockRestore();
   });
 
-  it('should log an audit entry when creating a suggestion', async () => {
+  it('should log an audit entry with IP when creating a suggestion', async () => {
     await request(app)
       .post('/api/suggestions')
       .send({ title: 'Audit Test', description: 'Testing logs' });
 
-    expect(logSpy).toHaveBeenCalledWith(expect.stringMatching(/\[audit\] SUGGESTION_CREATE: id=\d+ user=dev-user/));
+    expect(logSpy).toHaveBeenCalledWith(expect.stringMatching(/\[audit\] SUGGESTION_CREATE: id=\d+ user=dev-user ip=[a-f\d\.:]+/));
   });
 
-  it('should log an audit entry when updating a suggestion status', async () => {
+  it('should log an audit entry with IP when updating a suggestion status', async () => {
     // First create one
     const createRes = await request(app)
       .post('/api/suggestions')
@@ -343,6 +352,6 @@ describe('Audit Logging', () => {
 
     await request(app).patch(`/api/suggestions/${id}/approve`);
 
-    expect(logSpy).toHaveBeenCalledWith(expect.stringMatching(/\[audit\] SUGGESTION_UPDATE: id=\d+ action=approve user=dev-user status=approved/));
+    expect(logSpy).toHaveBeenCalledWith(expect.stringMatching(/\[audit\] SUGGESTION_UPDATE: id=\d+ action=approve user=dev-user ip=[a-f\d\.:]+ status=approved/));
   });
 });
