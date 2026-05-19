@@ -35,12 +35,12 @@
 
   // -- Toast --
   let toastTimer;
-  function showToast(msg, type = 'info') {
+  function showToast(msg, type = 'info', duration = 2200) {
     clearTimeout(toastTimer);
     toastEl.textContent = msg;
     toastEl.classList.remove('toast-approve', 'toast-reject', 'toast-defer', 'toast-info');
     toastEl.classList.add('show', `toast-${type}`);
-    toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2200);
+    toastTimer = setTimeout(() => toastEl.classList.remove('show'), duration);
   }
 
   // -- Offline banner --
@@ -447,6 +447,9 @@
     if (key === 's') {
       flashButton('btn-copy');
       copyToClipboard();
+    }
+    if (key === '?' || key === '/') {
+      showToast('Shortcuts: A: Approve, Z: Reject, D: Defer, R: Refresh, C: Context, S: Copy', 'info', 5000);
     }
   });
 

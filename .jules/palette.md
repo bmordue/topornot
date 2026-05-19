@@ -9,3 +9,7 @@
 ## 2026-05-18 - [Gesture Threshold Visual Feedback]
 **Learning:** In touch-first interfaces using swipe gestures, providing immediate visual state changes (like a halo/ring and background tint) when an action threshold is reached significantly improves "discoverability" and reduces user anxiety about whether an action will trigger. Using `color-mix` for subtle background tints allows for responsive feedback that works across light and dark modes without hardcoding numerous color variants.
 **Action:** Implement active visual state changes for gesture-based interactions to confirm intent before the action is finalized.
+
+## 2026-05-19 - [Discoverability via On-Demand Help]
+**Learning:** For keyboard-heavy "power user" interfaces, rely on invisible shortcuts alone creates a steep learning curve. Providing a universal, on-demand help trigger (like `?`) that displays a transient summary of available actions via existing notification systems (like toasts) bridges the gap between discoverability and a clean, minimal UI.
+**Action:** Always provide a help shortcut (`?`) that surfaces available keyboard interactions in a non-intrusive way.
