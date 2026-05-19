@@ -37,3 +37,7 @@
 ## 2026-05-16 - [Incremental Array-Based JSON Caching]
 **Learning:** Maintaining JSON caches as arrays of pre-stringified fragments instead of monolithic strings enables O(1) or O(P) incremental updates. For LIFO views, the reverse index can be mapped in O(1) via `length - 1 - fIdx`. This avoids O(N) rebuild loops and reduces string allocation overhead.
 **Action:** Use array-of-fragments for JSON caches that require partial updates. Ensure state transitions (e.g., pending -> pending) are handled via in-place replacement to prevent duplication.
+
+## 2026-05-17 - [Joined String Memoization]
+**Learning:** Even with pre-stringified fragments, the O(N) cost of `.join(',')` and string concatenation for large arrays (e.g., 5000+ items) can consume ~1-2ms of CPU time per request. Memoizing the final joined JSON string until the next data mutation reduces read overhead to O(1) and eliminates redundant allocations.
+**Action:** Always memoize the final serialization result of large collections in read-heavy paths. Ensure robust invalidation in all mutation and load/reset paths.

@@ -22,6 +22,8 @@ let _cachePending = null;
 let _cacheAll = null;
 let _cachePendingJson = null;
 let _cacheAllJson = null;
+let _cachePendingJsonString = null;
+let _cacheAllJsonString = null;
 
 function _load() {
   if (_data) return _data;
@@ -42,6 +44,8 @@ function _load() {
   _cacheAll = null;
   _cachePendingJson = null;
   _cacheAllJson = null;
+  _cachePendingJsonString = null;
+  _cacheAllJsonString = null;
   _data.suggestions.forEach((s, i) => {
     _index.set(s.id, s);
     _fragmentMap.set(s.id, i);
@@ -100,10 +104,12 @@ function _save({ invalidatePending = true, invalidateAll = true } = {}) {
   if (invalidatePending) {
     _cachePending = null;
     _cachePendingJson = null;
+    _cachePendingJsonString = null;
   }
   if (invalidateAll) {
     _cacheAll = null;
     _cacheAllJson = null;
+    _cacheAllJsonString = null;
   }
 
   _needsSave = true;
@@ -122,6 +128,8 @@ function closeDb() {
   _cacheAll = null;
   _cachePendingJson = null;
   _cacheAllJson = null;
+  _cachePendingJsonString = null;
+  _cacheAllJsonString = null;
 }
 
 function getVersion() {
@@ -149,33 +157,39 @@ function getAllSuggestions() {
 
 function getPendingSuggestionsJson() {
   _load();
-  if (!_cachePendingJson) {
-    // Performance: Optimized fragment joining for API response.
-    // Avoids O(N) object graph traversal of JSON.stringify.
-    const pendingFragments = [];
-    for (const id of _pending.keys()) {
-      const fIdx = _fragmentMap.get(id);
-      if (fIdx !== undefined) {
-        pendingFragments.push(_getFragment(fIdx));
+  if (!_cachePendingJsonString) {
+    if (!_cachePendingJson) {
+      // Performance: Optimized fragment joining for API response.
+      // Avoids O(N) object graph traversal of JSON.stringify.
+      const pendingFragments = [];
+      for (const id of _pending.keys()) {
+        const fIdx = _fragmentMap.get(id);
+        if (fIdx !== undefined) {
+          pendingFragments.push(_getFragment(fIdx));
+        }
       }
+      _cachePendingJson = pendingFragments;
     }
-    _cachePendingJson = pendingFragments;
+    _cachePendingJsonString = `[${_cachePendingJson.join(',')}]`;
   }
-  return `[${_cachePendingJson.join(',')}]`;
+  return _cachePendingJsonString;
 }
 
 function getAllSuggestionsJson() {
   _load();
-  if (!_cacheAllJson) {
-    // Performance: Optimized fragment joining for API response.
-    // Joins pre-stringified fragments in reverse order to match getAllSuggestions().
-    const reversed = [];
-    for (let i = _fragments.length - 1; i >= 0; i--) {
-      reversed.push(_getFragment(i));
+  if (!_cacheAllJsonString) {
+    if (!_cacheAllJson) {
+      // Performance: Optimized fragment joining for API response.
+      // Joins pre-stringified fragments in reverse order to match getAllSuggestions().
+      const reversed = [];
+      for (let i = _fragments.length - 1; i >= 0; i--) {
+        reversed.push(_getFragment(i));
+      }
+      _cacheAllJson = reversed;
     }
-    _cacheAllJson = reversed;
+    _cacheAllJsonString = `[${_cacheAllJson.join(',')}]`;
   }
-  return `[${_cacheAllJson.join(',')}]`;
+  return _cacheAllJsonString;
 }
 
 function getSuggestionById(id) {
@@ -221,9 +235,11 @@ function createSuggestion({ title, description, context, agent, user }) {
   // Performance: Incremental JSON fragment cache updates
   if (_cacheAllJson) {
     _cacheAllJson.unshift(newFragment); // Prepend for LIFO order
+    _cacheAllJsonString = null;
   }
   if (_cachePendingJson) {
     _cachePendingJson.push(newFragment);
+    _cachePendingJsonString = null;
   }
 
   _save({ invalidatePending: false, invalidateAll: false });
@@ -258,6 +274,7 @@ function updateStatus(id, status, user) {
     const allIdx = _fragments.length - 1 - fIdx;
     if (allIdx >= 0 && allIdx < _cacheAllJson.length) {
       _cacheAllJson[allIdx] = newFragment;
+      _cacheAllJsonString = null;
     }
   }
 
@@ -273,26 +290,41 @@ function updateStatus(id, status, user) {
     // pending -> pending: Update in-place
     if (_cachePending) {
       const idx = _cachePending.indexOf(suggestion);
-      if (idx !== -1 && _cachePendingJson) _cachePendingJson[idx] = newFragment;
+      if (idx !== -1 && _cachePendingJson) {
+        _cachePendingJson[idx] = newFragment;
+        _cachePendingJsonString = null;
+      }
     } else if (_cachePendingJson) {
       const idx = _cachePendingJson.indexOf(oldFragment);
-      if (idx !== -1) _cachePendingJson[idx] = newFragment;
+      if (idx !== -1) {
+        _cachePendingJson[idx] = newFragment;
+        _cachePendingJsonString = null;
+      }
     }
   } else if (status === 'pending') {
     // non-pending -> pending: Append
     if (_cachePending) _cachePending.push(suggestion);
-    if (_cachePendingJson) _cachePendingJson.push(newFragment);
+    if (_cachePendingJson) {
+      _cachePendingJson.push(newFragment);
+      _cachePendingJsonString = null;
+    }
   } else if (oldStatus === 'pending') {
     // pending -> non-pending: Remove
     if (_cachePending) {
       const idx = _cachePending.indexOf(suggestion);
       if (idx !== -1) {
         _cachePending.splice(idx, 1);
-        if (_cachePendingJson) _cachePendingJson.splice(idx, 1);
+        if (_cachePendingJson) {
+          _cachePendingJson.splice(idx, 1);
+          _cachePendingJsonString = null;
+        }
       }
     } else if (_cachePendingJson) {
       const idx = _cachePendingJson.indexOf(oldFragment);
-      if (idx !== -1) _cachePendingJson.splice(idx, 1);
+      if (idx !== -1) {
+        _cachePendingJson.splice(idx, 1);
+        _cachePendingJsonString = null;
+      }
     }
   }
 
