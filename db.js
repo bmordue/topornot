@@ -247,11 +247,14 @@ function updateStatus(id, status, user) {
   const suggestion = _index.get(id);
   if (!suggestion) return null;
 
-  // Performance: Early return if status is unchanged to avoid redundant disk I/O
-  if (suggestion.status === status) return suggestion;
-
   const oldStatus = suggestion.status;
+
+  // Performance: Early return if status is unchanged to avoid redundant disk I/O
+  // Exception: if it's already pending, we still want to "defer" it (move to end)
+  if (suggestion.status === status && status !== 'pending') return suggestion;
+
   const fIdx = _fragmentMap.get(id);
+  const oldFragment = fIdx !== undefined ? _getFragment(fIdx) : null;
 
   suggestion.status = status;
   suggestion.updated_at = _getNow();
@@ -263,13 +266,22 @@ function updateStatus(id, status, user) {
     _fragments[fIdx] = newFragment;
   }
 
-  // Performance: Incremental JSON cache updates (O(1))
-  // We invalidate the JSON caches because string replacement is risky.
-  _cacheAllJson = null;
-  _cachePendingJson = null;
+  // Performance: Incremental JSON cache updates (O(1) / O(P))
+  if (_cacheAllJson && oldFragment) {
+    _cacheAllJson = _cacheAllJson.replace(oldFragment, newFragment);
+  }
+
+  if (_cachePendingJson && oldFragment && (status === 'pending' || oldStatus === 'pending')) {
+    _cachePendingJson = _removeFromCache(_cachePendingJson, oldFragment);
+    if (status === 'pending') {
+      _cachePendingJson = _cachePendingJson.slice(0, -1) + (_cachePendingJson.length > 2 ? ',' : '') + newFragment + ']';
+    }
+  }
 
   // Update pending Map
   if (status === 'pending') {
+    // If it was already pending, this moves it to the end of the Map (LIFO/FIFO behavior)
+    _pending.delete(id);
     _pending.set(id, suggestion);
   } else {
     _pending.delete(id);
@@ -277,11 +289,12 @@ function updateStatus(id, status, user) {
 
   // Performance: Incremental _cachePending update
   if (_cachePending) {
+    const idx = _cachePending.findIndex(s => s.id === id);
+    if (idx !== -1) {
+      _cachePending.splice(idx, 1);
+    }
     if (status === 'pending') {
       _cachePending.push(suggestion);
-    } else if (oldStatus === 'pending') {
-      const idx = _cachePending.findIndex(s => s.id === id);
-      if (idx !== -1) _cachePending.splice(idx, 1);
     }
   }
 
