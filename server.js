@@ -9,7 +9,7 @@ const app = express();
 
 // Security: Restrict unnecessary browser features via Permissions-Policy.
 // Explicitly disable features that the application does not require.
-const PERMISSIONS_POLICY = 'camera=(), microphone=(), geolocation=(), interest-cohort=(), browsing-topics=(), run-ad-auction=(), join-ad-interest-group=(), fullscreen=(), payment=(), usb=(), publickey-credentials-get=(), screen-wake-lock=(), sync-xhr=(), xr-spatial-tracking=()';
+const PERMISSIONS_POLICY = 'accelerometer=(), camera=(), fullscreen=(), geolocation=(), gyroscope=(), interest-cohort=(), browsing-topics=(), run-ad-auction=(), join-ad-interest-group=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), sync-xhr=(), usb=(), web-share=(), xr-spatial-tracking=()';
 
 // Trust the first proxy in front of us
 app.set('trust proxy', 1);
@@ -37,9 +37,10 @@ app.use(helmet({
   permittedCrossDomainPolicies: { policy: 'none' },
 }));
 
-// Security: Apply restrictive Permissions-Policy
+// Security: Apply restrictive Permissions-Policy and prevent indexing by search engines.
 app.use((req, res, next) => {
   res.setHeader('Permissions-Policy', PERMISSIONS_POLICY);
+  res.setHeader('X-Robots-Tag', 'noindex, nofollow');
   next();
 });
 
@@ -171,16 +172,22 @@ app.patch('/api/suggestions/:id/:action', actionLimiter, (req, res) => {
 
 // Catch-all 404 for API routes to prevent leaking Express default HTML error pages
 app.use('/api', (req, res) => {
+  // Security: Prevent caching of error responses to avoid leaking info.
+  res.setHeader('Cache-Control', 'no-store, max-age=0');
   res.status(404).json({ error: 'API endpoint not found' });
 });
 
 // Global 404 handler for non-API routes to prevent leaking Express default HTML error pages
 app.use((req, res) => {
+  res.setHeader('Cache-Control', 'no-store, max-age=0');
   res.status(404).type('text/plain').send('404 Not Found');
 });
 
 // Global error handler to prevent stack trace leaks
 app.use((err, req, res, next) => {
+  // Security: Prevent caching of error responses.
+  res.setHeader('Cache-Control', 'no-store, max-age=0');
+
   // If it's a JSON parsing error from express.json()
   if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
     return res.status(400).json({ error: 'Invalid JSON payload' });

@@ -26,6 +26,7 @@ describe('Security Headers', () => {
     expect(res.headers['x-permitted-cross-domain-policies']).toBe('none');
     expect(res.headers['referrer-policy']).toBe('no-referrer');
     expect(res.headers['permissions-policy']).toBe(PERMISSIONS_POLICY);
+    expect(res.headers['x-robots-tag']).toBe('noindex, nofollow');
 
     const csp = res.headers['content-security-policy'];
     expect(csp).toMatch(/default-src 'none'/);
@@ -82,7 +83,7 @@ describe('Input Validation', () => {
     expect(res.body.error).toMatch(/title must be a string/);
   });
 
-  it('should not leak stack traces on invalid JSON', async () => {
+  it('should not leak stack traces on invalid JSON and set no-store', async () => {
     const res = await request(app)
       .post('/api/suggestions')
       .set('Content-Type', 'application/json')
@@ -95,6 +96,7 @@ describe('Input Validation', () => {
     // Ideally it should be a JSON error response
     expect(res.headers['content-type']).toMatch(/json/);
     expect(res.body.error).toBeDefined();
+    expect(res.headers['cache-control']).toBe('no-store, max-age=0');
   });
 });
 
@@ -124,18 +126,20 @@ describe('API Cache Control', () => {
 });
 
 describe('API Error Handling', () => {
-  it('should return JSON 404 for non-existent API routes', async () => {
+  it('should return JSON 404 for non-existent API routes and set no-store', async () => {
     const res = await request(app).get('/api/non-existent-route');
     expect(res.status).toBe(404);
     expect(res.headers['content-type']).toMatch(/json/);
     expect(res.body.error).toBe('API endpoint not found');
+    expect(res.headers['cache-control']).toBe('no-store, max-age=0');
   });
 
-  it('should return plain text 404 for non-existent non-API routes', async () => {
+  it('should return plain text 404 for non-existent non-API routes and set no-store', async () => {
     const res = await request(app).get('/non-existent-route');
     expect(res.status).toBe(404);
     expect(res.headers['content-type']).toMatch(/text\/plain/);
     expect(res.text).toBe('404 Not Found');
+    expect(res.headers['cache-control']).toBe('no-store, max-age=0');
   });
 
   it('should reject non-numeric IDs in PATCH route', async () => {

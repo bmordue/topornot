@@ -38,7 +38,9 @@ self.addEventListener('fetch', (event) => {
           headers: {
             'Content-Type': 'application/json',
             'X-Content-Type-Options': 'nosniff',
-            'X-Frame-Options': 'DENY'
+            'X-Frame-Options': 'DENY',
+            'X-Robots-Tag': 'noindex, nofollow',
+            'Permissions-Policy': 'accelerometer=(), camera=(), fullscreen=(), geolocation=(), gyroscope=(), interest-cohort=(), browsing-topics=(), run-ad-auction=(), join-ad-interest-group=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), sync-xhr=(), usb=(), web-share=(), xr-spatial-tracking=()'
           }
         })
       )
