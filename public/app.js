@@ -26,6 +26,10 @@
   const hintReject   = document.getElementById('hint-reject');
   const hintDefer    = document.getElementById('hint-defer');
 
+  function showHelp() {
+    showToast('Shortcuts: A: Approve, Z: Reject, D: Defer, R: Refresh, C: Context, S: Copy, ?: Help', 'info', 5000);
+  }
+
   function flashButton(id) {
     const el = document.getElementById(id);
     if (!el) return;
@@ -317,6 +321,10 @@
   });
   document.getElementById('btn-refresh').addEventListener('click', refreshHandler);
   document.getElementById('btn-header-refresh').addEventListener('click', refreshHandler);
+  document.getElementById('btn-header-help').addEventListener('click', () => {
+    flashButton('btn-header-help');
+    showHelp();
+  });
 
   // -- Swipe gestures --
   let touchStartX = 0;
@@ -449,7 +457,8 @@
       copyToClipboard();
     }
     if (key === '?' || key === '/') {
-      showToast('Shortcuts: A: Approve, Z: Reject, D: Defer, R: Refresh, C: Context, S: Copy', 'info', 5000);
+      flashButton('btn-header-help');
+      showHelp();
     }
   });
 
