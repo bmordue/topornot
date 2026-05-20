@@ -54,8 +54,10 @@ function authMiddleware(req, res, next) {
   // This ensures a fail-closed posture if AUTH_MODE is misconfigured.
   if (AUTH_MODE !== 'dev' && !user) {
     // Security: Log unauthorized access attempts for auditability.
-    // Sanitize req.ip to prevent log injection if proxy headers are spoofed.
-    console.warn(`[auth] Unauthorized access attempt: Missing Remote-User from ${sanitize(req.ip)}`);
+    // Sanitize method, path, and IP to prevent log injection.
+    console.warn(`[auth] Unauthorized access attempt: ${sanitize(req.method)} ${sanitize(req.path)} – Missing Remote-User from ${sanitize(req.ip)}`);
+    // Security: Prevent caching of unauthorized responses to protect privacy.
+    res.setHeader('Cache-Control', 'no-store, max-age=0');
     return res.status(401).json({ error: 'Missing upstream identity header (Remote-User)' });
   }
 

@@ -218,48 +218,34 @@ describe('API Error Handling', () => {
     expect(next).toHaveBeenCalled();
   });
 
-  it('should sanitize req.ip in unauthorized warning log (unit test)', () => {
+  it('should sanitize req.method, req.path, and req.ip in unauthorized warning log (unit test)', () => {
     const spy = jest.spyOn(console, 'warn').mockImplementation();
     const req = {
+      method: 'POST\nInjected',
+      path: '/api/suggestions\r\nInjected',
       ip: '127.0.0.1\nInjected',
       headers: {} // No remote-user
     };
     const res = {
       status: jest.fn().mockReturnThis(),
-      json: jest.fn().mockReturnThis()
+      json: jest.fn().mockReturnThis(),
+      setHeader: jest.fn()
     };
     const next = jest.fn();
 
-    // Force proxy mode to trigger the log
-    const originalAuthMode = process.env.AUTH_MODE;
-    process.env.AUTH_MODE = 'proxy';
-
-    // We need to re-require or manually trigger since auth.js has its own AUTH_MODE const
-    // But authMiddleware is exported, and it uses AUTH_MODE which is set at load time.
-    // Wait, AUTH_MODE in auth.js is: const AUTH_MODE = (process.env.AUTH_MODE || 'dev').toLowerCase();
-    // So changing process.env.AUTH_MODE won't change it if it's already loaded.
-    // Let's use a trick: require.cache or just accept that it might be 'dev' if not careful.
-
-    // For the test, we can manually call authMiddleware and it uses the AUTH_MODE from its module scope.
-    // If it's 'dev', it will fill headers.
-
-    // Let's see if we can trigger the 401.
-    // I will mock the AUTH_MODE by re-requiring the module if necessary,
-    // but usually in jest --runInBand it might be tricky.
-
-    // Actually, I can just check if I can reach the sanitize(req.ip) call.
+    // The auth.js module sets AUTH_MODE at load time.
+    // security.test.js already requires('../server') which requires('../db') and ('./auth').
+    const { AUTH_MODE } = require('../auth');
 
     authMiddleware(req, res, next);
 
-    // If AUTH_MODE was 'dev', it filled headers and didn't log warn.
-    // Let's check what it is.
-    const { AUTH_MODE } = require('../auth');
     if (AUTH_MODE === 'proxy') {
-      expect(spy).toHaveBeenCalledWith(expect.stringContaining('127.0.0.1_Injected'));
+      expect(spy).toHaveBeenCalledWith(expect.stringContaining('POST_Injected /api/suggestions__Injected – Missing Remote-User from 127.0.0.1_Injected'));
+      expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'no-store, max-age=0');
+      expect(res.status).toHaveBeenCalledWith(401);
     }
 
     spy.mockRestore();
-    process.env.AUTH_MODE = originalAuthMode;
   });
 
   it('should sanitize req.method, req.path and req.ip in the auth log (unit test)', () => {
