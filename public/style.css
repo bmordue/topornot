@@ -93,7 +93,7 @@ body {
   gap: 12px;
 }
 
-.btn-header-refresh {
+.btn-header-refresh, .btn-header-help {
   background: rgba(255, 255, 255, 0.15);
   border: 1px solid rgba(255, 255, 255, 0.2);
   color: white;
@@ -106,20 +106,21 @@ body {
   transition: background 0.2s, transform 0.1s;
 }
 
-.btn-header-refresh:hover {
+.btn-header-refresh:hover, .btn-header-help:hover {
   background: rgba(255, 255, 255, 0.25);
 }
 
-.btn-header-refresh:active, .btn-header-refresh.pressed {
+.btn-header-refresh:active, .btn-header-refresh.pressed,
+.btn-header-help:active, .btn-header-help.pressed {
   transform: scale(0.95);
 }
 
-.btn-header-refresh:focus-visible {
+.btn-header-refresh:focus-visible, .btn-header-help:focus-visible {
   outline: 2px solid white;
   outline-offset: 2px;
 }
 
-.btn-header-refresh kbd {
+.btn-header-refresh kbd, .btn-header-help kbd {
   background: rgba(0, 0, 0, 0.2);
   border-color: rgba(255, 255, 255, 0.3);
   color: white;
