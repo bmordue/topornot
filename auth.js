@@ -30,8 +30,10 @@ const DEV_DEFAULTS = {
 // Truncates to maxLen to prevent resource exhaustion/log bloat.
 // Robustly handles array inputs from Express headers.
 const sanitize = (val, maxLen = 255) => {
-  if (!val) return null;
-  const str = Array.isArray(val) ? String(val[0]) : String(val);
+  if (val === undefined || val === null) return null;
+  const raw = Array.isArray(val) ? val[0] : val;
+  if (raw === undefined || raw === null) return null;
+  const str = String(raw);
   return str.replace(/[\x00-\x1F\x7F]/g, '_').slice(0, maxLen);
 };
 
