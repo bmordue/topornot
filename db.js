@@ -6,7 +6,6 @@ const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'suggestions.json');
 let _data = null;
 let _index = new Map();
 let _pending = new Map();
-let _pendingIndexMap = new Map(); // id -> index in _cachePendingJson
 let _version = 0;
 
 // Fragment caches for fast O(1) serialization
@@ -21,7 +20,7 @@ const SAVE_INTERVAL = 1000; // 1 second batching
 // Result caches to avoid repeated O(N) conversions
 let _cachePending = null;
 let _cacheAll = null;
-let _cachePendingJson = null;
+let _cachePendingJson = null; // Map<id, fragment>
 let _cacheAllJson = null;
 let _cachePendingJsonString = null;
 let _cacheAllJsonString = null;
@@ -39,7 +38,6 @@ function _load() {
   }
   _index.clear();
   _pending.clear();
-  _pendingIndexMap.clear();
   _fragmentMap.clear();
   _fragments = [];
   _cachePending = null;
@@ -126,7 +124,6 @@ function _save({ invalidatePending = true, invalidateAll = true } = {}) {
 function closeDb() {
   flush(); // Ensure everything is saved before clearing
   _data = null;
-  _pendingIndexMap.clear();
   _cachePending = null;
   _cacheAll = null;
   _cachePendingJson = null;
@@ -164,18 +161,16 @@ function getPendingSuggestionsJson() {
     if (!_cachePendingJson) {
       // Performance: Optimized fragment joining for API response.
       // Avoids O(N) object graph traversal of JSON.stringify.
-      const pendingFragments = [];
-      _pendingIndexMap.clear();
+      const pendingFragments = new Map();
       for (const id of _pending.keys()) {
         const fIdx = _fragmentMap.get(id);
         if (fIdx !== undefined) {
-          _pendingIndexMap.set(id, pendingFragments.length);
-          pendingFragments.push(_getFragment(fIdx));
+          pendingFragments.set(id, _getFragment(fIdx));
         }
       }
       _cachePendingJson = pendingFragments;
     }
-    _cachePendingJsonString = `[${_cachePendingJson.join(',')}]`;
+    _cachePendingJsonString = `[${Array.from(_cachePendingJson.values()).join(',')}]`;
   }
   return _cachePendingJsonString;
 }
@@ -230,21 +225,15 @@ function createSuggestion({ title, description, context, agent, user }) {
   _fragmentMap.set(suggestion.id, _fragments.length);
   _fragments.push(newFragment);
 
-  if (_cacheAll) {
-    _cacheAll.unshift(suggestion); // Suggestions are reversed in _cacheAll
-  }
-  if (_cachePending) {
-    _cachePending.push(suggestion);
-  }
+  // Performance: Invalidate array-based caches to ensure O(1) write.
+  // These will be rebuilt on next read (O(N)).
+  _cacheAll = null;
+  _cachePending = null;
+  _cacheAllJson = null;
+  _cacheAllJsonString = null;
 
-  // Performance: Incremental JSON fragment cache updates
-  if (_cacheAllJson) {
-    _cacheAllJson.unshift(newFragment); // Prepend for LIFO order
-    _cacheAllJsonString = null;
-  }
   if (_cachePendingJson) {
-    _pendingIndexMap.set(suggestion.id, _cachePendingJson.length);
-    _cachePendingJson.push(newFragment);
+    _cachePendingJson.set(suggestion.id, newFragment);
     _cachePendingJsonString = null;
   }
 
@@ -274,15 +263,11 @@ function updateStatus(id, status, user) {
     _fragments[fIdx] = newFragment;
   }
 
-  // Performance: Incremental JSON cache updates
-  // Update _cacheAllJson in O(1) by calculating the reversed index
-  if (_cacheAllJson && fIdx !== undefined) {
-    const allIdx = _fragments.length - 1 - fIdx;
-    if (allIdx >= 0 && allIdx < _cacheAllJson.length) {
-      _cacheAllJson[allIdx] = newFragment;
-      _cacheAllJsonString = null;
-    }
-  }
+  // Performance: Invalidate array-based caches to ensure O(1) write.
+  _cacheAll = null;
+  _cachePending = null;
+  _cacheAllJson = null;
+  _cacheAllJsonString = null;
 
   // Update pending Map
   if (status === 'pending') {
@@ -291,61 +276,28 @@ function updateStatus(id, status, user) {
     _pending.delete(id);
   }
 
-  // Performance: Incremental array and JSON fragment cache updates
+  // Performance: Incremental JSON fragment cache updates
   if (status === 'pending' && oldStatus === 'pending') {
-    // pending -> pending: Update in-place
-    if (_cachePending) {
-      const idx = _cachePending.indexOf(suggestion);
-      if (idx !== -1 && _cachePendingJson) {
-        _cachePendingJson[idx] = newFragment;
-        _cachePendingJsonString = null;
-      }
-    } else if (_cachePendingJson) {
-      const idx = _pendingIndexMap.has(id) ? _pendingIndexMap.get(id) : _cachePendingJson.indexOf(oldFragment);
-      if (idx !== -1) {
-        _cachePendingJson[idx] = newFragment;
-        _cachePendingJsonString = null;
-        _pendingIndexMap.set(id, idx);
-      }
+    // pending -> pending: Rotate to back for defer
+    _pending.delete(id);
+    _pending.set(id, suggestion);
+
+    if (_cachePendingJson) {
+      _cachePendingJson.delete(id);
+      _cachePendingJson.set(id, newFragment);
+      _cachePendingJsonString = null;
     }
   } else if (status === 'pending') {
     // non-pending -> pending: Append
-    if (_cachePending) _cachePending.push(suggestion);
     if (_cachePendingJson) {
-      _pendingIndexMap.set(id, _cachePendingJson.length);
-      _cachePendingJson.push(newFragment);
+      _cachePendingJson.set(id, newFragment);
       _cachePendingJsonString = null;
     }
   } else if (oldStatus === 'pending') {
     // pending -> non-pending: Remove
-    if (_cachePending) {
-      const idx = _cachePending.indexOf(suggestion);
-      if (idx !== -1) {
-        _cachePending.splice(idx, 1);
-        if (_cachePendingJson) {
-          const pIdx = _pendingIndexMap.has(id) ? _pendingIndexMap.get(id) : idx;
-          _cachePendingJson.splice(pIdx, 1);
-          _cachePendingJsonString = null;
-          _pendingIndexMap.delete(id);
-          // Re-index remaining items in _pendingIndexMap if we didn't just clear it via _cachePending
-          if (pIdx < _cachePendingJson.length) {
-            for (let i = pIdx; i < _cachePendingJson.length; i++) {
-              const item = _cachePending[i];
-              if (item) _pendingIndexMap.set(item.id, i);
-            }
-          }
-        }
-      }
-    } else if (_cachePendingJson) {
-      const idx = _pendingIndexMap.has(id) ? _pendingIndexMap.get(id) : _cachePendingJson.indexOf(oldFragment);
-      if (idx !== -1) {
-        _cachePendingJson.splice(idx, 1);
-        _cachePendingJsonString = null;
-        _pendingIndexMap.delete(id);
-        // O(N) re-indexing is required here because we don't have _cachePending to quickly find IDs.
-        // However, this path is only hit if _cachePending is null, and we've still avoided the indexOf(oldFragment) O(N) search.
-        _pendingIndexMap.clear(); // Simpler to clear and let next read rebuild it O(N) if needed
-      }
+    if (_cachePendingJson) {
+      _cachePendingJson.delete(id);
+      _cachePendingJsonString = null;
     }
   }
 
