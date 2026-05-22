@@ -73,3 +73,8 @@
 **Vulnerability:** Default static file serving might expose sensitive dotfiles (e.g., .env), and audit logs lacked source IP addresses, hindering forensic investigation of security events.
 **Learning:** Hardening static file serving and implementing comprehensive IP logging across all state-changing and authenticated operations provides a critical layer of defense-in-depth and accountability. A "deny-by-default" CSP (default-src 'none') further minimizes the attack surface.
 **Prevention:** Explicitly configure static middleware to deny dotfiles, and always include sanitized source IP addresses in all security-relevant log entries to ensure forensic traceability.
+
+## 2026-06-25 - Comprehensive Security Headers for Service Worker Synthetic Responses
+**Vulnerability:** Service Worker offline fallback responses were missing critical modern security headers (CSP, COOP, COEP, CORP), creating a security disparity between online and offline states.
+**Learning:** Hardening only the server-side responses is insufficient when a Service Worker can generate synthetic responses. These synthetic responses must mirror the security posture of the server to prevent them from becoming a weaker link in the defense-in-depth chain.
+**Prevention:** Always define a comprehensive set of security headers for any synthetic Response object created in a Service Worker, including a strict Content-Security-Policy and cross-origin isolation policies.

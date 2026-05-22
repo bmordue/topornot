@@ -114,6 +114,8 @@ app.get('/api/suggestions', (req, res) => {
 
 // POST a new suggestion (used by agents)
 app.post('/api/suggestions', suggestionLimiter, (req, res) => {
+  // Security: Prevent caching of validation errors or sensitive created data.
+  res.setHeader('Cache-Control', 'no-store, max-age=0');
   const { title, description, context, agent } = req.body;
 
   if (!title || !description) {
@@ -148,6 +150,8 @@ app.post('/api/suggestions', suggestionLimiter, (req, res) => {
 
 // PATCH to update status: approve, reject, defer
 app.patch('/api/suggestions/:id/:action', actionLimiter, (req, res) => {
+  // Security: Prevent caching of validation errors or sensitive updated data.
+  res.setHeader('Cache-Control', 'no-store, max-age=0');
   const { id, action } = req.params;
 
   // Input validation: ensure ID is a safe numeric integer

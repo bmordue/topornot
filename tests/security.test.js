@@ -83,6 +83,14 @@ describe('Input Validation', () => {
     expect(res.body.error).toMatch(/title must be a string/);
   });
 
+  it('should set Cache-Control: no-store on route-level validation errors', async () => {
+    const res = await request(app)
+      .post('/api/suggestions')
+      .send({ description: 'missing title' }); // Triggers 400
+    expect(res.status).toBe(400);
+    expect(res.headers['cache-control']).toBe('no-store, max-age=0');
+  });
+
   it('should not leak stack traces on invalid JSON and set no-store', async () => {
     const res = await request(app)
       .post('/api/suggestions')
