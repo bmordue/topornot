@@ -49,3 +49,7 @@
 ## 2026-05-20 - [O(1) Queue Updates with Map-based Fragment Caching]
 **Learning:** Refactoring an array-based pending cache (using `splice` and manual index maps) to a native JavaScript `Map` provides O(1) removals and appends while preserving insertion order. This eliminates the O(N) cost of re-indexing and string searches, resulting in a ~17x reduction in update latency for large suggestion queues.
 **Action:** Use Map-based caches for incremental status/filtered views that require frequent removals and appends. Leverage Map's `delete` and `set` operations to efficiently implement "move to back" (rotation) logic in O(1).
+
+## 2026-05-21 - [O(1) Incremental LIFO Cache Updates]
+**Learning:** Moving from lazy invalidation to incremental updates for LIFO views (reversed arrays) prevents O(N) latency spikes on the first read after a write. For LIFO, new items are `unshifted`, and updates use the index mapping `length - 1 - fIdx` to perform in-place replacement. While `unshift` is O(N), it is often faster than a full array copy and reverse for typical queue sizes.
+**Action:** Use incremental updates for LIFO/FIFO result caches to maintain consistent read performance. Ensure all required fragments and objects are updated or invalidated to prevent stale data.

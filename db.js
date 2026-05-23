@@ -225,17 +225,17 @@ function createSuggestion({ title, description, context, agent, user }) {
   _fragmentMap.set(suggestion.id, _fragments.length);
   _fragments.push(newFragment);
 
-  // Performance: Invalidate array-based caches to ensure O(1) write.
-  // These will be rebuilt on next read (O(N)).
-  _cacheAll = null;
-  _cachePending = null;
-  _cacheAllJson = null;
+  // Performance: Incremental update of "all" caches (LIFO).
+  // Note: unshift is O(N), but for typical queue sizes it prevents latency spikes on read.
+  if (_cacheAll) _cacheAll.unshift(suggestion);
+  if (_cacheAllJson) _cacheAllJson.unshift(newFragment);
   _cacheAllJsonString = null;
 
+  _cachePending = null;
   if (_cachePendingJson) {
     _cachePendingJson.set(suggestion.id, newFragment);
-    _cachePendingJsonString = null;
   }
+  _cachePendingJsonString = null;
 
   _save({ invalidatePending: false, invalidateAll: false });
   return suggestion;
@@ -251,7 +251,6 @@ function updateStatus(id, status, user) {
 
   const oldStatus = suggestion.status;
   const fIdx = _fragmentMap.get(id);
-  const oldFragment = fIdx !== undefined ? _getFragment(fIdx) : null;
 
   suggestion.status = status;
   suggestion.updated_at = _getNow();
@@ -261,13 +260,18 @@ function updateStatus(id, status, user) {
   const newFragment = JSON.stringify(suggestion);
   if (fIdx !== undefined) {
     _fragments[fIdx] = newFragment;
-  }
 
-  // Performance: Invalidate array-based caches to ensure O(1) write.
-  _cacheAll = null;
-  _cachePending = null;
-  _cacheAllJson = null;
+    // Performance: Incremental update of "all" caches.
+    // Suggestion object is mutated in-place, so _cacheAll remains valid.
+    if (_cacheAllJson) {
+      const allIdx = _fragments.length - 1 - fIdx;
+      _cacheAllJson[allIdx] = newFragment;
+    }
+  }
   _cacheAllJsonString = null;
+
+  _cachePending = null;
+  _cachePendingJsonString = null;
 
   // Update pending Map
   if (status === 'pending') {
@@ -285,19 +289,16 @@ function updateStatus(id, status, user) {
     if (_cachePendingJson) {
       _cachePendingJson.delete(id);
       _cachePendingJson.set(id, newFragment);
-      _cachePendingJsonString = null;
     }
   } else if (status === 'pending') {
     // non-pending -> pending: Append
     if (_cachePendingJson) {
       _cachePendingJson.set(id, newFragment);
-      _cachePendingJsonString = null;
     }
   } else if (oldStatus === 'pending') {
     // pending -> non-pending: Remove
     if (_cachePendingJson) {
       _cachePendingJson.delete(id);
-      _cachePendingJsonString = null;
     }
   }
 
