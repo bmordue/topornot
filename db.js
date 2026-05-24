@@ -225,16 +225,16 @@ function createSuggestion({ title, description, context, agent, user }) {
   _fragmentMap.set(suggestion.id, _fragments.length);
   _fragments.push(newFragment);
 
-  // Performance: Invalidate array-based caches to ensure O(1) write.
-  // These will be rebuilt on next read (O(N)).
-  _cacheAll = null;
-  _cachePending = null;
-  _cacheAllJson = null;
+  // Performance: Incremental array-based cache updates to avoid O(N) rebuilds.
+  if (_cacheAll) _cacheAll.unshift(suggestion);
+  if (_cacheAllJson) _cacheAllJson.unshift(newFragment);
+  if (_cachePending) _cachePending.push(suggestion);
+
   _cacheAllJsonString = null;
+  _cachePendingJsonString = null;
 
   if (_cachePendingJson) {
     _cachePendingJson.set(suggestion.id, newFragment);
-    _cachePendingJsonString = null;
   }
 
   _save({ invalidatePending: false, invalidateAll: false });
@@ -263,11 +263,32 @@ function updateStatus(id, status, user) {
     _fragments[fIdx] = newFragment;
   }
 
-  // Performance: Invalidate array-based caches to ensure O(1) write.
-  _cacheAll = null;
-  _cachePending = null;
-  _cacheAllJson = null;
+  // Performance: Incremental array-based cache updates to avoid O(N) rebuilds.
+  if (_cacheAll && fIdx !== undefined) {
+    const revIdx = _cacheAll.length - 1 - fIdx;
+    _cacheAll[revIdx] = suggestion;
+  }
+  if (_cacheAllJson && fIdx !== undefined) {
+    const revIdx = _cacheAllJson.length - 1 - fIdx;
+    _cacheAllJson[revIdx] = newFragment;
+  }
+  if (_cachePending) {
+    const pIdx = _cachePending.findIndex(s => s.id === id);
+    if (status === 'pending' && oldStatus === 'pending') {
+      // Rotate to back for defer
+      if (pIdx !== -1) _cachePending.splice(pIdx, 1);
+      _cachePending.push(suggestion);
+    } else if (status === 'pending') {
+      // non-pending -> pending: Append
+      if (pIdx === -1) _cachePending.push(suggestion);
+    } else if (oldStatus === 'pending') {
+      // pending -> non-pending: Remove
+      if (pIdx !== -1) _cachePending.splice(pIdx, 1);
+    }
+  }
+
   _cacheAllJsonString = null;
+  _cachePendingJsonString = null;
 
   // Update pending Map
   if (status === 'pending') {
