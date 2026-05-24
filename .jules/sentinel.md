@@ -78,3 +78,8 @@
 **Vulnerability:** Service Worker offline fallback responses were missing critical modern security headers (CSP, COOP, COEP, CORP), creating a security disparity between online and offline states.
 **Learning:** Hardening only the server-side responses is insufficient when a Service Worker can generate synthetic responses. These synthetic responses must mirror the security posture of the server to prevent them from becoming a weaker link in the defense-in-depth chain.
 **Prevention:** Always define a comprehensive set of security headers for any synthetic Response object created in a Service Worker, including a strict Content-Security-Policy and cross-origin isolation policies.
+
+## 2026-07-02 - Secure Cache Control for Rate Limit Errors
+**Vulnerability:** "429 Too Many Requests" responses were missing `Cache-Control: no-store`, which could allow intermediaries to cache and serve the error even after the rate limit window has reset.
+**Learning:** Rate-limiting middleware often uses default handlers that do not include security-related headers. Explicitly overriding the `handler` allows for the inclusion of defense-in-depth headers like `Cache-Control: no-store` to prevent information leakage and ensure state consistency across caches.
+**Prevention:** Always implement custom handlers for rate-limiting middleware that set `Cache-Control: no-store, max-age=0` on all 429 responses.

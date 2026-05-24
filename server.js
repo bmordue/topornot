@@ -63,7 +63,11 @@ const apiLimiter = rateLimit({
   validate: { keyGeneratorIpFallback: false }, // User identifier might be anything
   standardHeaders: true,
   legacyHeaders: false,
-  message: { error: 'Too many requests, please try again later' }
+  message: { error: 'Too many requests, please try again later' },
+  handler: (req, res, next, options) => {
+    res.setHeader('Cache-Control', 'no-store, max-age=0');
+    res.status(options.statusCode).send(options.message);
+  }
 });
 
 // Stricter rate limiter for new suggestions (POST)
@@ -74,7 +78,11 @@ const suggestionLimiter = rateLimit({
   validate: { keyGeneratorIpFallback: false },
   standardHeaders: true,
   legacyHeaders: false,
-  message: { error: 'Too many suggestions from this user/IP, please try again after 15 minutes' }
+  message: { error: 'Too many suggestions from this user/IP, please try again after 15 minutes' },
+  handler: (req, res, next, options) => {
+    res.setHeader('Cache-Control', 'no-store, max-age=0');
+    res.status(options.statusCode).send(options.message);
+  }
 });
 
 // Stricter rate limiter for acting on suggestions (PATCH)
@@ -85,7 +93,11 @@ const actionLimiter = rateLimit({
   validate: { keyGeneratorIpFallback: false },
   standardHeaders: true,
   legacyHeaders: false,
-  message: { error: 'Too many actions from this user/IP, please try again after 15 minutes' }
+  message: { error: 'Too many actions from this user/IP, please try again after 15 minutes' },
+  handler: (req, res, next, options) => {
+    res.setHeader('Cache-Control', 'no-store, max-age=0');
+    res.status(options.statusCode).send(options.message);
+  }
 });
 
 // Apply general limiter to all /api routes

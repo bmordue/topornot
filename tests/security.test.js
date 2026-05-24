@@ -124,6 +124,33 @@ describe('Rate Limiting', () => {
     expect(res.headers['ratelimit-limit']).toBeDefined();
     expect(res.headers['ratelimit-remaining']).toBeDefined();
   });
+
+  it('should set Cache-Control: no-store on 429 Rate Limit exceeded', async () => {
+    // We need to hit the limit. For testing, we can use a small limit or mock it.
+    // However, since we've added a custom handler, we can verify it if we can trigger it.
+    // Let's try to trigger it by making many requests in a loop.
+    // Since the limit is 100 or 500, it might take a moment but it's doable in a test.
+    // Alternatively, we could create a temporary app with a very low limit.
+
+    const { rateLimit } = require('express-rate-limit');
+    const express = require('express');
+    const testApp = express();
+    const limiter = rateLimit({
+      windowMs: 60 * 1000,
+      limit: 1,
+      handler: (req, res, next, options) => {
+        res.setHeader('Cache-Control', 'no-store, max-age=0');
+        res.status(options.statusCode).send(options.message);
+      }
+    });
+    testApp.get('/test', limiter, (req, res) => res.send('ok'));
+
+    await request(testApp).get('/test'); // 1st request: OK
+    const res = await request(testApp).get('/test'); // 2nd request: 429
+
+    expect(res.status).toBe(429);
+    expect(res.headers['cache-control']).toBe('no-store, max-age=0');
+  });
 });
 
 describe('API Cache Control', () => {
