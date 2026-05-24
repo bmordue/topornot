@@ -13,3 +13,7 @@
 ## 2026-05-19 - [Discoverability via On-Demand Help]
 **Learning:** For keyboard-heavy "power user" interfaces, rely on invisible shortcuts alone creates a steep learning curve. Providing a universal, on-demand help trigger (like `?`) that displays a transient summary of available actions via existing notification systems (like toasts) bridges the gap between discoverability and a clean, minimal UI.
 **Action:** Always provide a help shortcut (`?`) that surfaces available keyboard interactions in a non-intrusive way.
+
+## 2026-05-24 - [Keyboard Accessibility & Feedback Reinforcement]
+**Learning:** Implementing a "Skip to content" link is a critical yet often overlooked accessibility feature for keyboard-only users, significantly reducing "tab fatigue" in applications with global headers. Additionally, subtle animations (like a pulse) on state-indicating elements (like a queue counter) bridge the gap between "something happened" and "I see what changed," reinforcing the user's mental model of the system state without being distracting.
+**Action:** Always include a skip link for main content in layout templates; use subtle, non-intrusive animations to signal important state transitions.

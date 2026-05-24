@@ -3,6 +3,7 @@
 
   // -- State --
   let suggestions = [];
+  let lastCount = -1;
   let currentIndex = 0;
   let processing = false;
   let loading = false;
@@ -111,6 +112,14 @@
     // API already returns only pending suggestions by default, and we remove items
     // from this array in doAction() as they are approved/rejected.
     const pendingCount = suggestions.length;
+
+    if (lastCount !== -1 && pendingCount !== lastCount) {
+      queueCount.classList.remove('pulse-subtle');
+      void queueCount.offsetWidth;
+      queueCount.classList.add('pulse-subtle');
+      setTimeout(() => queueCount.classList.remove('pulse-subtle'), 400);
+    }
+    lastCount = pendingCount;
 
     queueCount.textContent = `${pendingCount} pending`;
     document.title = pendingCount > 0 ? `(${pendingCount}) topornot` : '✓ All clear - topornot';
