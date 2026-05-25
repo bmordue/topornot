@@ -14,6 +14,10 @@
 **Learning:** For keyboard-heavy "power user" interfaces, rely on invisible shortcuts alone creates a steep learning curve. Providing a universal, on-demand help trigger (like `?`) that displays a transient summary of available actions via existing notification systems (like toasts) bridges the gap between discoverability and a clean, minimal UI.
 **Action:** Always provide a help shortcut (`?`) that surfaces available keyboard interactions in a non-intrusive way.
 
+## 2026-05-20 - [Context-Aware Global Shortcuts]
+**Learning:** Adding intuitive global shortcuts (like `Enter` for a primary action) improves flow, but without explicit target gating (e.g., checking `e.target.tagName`), these shortcuts can collide with native browser behaviors for focused interactive elements like buttons, links, or `<summary>` tags.
+**Action:** When implementing global keyboard listeners, always exclude active interactive elements from triggering primary action aliases to preserve standard accessibility expectations.
+
 ## 2026-05-20 - [Accessibility: Skip to Content Link]
 **Learning:** Implementing a "Skip to content" link as the first focusable element on a page significantly improves the experience for keyboard and screen reader users by allowing them to bypass repetitive navigation and jump straight to the primary task. For maximum effectiveness, it should be visually hidden until focused and transition smoothly into view.
 **Action:** Always include a skip-link in keyboard-heavy or navigation-rich PWAs to satisfy WCAG 2.4.1 (Bypass Blocks); ensure it is the first child of the <body>.
