@@ -17,3 +17,11 @@
 ## 2026-05-24 - [Keyboard Accessibility & Feedback Reinforcement]
 **Learning:** Implementing a "Skip to content" link is a critical yet often overlooked accessibility feature for keyboard-only users, significantly reducing "tab fatigue" in applications with global headers. Additionally, subtle animations (like a pulse) on state-indicating elements (like a queue counter) bridge the gap between "something happened" and "I see what changed," reinforcing the user's mental model of the system state without being distracting.
 **Action:** Always include a skip link for main content in layout templates; use subtle, non-intrusive animations to signal important state transitions.
+
+## 2026-05-20 - [Context-Aware Global Shortcuts]
+**Learning:** Adding intuitive global shortcuts (like `Enter` for a primary action) improves flow, but without explicit target gating (e.g., checking `e.target.tagName`), these shortcuts can collide with native browser behaviors for focused interactive elements like buttons, links, or `<summary>` tags.
+**Action:** When implementing global keyboard listeners, always exclude active interactive elements from triggering primary action aliases to preserve standard accessibility expectations.
+
+## 2026-05-20 - [Accessibility: Skip to Content Link]
+**Learning:** Implementing a "Skip to content" link as the first focusable element on a page significantly improves the experience for keyboard and screen reader users by allowing them to bypass repetitive navigation and jump straight to the primary task. For maximum effectiveness, it should be visually hidden until focused and transition smoothly into view.
+**Action:** Always include a skip-link in keyboard-heavy or navigation-rich PWAs to satisfy WCAG 2.4.1 (Bypass Blocks); ensure it is the first child of the <body>.

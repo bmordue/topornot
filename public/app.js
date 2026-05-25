@@ -28,7 +28,7 @@
   const hintDefer    = document.getElementById('hint-defer');
 
   function showHelp() {
-    showToast('Shortcuts: A: Approve, Z: Reject, D: Defer, R: Refresh, C: Context, S: Copy, ?: Help', 'info', 5000);
+    showToast('Shortcuts: A/Enter: Approve, Z: Reject, D: Defer, R: Refresh, C: Context, S: Copy, ?: Help', 'info', 5000);
   }
 
   function flashButton(id) {
@@ -436,7 +436,7 @@
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
 
     const key = e.key.toLowerCase();
-    if (key === 'arrowright' || key === 'a') {
+    if (key === 'arrowright' || key === 'a' || (key === 'enter' && e.target.tagName !== 'BUTTON' && e.target.tagName !== 'SUMMARY')) {
       flashButton('btn-approve');
       doAction('approve');
     }
