@@ -53,7 +53,14 @@ app.use(express.static(path.join(__dirname, 'public'), { dotfiles: 'deny' }));
 
 // Security: Use authenticated user for rate limiting key if available.
 // When fallback to IP, it defaults to Express's req.ip.
-const rateLimitKey = (req) => req.identity?.user || req.ip;
+// The key is sanitized to prevent log injection if the key is used in logs.
+const rateLimitKey = (req) => sanitize(req.identity?.user || req.ip);
+
+// Custom rate limit handler to ensure security headers are set on 429 responses.
+const rateLimitHandler = (req, res, next, options) => {
+  res.setHeader('Cache-Control', 'no-store, max-age=0');
+  res.status(options.statusCode).send(options.message);
+};
 
 // General rate limiter for all API routes
 const apiLimiter = rateLimit({
@@ -63,7 +70,8 @@ const apiLimiter = rateLimit({
   validate: { keyGeneratorIpFallback: false }, // User identifier might be anything
   standardHeaders: true,
   legacyHeaders: false,
-  message: { error: 'Too many requests, please try again later' }
+  message: { error: 'Too many requests, please try again later' },
+  handler: rateLimitHandler
 });
 
 // Stricter rate limiter for new suggestions (POST)
@@ -74,7 +82,8 @@ const suggestionLimiter = rateLimit({
   validate: { keyGeneratorIpFallback: false },
   standardHeaders: true,
   legacyHeaders: false,
-  message: { error: 'Too many suggestions from this user/IP, please try again after 15 minutes' }
+  message: { error: 'Too many suggestions from this user/IP, please try again after 15 minutes' },
+  handler: rateLimitHandler
 });
 
 // Stricter rate limiter for acting on suggestions (PATCH)
@@ -85,7 +94,8 @@ const actionLimiter = rateLimit({
   validate: { keyGeneratorIpFallback: false },
   standardHeaders: true,
   legacyHeaders: false,
-  message: { error: 'Too many actions from this user/IP, please try again after 15 minutes' }
+  message: { error: 'Too many actions from this user/IP, please try again after 15 minutes' },
+  handler: rateLimitHandler
 });
 
 // Apply general limiter to all /api routes
