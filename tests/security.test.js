@@ -124,6 +124,25 @@ describe('Rate Limiting', () => {
     expect(res.headers['ratelimit-limit']).toBeDefined();
     expect(res.headers['ratelimit-remaining']).toBeDefined();
   });
+
+  it('should set Cache-Control: no-store on 429 rate limit responses', async () => {
+    // We'll trigger the limiter by making many requests.
+    // Use a unique user to avoid affecting other tests.
+    const uniqueUser = `rate-limit-user-${Date.now()}`;
+    const promises = [];
+    for (let i = 0; i < 105; i++) {
+      promises.push(request(app)
+        .post('/api/suggestions')
+        .set('Remote-User', uniqueUser)
+        .send({ title: 'rate', description: 'limit' }));
+    }
+    const results = await Promise.all(promises);
+    const tooManyRequests = results.find(r => r.status === 429);
+
+    expect(tooManyRequests).toBeDefined();
+    expect(tooManyRequests.headers['cache-control']).toBe('no-store, max-age=0');
+    expect(tooManyRequests.body.error).toMatch(/Too many suggestions/);
+  });
 });
 
 describe('API Cache Control', () => {
