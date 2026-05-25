@@ -225,11 +225,15 @@ function createSuggestion({ title, description, context, agent, user }) {
   _fragmentMap.set(suggestion.id, _fragments.length);
   _fragments.push(newFragment);
 
-  // Performance: Invalidate array-based caches to ensure O(1) write.
-  // These will be rebuilt on next read (O(N)).
-  _cacheAll = null;
-  _cachePending = null;
-  _cacheAllJson = null;
+  // Performance: Incremental updates to array-based caches to maintain O(1) read latency.
+  // Use unshift to maintain LIFO order for 'all' views.
+  if (_cacheAll) _cacheAll.unshift(suggestion);
+  if (_cacheAllJson) _cacheAllJson.unshift(newFragment);
+
+  // Incremental update for pending cache (FIFO)
+  if (_cachePending && suggestion.status === 'pending') {
+    _cachePending.push(suggestion);
+  }
   _cacheAllJsonString = null;
 
   if (_cachePendingJson) {
@@ -257,17 +261,21 @@ function updateStatus(id, status, user) {
   suggestion.updated_at = _getNow();
   suggestion.updated_by = user || null;
 
-  // Performance: Incremental fragment update
+  // Performance: Incremental fragment and cache updates.
   const newFragment = JSON.stringify(suggestion);
   if (fIdx !== undefined) {
     _fragments[fIdx] = newFragment;
-  }
 
-  // Performance: Invalidate array-based caches to ensure O(1) write.
-  _cacheAll = null;
-  _cachePending = null;
-  _cacheAllJson = null;
+    // Uses reverse index mapping (length - 1 - fIdx) to update LIFO-ordered 'all' caches in-place.
+    const reverseIdx = _data.suggestions.length - 1 - fIdx;
+    if (_cacheAll) _cacheAll[reverseIdx] = suggestion;
+    if (_cacheAllJson) _cacheAllJson[reverseIdx] = newFragment;
+  }
   _cacheAllJsonString = null;
+
+  // Pending array is more complex to update incrementally due to filtering,
+  // so we invalidate it. The pending Map-based JSON cache is updated below.
+  _cachePending = null;
 
   // Update pending Map
   if (status === 'pending') {
