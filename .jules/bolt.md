@@ -53,3 +53,7 @@
 ## 2026-05-25 - [Incremental LIFO Cache Updates]
 **Learning:** For LIFO-ordered views derived from an insertion-ordered source, incremental updates can be performed in O(1) by mapping the source index to the reversed index using `length - 1 - fIdx`. This avoids O(N) rebuilds on every write, reducing read latency after mutations from O(N) to O(1) (plus a fast string join).
 **Action:** Use reverse index mapping to maintain LIFO caches incrementally. Ensure status checks are performant before updating filtered subsets.
+
+## 2026-05-26 - [O(1) Creation via Lazy LIFO Invalidation]
+**Learning:** Maintaining LIFO-ordered caches incrementally via `unshift` in the creation path becomes a significant bottleneck (O(N)) as the dataset grows (e.g., ~0.8ms for 100k items). Switching to lazy invalidation (setting cache to null) moves this cost to the first subsequent read, ensuring sub-millisecond latency for writes.
+**Action:** Favor lazy invalidation over incremental O(N) maintenance for LIFO views in write-heavy paths. Use pre-allocated arrays (`new Array(len)`) when rebuilding these caches to optimize V8 performance.

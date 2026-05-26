@@ -181,9 +181,11 @@ function getAllSuggestionsJson() {
     if (!_cacheAllJson) {
       // Performance: Optimized fragment joining for API response.
       // Joins pre-stringified fragments in reverse order to match getAllSuggestions().
-      const reversed = [];
-      for (let i = _fragments.length - 1; i >= 0; i--) {
-        reversed.push(_getFragment(i));
+      // Using a pre-allocated array for better performance in V8.
+      const len = _fragments.length;
+      const reversed = new Array(len);
+      for (let i = 0; i < len; i++) {
+        reversed[i] = _getFragment(len - 1 - i);
       }
       _cacheAllJson = reversed;
     }
@@ -225,16 +227,16 @@ function createSuggestion({ title, description, context, agent, user }) {
   _fragmentMap.set(suggestion.id, _fragments.length);
   _fragments.push(newFragment);
 
-  // Performance: Incremental updates to array-based caches to maintain O(1) read latency.
-  // Use unshift to maintain LIFO order for 'all' views.
-  if (_cacheAll) _cacheAll.unshift(suggestion);
-  if (_cacheAllJson) _cacheAllJson.unshift(newFragment);
+  // Performance: Invalidate LIFO caches to avoid O(N) unshift cost.
+  // Next read will rebuild these in O(N).
+  _cacheAll = null;
+  _cacheAllJson = null;
+  _cacheAllJsonString = null;
 
-  // Incremental update for pending cache (FIFO)
-  if (_cachePending && suggestion.status === 'pending') {
+  // Incremental update for pending cache (FIFO) is O(1) via push.
+  if (_cachePending) {
     _cachePending.push(suggestion);
   }
-  _cacheAllJsonString = null;
 
   if (_cachePendingJson) {
     _cachePendingJson.set(suggestion.id, newFragment);
