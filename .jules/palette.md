@@ -25,3 +25,11 @@
 ## 2026-05-20 - [Accessibility: Skip to Content Link]
 **Learning:** Implementing a "Skip to content" link as the first focusable element on a page significantly improves the experience for keyboard and screen reader users by allowing them to bypass repetitive navigation and jump straight to the primary task. For maximum effectiveness, it should be visually hidden until focused and transition smoothly into view.
 **Action:** Always include a skip-link in keyboard-heavy or navigation-rich PWAs to satisfy WCAG 2.4.1 (Bypass Blocks); ensure it is the first child of the <body>.
+
+## 2026-05-25 - [Celebratory Completion & Screen Reader Granularity]
+**Learning:** Providing a distinct "success" state when a user completes a repetitive task queue (like reviewing items) transforms a routine action into a moment of closure and delight. Coupling this with haptic feedback reinforces the accomplishment. Additionally, for progress indicators,  is essential for translating abstract percentages into human-readable context (e.g., "Item 1 of 5") that is immediately useful to screen reader users.
+**Action:** Always provide a celebratory state or message upon task completion; use `aria-valuetext` to provide human-readable context for abstract progress metrics.
+
+## 2026-05-25 - [Celebratory Completion & Screen Reader Granularity]
+**Learning:** Providing a distinct "success" state when a user completes a repetitive task queue (like reviewing items) transforms a routine action into a moment of closure and delight. Coupling this with haptic feedback reinforces the accomplishment. Additionally, for progress indicators, `aria-valuetext` is essential for translating abstract percentages into human-readable context (e.g., "Item 1 of 5") that is immediately useful to screen reader users.
+**Action:** Always provide a celebratory state or message upon task completion; use `aria-valuetext` to provide human-readable context for abstract progress metrics.

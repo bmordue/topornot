@@ -173,6 +173,7 @@
     const progressPercent = Math.round((currentPos / pendingCount) * 100);
     cardProgress.style.width = `${progressPercent}%`;
     cardProgress.setAttribute('aria-valuenow', progressPercent);
+    cardProgress.setAttribute('aria-valuetext', `Item ${currentPos} of ${pendingCount}`);
   }
 
   // -- Load suggestions from server (or cache) --
@@ -251,7 +252,12 @@
       if (suggestions.length === 0 || currentIndex >= suggestions.length) {
         currentIndex = 0;
       }
-      showToast(action === 'approve' ? '✓ Approved' : '✗ Rejected', action);
+      if (suggestions.length === 0) {
+        showToast('🎉 All caught up!', 'info', 3000);
+        if (navigator.vibrate) navigator.vibrate([50, 30, 50, 30, 80]);
+      } else {
+        showToast(action === 'approve' ? '✓ Approved' : '✗ Rejected', action);
+      }
     }
 
     renderCard();
