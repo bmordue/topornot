@@ -258,7 +258,6 @@ function updateStatus(id, status, user) {
 
   const oldStatus = suggestion.status;
   const fIdx = _fragmentMap.get(id);
-  const oldFragment = fIdx !== undefined ? _getFragment(fIdx) : null;
 
   suggestion.status = status;
   suggestion.updated_at = _getNow();
