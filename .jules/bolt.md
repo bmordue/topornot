@@ -57,3 +57,7 @@
 ## 2026-05-26 - [O(1) Creation via Lazy LIFO Invalidation]
 **Learning:** Maintaining LIFO-ordered caches incrementally via `unshift` in the creation path becomes a significant bottleneck (O(N)) as the dataset grows (e.g., ~0.8ms for 100k items). Switching to lazy invalidation (setting cache to null) moves this cost to the first subsequent read, ensuring sub-millisecond latency for writes.
 **Action:** Favor lazy invalidation over incremental O(N) maintenance for LIFO views in write-heavy paths. Use pre-allocated arrays (`new Array(len)`) when rebuilding these caches to optimize V8 performance.
+
+## 2026-05-27 - [Pre-Regex Truncation & Redundant Logic Removal]
+**Learning:** Performing regex replacements on unsanitized inputs before truncation can lead to unnecessary CPU work for large malicious payloads. Additionally, passing already-sanitized values (like `req.identity.user`) back through sanitization functions in hot paths (like rate limiting) adds redundant overhead.
+**Action:** Always truncate strings to their maximum allowed length *before* running regex-based sanitizers. Audit request lifecycle to ensure sanitization happens exactly once per field.

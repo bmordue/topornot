@@ -53,8 +53,8 @@ app.use(express.static(path.join(__dirname, 'public'), { dotfiles: 'deny' }));
 
 // Security: Use authenticated user for rate limiting key if available.
 // When fallback to IP, it defaults to Express's req.ip.
-// The key is sanitized to prevent log injection if the key is used in logs.
-const rateLimitKey = (req) => sanitize(req.identity?.user || req.ip);
+// Performance: req.identity.user is already sanitized by authMiddleware.
+const rateLimitKey = (req) => req.identity?.user || sanitize(req.ip);
 
 // Custom rate limit handler to ensure security headers are set on 429 responses.
 const rateLimitHandler = (req, res, next, options) => {
