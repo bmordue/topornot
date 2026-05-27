@@ -78,3 +78,13 @@
 **Vulnerability:** Service Worker offline fallback responses were missing critical modern security headers (CSP, COOP, COEP, CORP), creating a security disparity between online and offline states.
 **Learning:** Hardening only the server-side responses is insufficient when a Service Worker can generate synthetic responses. These synthetic responses must mirror the security posture of the server to prevent them from becoming a weaker link in the defense-in-depth chain.
 **Prevention:** Always define a comprehensive set of security headers for any synthetic Response object created in a Service Worker, including a strict Content-Security-Policy and cross-origin isolation policies.
+
+## 2026-05-27 - Restrictive Database File Permissions
+**Vulnerability:** The JSON database file was created with default system permissions, potentially allowing other local users to read sensitive suggestion data.
+**Learning:** In multi-user environments or shared hosting, sensitive data stored in flat files must be explicitly protected at the filesystem level.
+**Prevention:** Always use the `mode` option (e.g., `0o600`) when creating or writing to files containing sensitive information to ensure only the owner has access.
+
+## 2026-05-27 - Defensive Sanitization for DoS Mitigation
+**Vulnerability:** Sanitization logic that processes untrusted input of arbitrary length before truncation can be susceptible to resource exhaustion (DoS).
+**Learning:** Truncating input strings to a sensible maximum length *before* performing complex operations like regex replacement significantly reduces the attack surface and ensures predictable performance.
+**Prevention:** Always apply strict length limits to untrusted input as the very first step of sanitization to protect downstream processing logic.

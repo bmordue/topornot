@@ -33,8 +33,9 @@ const sanitize = (val, maxLen = 255) => {
   if (val === undefined || val === null) return null;
   const raw = Array.isArray(val) ? val[0] : val;
   if (raw === undefined || raw === null) return null;
-  const str = String(raw);
-  return str.replace(/[\x00-\x1F\x7F]/g, '_').slice(0, maxLen);
+  // Security: Truncate BEFORE regex replacement to improve performance and protect against DoS.
+  const str = String(raw).slice(0, maxLen);
+  return str.replace(/[\x00-\x1F\x7F]/g, '_');
 };
 
 /**

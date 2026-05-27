@@ -21,7 +21,8 @@ describe('Security Headers', () => {
     const res = await request(app).get('/');
     expect(res.headers['x-dns-prefetch-control']).toBeDefined();
     expect(res.headers['x-frame-options']).toBe('DENY');
-    expect(res.headers['strict-transport-security']).toBeDefined();
+    expect(res.headers['strict-transport-security']).toMatch(/preload/);
+    expect(res.headers['cross-origin-embedder-policy']).toBe('require-corp');
     expect(res.headers['x-content-type-options']).toBe('nosniff');
     expect(res.headers['x-permitted-cross-domain-policies']).toBe('none');
     expect(res.headers['referrer-policy']).toBe('no-referrer');
@@ -36,6 +37,8 @@ describe('Security Headers', () => {
     expect(csp).toMatch(/connect-src 'self'/);
     expect(csp).toMatch(/manifest-src 'self'/);
     expect(csp).toMatch(/worker-src 'self'/);
+    expect(csp).toMatch(/font-src 'none'/);
+    expect(csp).toMatch(/script-src-attr 'none'/);
     expect(csp).toMatch(/frame-ancestors 'none'/);
     expect(csp).toMatch(/base-uri 'none'/);
     expect(csp).toMatch(/form-action 'none'/);
