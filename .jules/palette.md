@@ -30,6 +30,10 @@
 **Learning:** Providing a distinct "success" state when a user completes a repetitive task queue (like reviewing items) transforms a routine action into a moment of closure and delight. Coupling this with haptic feedback reinforces the accomplishment. Additionally, for progress indicators,  is essential for translating abstract percentages into human-readable context (e.g., "Item 1 of 5") that is immediately useful to screen reader users.
 **Action:** Always provide a celebratory state or message upon task completion; use `aria-valuetext` to provide human-readable context for abstract progress metrics.
 
+## 2026-05-27 - [Sticky Actions & Glassmorphism Polishing]
+**Learning:** For variable-length content (like suggestions with long descriptions), anchoring primary actions (Approve/Reject) using `position: sticky` ensures they remain "at the user's fingertips" regardless of scroll depth. Applying a glassmorphism effect (`backdrop-filter: blur`) with a semi-transparent `color-mix` background provides a premium, "built-in" feel while maintaining legibility of actions when they overlay content.
+**Action:** Use sticky positioning for critical action bars in scroll-heavy views; pair with glassmorphism and subtle borders for visual separation.
+
 ## 2026-05-25 - [Celebratory Completion & Screen Reader Granularity]
 **Learning:** Providing a distinct "success" state when a user completes a repetitive task queue (like reviewing items) transforms a routine action into a moment of closure and delight. Coupling this with haptic feedback reinforces the accomplishment. Additionally, for progress indicators, `aria-valuetext` is essential for translating abstract percentages into human-readable context (e.g., "Item 1 of 5") that is immediately useful to screen reader users.
 **Action:** Always provide a celebratory state or message upon task completion; use `aria-valuetext` to provide human-readable context for abstract progress metrics.
