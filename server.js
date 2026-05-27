@@ -25,6 +25,8 @@ app.use(helmet({
       "connect-src": ["'self'"],
       "manifest-src": ["'self'"],
       "worker-src": ["'self'"],
+      "font-src": ["'none'"],
+      "script-src-attr": ["'none'"],
       "object-src": ["'none'"],
       "frame-ancestors": ["'none'"],
       "base-uri": ["'none'"],
@@ -35,6 +37,12 @@ app.use(helmet({
   frameguard: { action: 'deny' },
   referrerPolicy: { policy: 'no-referrer' },
   permittedCrossDomainPolicies: { policy: 'none' },
+  crossOriginEmbedderPolicy: true,
+  hsts: {
+    maxAge: 31536000,
+    includeSubDomains: true,
+    preload: true,
+  },
 }));
 
 // Security: Apply restrictive Permissions-Policy and prevent indexing by search engines.
