@@ -86,7 +86,8 @@ function flush() {
     _getFragment(i);
   }
   const json = `{"nextId":${_data.nextId},"suggestions":[${_fragments.join(',')}]}`;
-  fs.writeFileSync(DB_PATH, json, 'utf8');
+  // Security: Set file permissions to 0o600 (owner read/write only) to protect sensitive data.
+  fs.writeFileSync(DB_PATH, json, { encoding: 'utf8', mode: 0o600 });
 
   _needsSave = false;
   if (_pendingSave) {
