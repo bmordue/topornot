@@ -421,6 +421,10 @@ body {
   outline-offset: 2px;
 }
 
+.btn-approve:focus-visible { outline-color: var(--color-approve); }
+.btn-reject:focus-visible  { outline-color: var(--color-reject); }
+.btn-defer:focus-visible   { outline-color: var(--color-defer); }
+
 .btn-icon {
   font-size: 1.5rem;
   line-height: 1;
