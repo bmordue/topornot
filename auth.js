@@ -33,6 +33,13 @@ const sanitize = (val, maxLen = 255) => {
   if (val === undefined || val === null) return null;
   const raw = Array.isArray(val) ? val[0] : val;
   if (raw === undefined || raw === null) return null;
+
+  // Performance: Fast-path for common case where string is within limits and contains no control characters.
+  // This avoids slicing and string replacement overhead.
+  if (typeof raw === 'string' && raw.length <= maxLen && !/[\x00-\x1F\x7F]/.test(raw)) {
+    return raw;
+  }
+
   const str = String(raw);
   // Performance: Truncate before regex replacement to avoid unnecessary processing of large inputs.
   return str.slice(0, maxLen).replace(/[\x00-\x1F\x7F]/g, '_');
