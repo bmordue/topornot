@@ -28,7 +28,7 @@
   const hintDefer    = document.getElementById('hint-defer');
 
   function showHelp() {
-    showToast('Shortcuts: A/Enter: Approve, Z: Reject, D: Defer, R: Refresh, C: Context, S: Copy, ?: Help', 'info', 5000);
+    showToast('Shortcuts: A/Enter/→: Approve, Z/←: Reject, D/↑: Defer, R: Refresh, C: Context, S: Copy, ?: Help', 'info', 5000);
   }
 
   function flashButton(id) {
@@ -440,6 +440,8 @@
   document.addEventListener('keydown', (e) => {
     // Safeguard: Don't trigger shortcuts if user is typing in an input
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
+    // Ignore if a modifier key is held (e.g. Ctrl+R)
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
 
     const key = e.key.toLowerCase();
     if (key === 'arrowright' || key === 'a' || (key === 'enter' && e.target.tagName !== 'BUTTON' && e.target.tagName !== 'SUMMARY')) {

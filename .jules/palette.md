@@ -37,3 +37,7 @@
 ## 2026-05-25 - [Celebratory Completion & Screen Reader Granularity]
 **Learning:** Providing a distinct "success" state when a user completes a repetitive task queue (like reviewing items) transforms a routine action into a moment of closure and delight. Coupling this with haptic feedback reinforces the accomplishment. Additionally, for progress indicators, `aria-valuetext` is essential for translating abstract percentages into human-readable context (e.g., "Item 1 of 5") that is immediately useful to screen reader users.
 **Action:** Always provide a celebratory state or message upon task completion; use `aria-valuetext` to provide human-readable context for abstract progress metrics.
+
+## 2026-05-28 - [Shortcut Discoverability & Semantic Focus]
+**Learning:** Explicitly advertising alternative shortcuts (like Arrow keys) in tooltips, ARIA labels, and help systems significantly improves discoverability for new users while preserving a clean UI. Additionally, implementing semantic focus states (e.g., green for approve, red for reject) provides immediate, non-textual confirmation of the targeted action, reinforcing the user's mental model of the system.
+**Action:** Always include alternative shortcuts in `title` and `aria-keyshortcuts` attributes; use semantic colors for focus-visible states on high-stakes action buttons.
