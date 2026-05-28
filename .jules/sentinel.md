@@ -88,3 +88,8 @@
 **Vulnerability:** Sanitization logic that processes untrusted input of arbitrary length before truncation can be susceptible to resource exhaustion (DoS).
 **Learning:** Truncating input strings to a sensible maximum length *before* performing complex operations like regex replacement significantly reduces the attack surface and ensures predictable performance.
 **Prevention:** Always apply strict length limits to untrusted input as the very first step of sanitization to protect downstream processing logic.
+
+## 2026-06-25 - Comprehensive Control Character Sanitization with Fast-Path Optimization
+**Vulnerability:** Identity headers and other user-supplied metadata were sanitized for C0 control characters, but remained vulnerable to C1 control characters (\x80-\x9F), which can be used for advanced log spoofing or terminal manipulation in modern environments.
+**Learning:** Comprehensive sanitization of all control characters (C0, C1, and DEL) is essential for robust audit logs. Furthermore, a regex-based "fast-path" check allows for efficient validation of already-clean inputs without redundant replacement operations.
+**Prevention:** Always include the C1 range (\x80-\x9F) in sanitization filters and use `RegExp.test()` for optimized early returns on clean strings.

@@ -34,8 +34,10 @@ const sanitize = (val, maxLen = 255) => {
   const raw = Array.isArray(val) ? val[0] : val;
   if (raw === undefined || raw === null) return null;
   const str = String(raw);
+  // Performance: Optimized fast-path check to immediately return clean, short strings.
+  if (str.length <= maxLen && !/[\x00-\x1F\x7F-\x9F]/.test(str)) return str;
   // Performance: Truncate before regex replacement to avoid unnecessary processing of large inputs.
-  return str.slice(0, maxLen).replace(/[\x00-\x1F\x7F]/g, '_');
+  return str.slice(0, maxLen).replace(/[\x00-\x1F\x7F-\x9F]/g, '_');
 };
 
 /**

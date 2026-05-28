@@ -340,6 +340,27 @@ describe('API Error Handling', () => {
     expect(res.body.context).toBe('Context_[31mwith_[0mANSI');
     expect(res.body.agent).toBe('Agent_with_nulls');
   });
+
+  it('should sanitize C1 control characters in identity headers (unit test)', () => {
+    const req = {
+      method: 'GET',
+      path: '/api/suggestions',
+      headers: {
+        'remote-user': 'alice\x80C1',
+        'remote-groups': 'admin\x9fC1',
+        'remote-email': 'alice@example.com',
+        'remote-name': 'Alice'
+      }
+    };
+    const res = {};
+    const next = jest.fn();
+
+    authMiddleware(req, res, next);
+
+    expect(req.identity.user).toBe('alice_C1');
+    expect(req.identity.groups).toBe('admin_C1');
+    expect(next).toHaveBeenCalled();
+  });
 });
 
 describe('Audit Logging', () => {
