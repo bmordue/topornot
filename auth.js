@@ -36,7 +36,7 @@ const sanitize = (val, maxLen = 255) => {
 
   // Performance: Fast-path for common case where string is within limits and contains no control characters.
   // This avoids slicing and string replacement overhead.
-  if (typeof raw === 'string' && raw.length <= maxLen && !/[\x00-\x1F\x7F]/.test(raw)) {
+  if (typeof raw === 'string' && raw.length <= maxLen && !/[\x00-\x1F\x7F-\x9F]/.test(raw)) {
     return raw;
   }
 
