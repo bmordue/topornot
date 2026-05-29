@@ -279,32 +279,29 @@ function updateStatus(id, status, user) {
   // so we invalidate it. The pending Map-based JSON cache is updated below.
   _cachePending = null;
 
-  // Update pending Map
+  // Performance: Optimized Map and incremental JSON fragment cache updates.
+  // Leverages Map insertion order to handle 'defer' by re-inserting at the end.
   if (status === 'pending') {
-    _pending.set(id, suggestion);
-  } else {
-    _pending.delete(id);
-  }
-
-  // Performance: Incremental JSON fragment cache updates
-  if (status === 'pending' && oldStatus === 'pending') {
-    // pending -> pending: Rotate to back for defer
-    _pending.delete(id);
-    _pending.set(id, suggestion);
-
-    if (_cachePendingJson) {
-      _cachePendingJson.delete(id);
-      _cachePendingJson.set(id, newFragment);
-      _cachePendingJsonString = null;
-    }
-  } else if (status === 'pending') {
-    // non-pending -> pending: Append
-    if (_cachePendingJson) {
-      _cachePendingJson.set(id, newFragment);
-      _cachePendingJsonString = null;
+    if (oldStatus === 'pending') {
+      // pending -> pending: Rotate to back for defer
+      _pending.delete(id);
+      _pending.set(id, suggestion);
+      if (_cachePendingJson) {
+        _cachePendingJson.delete(id);
+        _cachePendingJson.set(id, newFragment);
+        _cachePendingJsonString = null;
+      }
+    } else {
+      // non-pending -> pending: Append
+      _pending.set(id, suggestion);
+      if (_cachePendingJson) {
+        _cachePendingJson.set(id, newFragment);
+        _cachePendingJsonString = null;
+      }
     }
   } else if (oldStatus === 'pending') {
     // pending -> non-pending: Remove
+    _pending.delete(id);
     if (_cachePendingJson) {
       _cachePendingJson.delete(id);
       _cachePendingJsonString = null;
