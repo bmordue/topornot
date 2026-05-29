@@ -34,9 +34,8 @@ const sanitize = (val, maxLen = 255) => {
   const raw = Array.isArray(val) ? val[0] : val;
   if (raw === undefined || raw === null) return null;
 
-  // Performance: Fast-path for common case where input is within limits and contains no control characters.
-  // Covers both C0 and C1 ranges [\x00-\x1F\x7F-\x9F].
-  // This avoids slicing, string conversion (if already string), and replacement overhead.
+  // Performance: Fast-path for common case where string is within limits and contains no control characters.
+  // This avoids slicing and string replacement overhead.
   if (typeof raw === 'string' && raw.length <= maxLen && !/[\x00-\x1F\x7F-\x9F]/.test(raw)) {
     return raw;
   }
