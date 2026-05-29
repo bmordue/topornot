@@ -41,3 +41,7 @@
 ## 2026-05-28 - [Shortcut Discoverability & Semantic Focus]
 **Learning:** Explicitly advertising alternative shortcuts (like Arrow keys) in tooltips, ARIA labels, and help systems significantly improves discoverability for new users while preserving a clean UI. Additionally, implementing semantic focus states (e.g., green for approve, red for reject) provides immediate, non-textual confirmation of the targeted action, reinforcing the user's mental model of the system.
 **Action:** Always include alternative shortcuts in `title` and `aria-keyshortcuts` attributes; use semantic colors for focus-visible states on high-stakes action buttons.
+
+## 2026-05-29 - [Contextual Feedback & Progress Affordance]
+**Learning:** In fast-paced, card-based interfaces, generic success feedback (e.g., "Approved") can feel disconnected from the action. Including the item's title in the feedback toast provides immediate confirmation of *what* was acted upon, reducing cognitive load. Furthermore, a progress bar without a "track" (background) lacks affordance; adding a subtle track using pseudo-elements provides the necessary context for the user's current position relative to the total queue length.
+**Action:** Include specific item identifiers in success/action toasts; always provide a background track for progress indicators to establish a visual baseline.

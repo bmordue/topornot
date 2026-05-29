@@ -231,6 +231,7 @@
     if (navigator.vibrate) navigator.vibrate(10);
     processing = true;
     const s = suggestions[currentIndex % suggestions.length];
+    const suggestionTitle = s.title || '';
 
     // Animate card out
     const animClass = action === 'approve' ? 'exiting-approve' :
@@ -243,7 +244,7 @@
     // Optimistic update for defer: it stays pending, just move to next
     if (action === 'defer') {
       currentIndex = (currentIndex + 1) % Math.max(suggestions.length, 1);
-      showToast('Deferred — moved to back of queue', 'defer');
+      showToast(`Deferred: ${truncate(suggestionTitle)}`, 'defer');
     } else {
       // Optimistically remove from pending view by updating suggestions array
       const sIdx = currentIndex % suggestions.length;
@@ -256,7 +257,8 @@
         showToast('🎉 All caught up!', 'info', 3000);
         if (navigator.vibrate) navigator.vibrate([50, 30, 50, 30, 80]);
       } else {
-        showToast(action === 'approve' ? '✓ Approved' : '✗ Rejected', action);
+        const prefix = action === 'approve' ? '✓ Approved' : '✗ Rejected';
+        showToast(`${prefix}: ${truncate(suggestionTitle)}`, action);
       }
     }
 
@@ -482,6 +484,12 @@
   // -- Register service worker --
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').catch(() => {});
+  }
+
+  // -- Truncate helper --
+  function truncate(str, max = 40) {
+    if (!str || str.length <= max) return str;
+    return str.substring(0, max - 3) + '...';
   }
 
   // -- Init --
