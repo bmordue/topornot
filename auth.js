@@ -26,7 +26,7 @@ const DEV_DEFAULTS = {
 };
 
 // Security: Helper to sanitize identity headers to prevent log/header injection.
-// Strips all C0 control characters and DEL to prevent terminal manipulation.
+// Strips all C0/C1 control characters and DEL to prevent terminal manipulation.
 // Truncates to maxLen to prevent resource exhaustion/log bloat.
 // Robustly handles array inputs from Express headers.
 const sanitize = (val, maxLen = 255) => {
@@ -41,7 +41,6 @@ const sanitize = (val, maxLen = 255) => {
   }
 
   const str = String(raw);
-  // Performance: Optimized fast-path check to immediately return clean, short strings.
   if (str.length <= maxLen && !/[\x00-\x1F\x7F-\x9F]/.test(str)) return str;
   // Performance: Truncate before regex replacement to avoid unnecessary processing of large inputs.
   return str.slice(0, maxLen).replace(/[\x00-\x1F\x7F-\x9F]/g, '_');

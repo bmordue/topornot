@@ -65,3 +65,7 @@
 ## 2026-05-28 - [Fast-Path Sanitization for Clean Strings]
 **Learning:** Performing `String.prototype.replace()` on every input string, even those that are already clean and within length limits, incurs unnecessary overhead due to full-string scanning and new string allocation. Implementing a "fast-path" check with `RegExp.test()` for common clean cases improves throughput by ~30-40% for typical inputs like IPs and simple usernames.
 **Action:** In high-frequency utility functions (like sanitizers or validators), implement a non-destructive fast-path check to avoid expensive operations on clean inputs.
+
+## 2026-05-29 - [Consolidated Fast-Paths & Map Operation Reduction]
+**Learning:** Consolidating multiple fast-path checks into a single, comprehensive regex test (e.g., covering both C0 and C1 ranges) reduces redundant CPU cycles and prevents logic inconsistencies where one check is more permissive than the final replacement. Additionally, in Map-based rotation logic, ensuring exactly one `delete/set` pair (avoiding an initial `set` if the status didn't change) minimizes operations on the Map's internal structures.
+**Action:** Always unify fast-path regexes to match the full replacement range. Audit state transition logic to ensure the minimum necessary Map operations are performed for "move-to-back" behaviors.
