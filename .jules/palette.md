@@ -45,3 +45,7 @@
 ## 2026-05-29 - [Contextual Feedback & Progress Affordance]
 **Learning:** In fast-paced, card-based interfaces, generic success feedback (e.g., "Approved") can feel disconnected from the action. Including the item's title in the feedback toast provides immediate confirmation of *what* was acted upon, reducing cognitive load. Furthermore, a progress bar without a "track" (background) lacks affordance; adding a subtle track using pseudo-elements provides the necessary context for the user's current position relative to the total queue length.
 **Action:** Include specific item identifiers in success/action toasts; always provide a background track for progress indicators to establish a visual baseline.
+
+## 2026-05-30 - [Interaction Synchronization & Tactile Feedback]
+**Learning:** Synchronizing visual states between independent UI components (e.g., highlighting an action button when a swipe threshold is met on a card) provides powerful "predictive" feedback that confirms user intent before an action is finalized. Coupling this with micro-vibrations (`navigator.vibrate`) for key interface triggers (like help or threshold hits) creates a more tactile and "physical" feel for digital interactions.
+**Action:** Mirror interaction thresholds in primary action buttons; use subtle haptics to reinforce non-obvious UI triggers.
