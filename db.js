@@ -39,23 +39,28 @@ function _load() {
   _index.clear();
   _pending.clear();
   _fragmentMap.clear();
-  _fragments = [];
   _cachePending = null;
   _cacheAll = null;
   _cachePendingJson = null;
   _cacheAllJson = null;
   _cachePendingJsonString = null;
   _cacheAllJsonString = null;
-  _data.suggestions.forEach((s, i) => {
-    _index.set(s.id, s);
-    _fragmentMap.set(s.id, i);
-    // Performance: Initialize fragment cache as null for lazy stringification.
-    // This avoids O(N) JSON.stringify calls during initial load.
-    _fragments.push(null);
+
+  const suggestions = _data.suggestions;
+  const len = suggestions.length;
+  // Performance: Initialize fragment cache as null for lazy stringification.
+  // Using a pre-allocated array for better performance in V8.
+  _fragments = new Array(len).fill(null);
+
+  for (let i = 0; i < len; i++) {
+    const s = suggestions[i];
+    const id = s.id;
+    _index.set(id, s);
+    _fragmentMap.set(id, i);
     if (s.status === 'pending') {
-      _pending.set(s.id, s);
+      _pending.set(id, s);
     }
-  });
+  }
   return _data;
 }
 
