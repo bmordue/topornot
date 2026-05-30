@@ -361,6 +361,29 @@ describe('API Error Handling', () => {
     expect(req.identity.groups).toBe('admin_C1');
     expect(next).toHaveBeenCalled();
   });
+
+  it('should sanitize dangerous Unicode BiDi and zero-width characters (unit test)', () => {
+    const req = {
+      method: 'GET',
+      path: '/api/suggestions',
+      headers: {
+        'remote-user': 'admin\u202Ereversed', // RLO
+        'remote-groups': 'user\u200Bname',   // ZWSP
+        'remote-email': 'alice\uFEFF@example.com', // BOM
+        'remote-name': 'Joe\u2066Bloggs' // LRI
+      }
+    };
+    const res = {};
+    const next = jest.fn();
+
+    authMiddleware(req, res, next);
+
+    expect(req.identity.user).toBe('admin_reversed');
+    expect(req.identity.groups).toBe('user_name');
+    expect(req.identity.email).toBe('alice_@example.com');
+    expect(req.identity.name).toBe('Joe_Bloggs');
+    expect(next).toHaveBeenCalled();
+  });
 });
 
 describe('Audit Logging', () => {
