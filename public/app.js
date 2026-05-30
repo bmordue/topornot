@@ -27,15 +27,22 @@
   const hintReject   = document.getElementById('hint-reject');
   const hintDefer    = document.getElementById('hint-defer');
 
+  const btnApprove   = document.getElementById('btn-approve');
+  const btnReject    = document.getElementById('btn-reject');
+  const btnDefer     = document.getElementById('btn-defer');
+
   function showHelp() {
+    if (navigator.vibrate) navigator.vibrate(10);
     showToast('Shortcuts: A/Enter/→: Approve, Z/←: Reject, D/↑: Defer, R: Refresh, C: Context, S: Copy, ?: Help', 'info', 5000);
   }
 
   function flashButton(id) {
     const el = document.getElementById(id);
     if (!el) return;
-    el.classList.add('pressed');
-    setTimeout(() => el.classList.remove('pressed'), 150);
+    const isAction = ['btn-approve', 'btn-reject', 'btn-defer'].includes(id);
+    const cls = isAction ? 'btn-active-threshold' : 'pressed';
+    el.classList.add(cls);
+    setTimeout(() => el.classList.remove(cls), 150);
   }
 
   // -- Toast --
@@ -380,10 +387,22 @@
     if (activeThreshold && !cardEl.classList.contains(activeThreshold)) {
       cardEl.classList.remove('threshold-approve', 'threshold-reject', 'threshold-defer');
       cardEl.classList.add(activeThreshold);
+
+      // Sync button feedback
+      btnApprove.classList.remove('btn-active-threshold');
+      btnReject.classList.remove('btn-active-threshold');
+      btnDefer.classList.remove('btn-active-threshold');
+      if (activeThreshold === 'threshold-approve') btnApprove.classList.add('btn-active-threshold');
+      if (activeThreshold === 'threshold-reject')  btnReject.classList.add('btn-active-threshold');
+      if (activeThreshold === 'threshold-defer')   btnDefer.classList.add('btn-active-threshold');
+
       if (navigator.vibrate) navigator.vibrate(10);
       thresholdReached = true;
     } else if (!activeThreshold && thresholdReached) {
       cardEl.classList.remove('threshold-approve', 'threshold-reject', 'threshold-defer');
+      btnApprove.classList.remove('btn-active-threshold');
+      btnReject.classList.remove('btn-active-threshold');
+      btnDefer.classList.remove('btn-active-threshold');
       thresholdReached = false;
     }
 
@@ -413,6 +432,10 @@
     if (!isDragging) return;
     isDragging = false;
     cardEl.classList.remove('dragging', 'threshold-approve', 'threshold-reject', 'threshold-defer');
+    btnApprove.classList.remove('btn-active-threshold');
+    btnReject.classList.remove('btn-active-threshold');
+    btnDefer.classList.remove('btn-active-threshold');
+
     const dx = e.changedTouches[0].clientX - touchStartX;
     const dy = e.changedTouches[0].clientY - touchStartY;
     cardEl.style.transform = '';
@@ -432,6 +455,9 @@
   cardEl.addEventListener('touchcancel', () => {
     isDragging = false;
     cardEl.classList.remove('dragging', 'threshold-approve', 'threshold-reject', 'threshold-defer');
+    btnApprove.classList.remove('btn-active-threshold');
+    btnReject.classList.remove('btn-active-threshold');
+    btnDefer.classList.remove('btn-active-threshold');
     cardEl.style.transform = '';
     hintApprove.style.opacity = 0;
     hintReject.style.opacity  = 0;
