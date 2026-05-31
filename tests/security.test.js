@@ -384,6 +384,28 @@ describe('API Error Handling', () => {
     expect(req.identity.name).toBe('Joe_Bloggs');
     expect(next).toHaveBeenCalled();
   });
+
+  it('should sanitize soft hyphen and Unicode separators (unit test)', () => {
+    const req = {
+      method: 'GET',
+      path: '/api/suggestions',
+      headers: {
+        'remote-user': 'alice\u00ADhyphen',
+        'remote-groups': 'admin\u2028separator',
+        'remote-email': 'alice\u2029paragraph@example.com',
+        'remote-name': 'Alice'
+      }
+    };
+    const res = {};
+    const next = jest.fn();
+
+    authMiddleware(req, res, next);
+
+    expect(req.identity.user).toBe('alice_hyphen');
+    expect(req.identity.groups).toBe('admin_separator');
+    expect(req.identity.email).toBe('alice_paragraph@example.com');
+    expect(next).toHaveBeenCalled();
+  });
 });
 
 describe('Audit Logging', () => {

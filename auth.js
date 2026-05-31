@@ -30,11 +30,17 @@ const CONTROL_CHARS = /[\x00-\x1F\x7F-\x9F\u200B-\u200F\u202A-\u202E\u2060\u2066
 const CONTROL_CHARS_G = new RegExp(CONTROL_CHARS.source, 'g');
 
 // Security: Helper to sanitize identity headers to prevent log/header injection.
-// Strips all C0/C1 control characters, DEL, and dangerous Unicode BiDi/zero-width characters
+// Strips all C0/C1 control characters, DEL, and dangerous Unicode BiDi/zero-width/separator characters
 // to prevent terminal manipulation and visual spoofing.
 // Truncates to maxLen to prevent resource exhaustion/log bloat.
 // Robustly handles array inputs from Express headers.
 // Performance: Uses pre-compiled regexes and fast-path checks to minimize CPU overhead.
+
+// C0/C1 control characters, DEL, soft hyphen, and Unicode BiDi/zero-width/separator formatting characters.
+// Hoisted to module scope for performance.
+const CONTROL_CHARS = /[\x00-\x1F\x7F-\x9F\u00AD\u200B-\u200F\u2028\u2029\u202A-\u202E\u2060\u2066-\u2069\uFEFF]/;
+const CONTROL_CHARS_G = new RegExp(CONTROL_CHARS.source, 'g');
+
 const sanitize = (val, maxLen = 255) => {
   if (val === undefined || val === null) return null;
   const raw = Array.isArray(val) ? val[0] : val;

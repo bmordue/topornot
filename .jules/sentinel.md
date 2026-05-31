@@ -93,3 +93,8 @@
 **Vulnerability:** Identity headers and other user-supplied metadata were sanitized for C0 control characters, but remained vulnerable to C1 control characters (\x80-\x9F), which can be used for advanced log spoofing or terminal manipulation in modern environments.
 **Learning:** Comprehensive sanitization of all control characters (C0, C1, and DEL) is essential for robust audit logs. Furthermore, a regex-based "fast-path" check allows for efficient validation of already-clean inputs without redundant replacement operations.
 **Prevention:** Always include the C1 range (\x80-\x9F) in sanitization filters and use `RegExp.test()` for optimized early returns on clean strings.
+
+## 2026-06-28 - Hardened Unicode Sanitization for Visual Spoofing
+**Vulnerability:** Sanitization that only targets common control characters (\x00-\x1F, \x7F-\x9F) leaves the application vulnerable to visual spoofing and log injection via "hidden" Unicode characters like the soft hyphen (\u00AD) and line/paragraph separators (\u2028, \u2029).
+**Learning:** Modern terminal emulators and web browsers may render these characters in ways that can maliciously alter the visual interpretation of strings, potentially hiding malicious payloads or spoofing audit logs.
+**Prevention:** Always include a broader set of dangerous Unicode formatting and separator characters in sanitization filters. Hoisting these regular expressions to module scope ensures that this multi-layered protection doesn't come with a significant performance penalty on the critical path.
