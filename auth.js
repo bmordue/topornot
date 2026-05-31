@@ -26,29 +26,31 @@ const DEV_DEFAULTS = {
 };
 
 // Security: Helper to sanitize identity headers to prevent log/header injection.
-// Strips all C0/C1 control characters, DEL, and dangerous Unicode BiDi/zero-width characters
+// Strips all C0/C1 control characters, DEL, and dangerous Unicode BiDi/zero-width/separator characters
 // to prevent terminal manipulation and visual spoofing.
 // Truncates to maxLen to prevent resource exhaustion/log bloat.
 // Robustly handles array inputs from Express headers.
+
+// C0/C1 control characters, DEL, soft hyphen, and Unicode BiDi/zero-width/separator formatting characters.
+// Hoisted to module scope for performance.
+const CONTROL_CHARS = /[\x00-\x1F\x7F-\x9F\u00AD\u200B-\u200F\u2028\u2029\u202A-\u202E\u2060\u2066-\u2069\uFEFF]/;
+const CONTROL_CHARS_G = new RegExp(CONTROL_CHARS.source, 'g');
+
 const sanitize = (val, maxLen = 255) => {
   if (val === undefined || val === null) return null;
   const raw = Array.isArray(val) ? val[0] : val;
   if (raw === undefined || raw === null) return null;
 
-  // C0/C1 control characters, DEL, and Unicode BiDi/zero-width formatting characters.
-  const controlChars = /[\x00-\x1F\x7F-\x9F\u200B-\u200F\u202A-\u202E\u2060\u2066-\u2069\uFEFF]/;
-
   // Performance: Fast-path for common case where string is within limits and contains no control characters.
   // This avoids slicing and string replacement overhead.
-  if (typeof raw === 'string' && raw.length <= maxLen && !controlChars.test(raw)) {
+  if (typeof raw === 'string' && raw.length <= maxLen && !CONTROL_CHARS.test(raw)) {
     return raw;
   }
 
   const str = String(raw);
-  if (str.length <= maxLen && !controlChars.test(str)) return str;
+  if (str.length <= maxLen && !CONTROL_CHARS.test(str)) return str;
   // Performance: Truncate before regex replacement to avoid unnecessary processing of large inputs.
-  const globalControlChars = new RegExp(controlChars.source, 'g');
-  return str.slice(0, maxLen).replace(globalControlChars, '_');
+  return str.slice(0, maxLen).replace(CONTROL_CHARS_G, '_');
 };
 
 /**
