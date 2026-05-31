@@ -49,3 +49,7 @@
 ## 2026-05-30 - [Interaction Synchronization & Tactile Feedback]
 **Learning:** Synchronizing visual states between independent UI components (e.g., highlighting an action button when a swipe threshold is met on a card) provides powerful "predictive" feedback that confirms user intent before an action is finalized. Coupling this with micro-vibrations (`navigator.vibrate`) for key interface triggers (like help or threshold hits) creates a more tactile and "physical" feel for digital interactions.
 **Action:** Mirror interaction thresholds in primary action buttons; use subtle haptics to reinforce non-obvious UI triggers.
+
+## 2026-05-31 - [Keyboard-Driven Content Visibility & Sensory Feedback]
+**Learning:** In keyboard-centric interfaces, expanding hidden content (like a <details> block) via shortcut can leave the newly revealed information off-screen or poorly positioned. Coupling the state change with a delayed `scrollIntoView({ behavior: 'smooth' })` ensures the user's focus and viewport follow the action. Additionally, adding subtle haptics to non-primary shortcuts (like help or context toggles) provides a satisfying tactile confirmation that "the system heard you" without the visual noise of a toast for every toggle.
+**Action:** Always pair keyboard-triggered content expansions with smooth scrolling; use micro-vibrations to reinforce utility shortcuts.

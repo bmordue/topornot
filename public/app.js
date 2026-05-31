@@ -33,7 +33,7 @@
 
   function showHelp() {
     if (navigator.vibrate) navigator.vibrate(10);
-    showToast('Shortcuts: A/Enter/→: Approve, Z/←: Reject, D/↑: Defer, R: Refresh, C: Context, S: Copy, ?: Help', 'info', 5000);
+    showToast('Shortcuts: A/Enter/→: Approve, Z/←: Reject, D/↑: Defer, R: Refresh, C: Context, S: Copy, ?, /: Help', 'info', 5000);
   }
 
   function flashButton(id) {
@@ -489,13 +489,22 @@
       refreshHandler();
     }
     if (key === 'c') {
+      if (navigator.vibrate) navigator.vibrate(10);
       flashButton('card-context-summary');
       const details = cardCtxWrap.querySelector('details');
-      if (details) details.open = !details.open;
+      if (details) {
+        details.open = !details.open;
+        if (details.open) {
+          setTimeout(() => details.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+        }
+      }
     }
     if (key === 'escape') {
       const details = cardCtxWrap.querySelector('details');
-      if (details && details.open) details.open = false;
+      if (details && details.open) {
+        if (navigator.vibrate) navigator.vibrate(10);
+        details.open = false;
+      }
     }
     if (key === 's') {
       flashButton('btn-copy');

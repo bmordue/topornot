@@ -320,6 +320,7 @@ body {
 }
 
 .card-context {
+  font-family: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
   font-size: 0.8rem;
   line-height: 1.5;
   color: var(--color-text-muted);
@@ -338,6 +339,7 @@ body {
   font-weight: 600;
   border-radius: 4px;
   padding: 2px;
+  transition: background 0.2s, transform 0.1s;
 }
 
 .card-context-wrap details summary:hover {
@@ -474,7 +476,7 @@ kbd {
   border: 1px solid rgba(0,0,0,0.1);
   border-radius: 4px;
   padding: 1px 5px;
-  font-family: inherit;
+  font-family: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
   font-size: 0.8em;
   font-weight: 600;
   display: inline-block;
