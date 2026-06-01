@@ -408,6 +408,28 @@ describe('API Error Handling', () => {
   });
 });
 
+describe('Database File Security', () => {
+  it('should harden database file permissions to 0o600 on flush', async () => {
+    // Use the existing TEST_DB which the db module is already using
+    if (!fs.existsSync(TEST_DB)) {
+      db.createSuggestion({ title: 'Init', description: 'Init' });
+      db.flush();
+    }
+
+    // Force loose permissions
+    fs.chmodSync(TEST_DB, 0o644);
+    expect(fs.statSync(TEST_DB).mode & 0o777).toBe(0o644);
+
+    // Trigger a flush. We need to make it think it needs a save.
+    db.createSuggestion({ title: 'Perm Test', description: 'Testing permissions' });
+    db.flush();
+
+    // Verify it was hardened
+    const finalMode = fs.statSync(TEST_DB).mode & 0o777;
+    expect(finalMode).toBe(0o600);
+  });
+});
+
 describe('Audit Logging', () => {
   let logSpy;
 
