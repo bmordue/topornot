@@ -73,3 +73,7 @@
 ## 2025-06-10 - [Pre-allocated Arrays & Standard For Loops for Load Optimization]
 **Learning:** Replacing `forEach` with a standard `for` loop and using a pre-allocated array (`new Array(len).fill(null)`) for large collections in `db.js`'s `_load()` path reduces initialization latency by ~20% for 100k items. This avoids dynamic resizing overhead and leverages V8's optimization of monomorphic loops.
 **Action:** Favor pre-allocated arrays and standard `for` loops for large-scale data initialization in performance-critical paths.
+
+## 2026-06-01 - [Animation Delay Bypass for Reduced Motion]
+**Learning:** Hardcoded animation delays (e.g., matching CSS transition durations) create unnecessary latency for users who have opted out of animations. Detecting `prefers-reduced-motion` in JS allows bypassing these delays, providing a ~300ms speedup per interaction.
+**Action:** Always check `prefers-reduced-motion` before awaiting animation timeouts or using `smooth` scroll behavior.
