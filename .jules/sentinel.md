@@ -81,8 +81,8 @@
 
 ## 2026-05-27 - Restrictive Database File Permissions
 **Vulnerability:** The JSON database file was created with default system permissions, potentially allowing other local users to read sensitive suggestion data.
-**Learning:** In multi-user environments or shared hosting, sensitive data stored in flat files must be explicitly protected at the filesystem level.
-**Prevention:** Always use the `mode` option (e.g., `0o600`) when creating or writing to files containing sensitive information to ensure only the owner has access.
+**Learning:** The `mode` option in Node.js `fs.writeFileSync` only applies when a file is newly created. If the file already exists (e.g., created by another process or `touch`), its permissions are not modified by `writeFileSync`.
+**Prevention:** Explicitly call `fs.chmodSync(path, 0o600)` after writing to ensure permissions are hardened even for existing files.
 
 ## 2026-05-27 - Defensive Sanitization for DoS Mitigation
 **Vulnerability:** Sanitization logic that processes untrusted input of arbitrary length before truncation can be susceptible to resource exhaustion (DoS).

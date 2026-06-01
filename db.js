@@ -92,7 +92,14 @@ function flush() {
   }
   const json = `{"nextId":${_data.nextId},"suggestions":[${_fragments.join(',')}]}`;
   // Security: Set file permissions to 0o600 (owner read/write only) to protect sensitive data.
+  // We use chmodSync because writeFileSync mode only applies to new files.
   fs.writeFileSync(DB_PATH, json, { encoding: 'utf8', mode: 0o600 });
+  try {
+    fs.chmodSync(DB_PATH, 0o600);
+  } catch (err) {
+    // Non-critical if chmod fails (e.g. on Windows or restricted filesystems)
+    console.warn(`[db] Failed to set file permissions on ${DB_PATH}: ${err.message}`);
+  }
 
   _needsSave = false;
   if (_pendingSave) {
