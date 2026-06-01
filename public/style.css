@@ -657,6 +657,38 @@ kbd {
 
 [hidden] { display: none !important; }
 
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-delay: -1ms !important;
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    background-attachment: initial !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0s !important;
+    transition-delay: 0s !important;
+  }
+
+  .skeleton {
+    background: #e2e8f0 !important;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .skeleton {
+      background: #334155 !important;
+    }
+  }
+
+  .card.slideIn,
+  .card.exiting-approve,
+  .card.exiting-reject,
+  .card.exiting-defer,
+  .queue-count.pulse-subtle,
+  .refresh-icon.spinning,
+  .empty-icon {
+    animation: none !important;
+  }
+}
+
 @media (min-width: 480px) {
   .app-main { padding-top: 40px; }
 }

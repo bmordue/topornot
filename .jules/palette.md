@@ -53,3 +53,7 @@
 ## 2026-05-31 - [Keyboard-Driven Content Visibility & Sensory Feedback]
 **Learning:** In keyboard-centric interfaces, expanding hidden content (like a <details> block) via shortcut can leave the newly revealed information off-screen or poorly positioned. Coupling the state change with a delayed `scrollIntoView({ behavior: 'smooth' })` ensures the user's focus and viewport follow the action. Additionally, adding subtle haptics to non-primary shortcuts (like help or context toggles) provides a satisfying tactile confirmation that "the system heard you" without the visual noise of a toast for every toggle.
 **Action:** Always pair keyboard-triggered content expansions with smooth scrolling; use micro-vibrations to reinforce utility shortcuts.
+
+## 2026-06-01 - [Reduced Motion Support]
+**Learning:** Implementing `prefers-reduced-motion` is a critical accessibility step that benefits users with motion sensitivities. It requires a dual approach: a CSS reset to disable declarative animations/transitions, and JavaScript adjustments to skip animation-related timeouts and use instant scroll behaviors.
+**Action:** Always include a `@media (prefers-reduced-motion: reduce)` block in CSS and respect this preference in JS for animations and smooth scrolling.

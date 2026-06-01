@@ -8,6 +8,12 @@
   let processing = false;
   let loading = false;
 
+  const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+  let prefersReducedMotion = motionQuery.matches;
+  motionQuery.addEventListener('change', () => {
+    prefersReducedMotion = motionQuery.matches;
+  });
+
   // -- DOM refs --
   const cardEl       = document.getElementById('current-card');
   const loadingEl    = document.getElementById('loading-state');
@@ -245,7 +251,7 @@
                       action === 'reject'  ? 'exiting-reject'  : 'exiting-defer';
     cardEl.classList.add(animClass);
 
-    await new Promise(r => setTimeout(r, 320));
+    await new Promise(r => setTimeout(r, prefersReducedMotion ? 0 : 320));
     cardEl.classList.remove(animClass);
 
     // Optimistic update for defer: it stays pending, just move to next
@@ -495,7 +501,8 @@
       if (details) {
         details.open = !details.open;
         if (details.open) {
-          setTimeout(() => details.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+          const behavior = prefersReducedMotion ? 'auto' : 'smooth';
+          setTimeout(() => details.scrollIntoView({ behavior, block: 'nearest' }), 50);
         }
       }
     }
