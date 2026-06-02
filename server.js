@@ -66,6 +66,8 @@ const rateLimitKey = (req) => req.identity?.user || sanitize(req.ip);
 
 // Custom rate limit handler to ensure security headers are set on 429 responses.
 const rateLimitHandler = (req, res, next, options) => {
+  // Security: Log rate limit events for auditability.
+  console.warn(`[audit] RATE_LIMIT_EXCEEDED: ${sanitize(req.method)} ${sanitize(req.path)} – user=${req.identity?.user || 'anonymous'} ip=${sanitize(req.ip)}`);
   res.setHeader('Cache-Control', 'no-store, max-age=0');
   res.status(options.statusCode).send(options.message);
 };

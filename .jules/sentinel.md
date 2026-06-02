@@ -98,3 +98,8 @@
 **Vulnerability:** Sanitization that only targets common control characters (\x00-\x1F, \x7F-\x9F) leaves the application vulnerable to visual spoofing and log injection via "hidden" Unicode characters like the soft hyphen (\u00AD) and line/paragraph separators (\u2028, \u2029).
 **Learning:** Modern terminal emulators and web browsers may render these characters in ways that can maliciously alter the visual interpretation of strings, potentially hiding malicious payloads or spoofing audit logs.
 **Prevention:** Always include a broader set of dangerous Unicode formatting and separator characters in sanitization filters. Hoisting these regular expressions to module scope ensures that this multi-layered protection doesn't come with a significant performance penalty on the critical path.
+
+## 2026-06-30 - Audit Logging for Rate Limit Violations
+**Vulnerability:** Rate limiting without audit logging makes it difficult to detect and investigate brute-force or DoS attacks in progress.
+**Learning:** Security headers (like `Cache-Control: no-store`) on 429 responses protect privacy, but server-side visibility into *who* is triggering limits and *on which endpoints* is essential for forensic auditability.
+**Prevention:** Always implement descriptive audit logging within rate limit handlers, ensuring that request metadata (method, path) and principal identifiers (user, IP) are sanitized before logging to prevent injection.
