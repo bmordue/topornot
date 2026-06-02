@@ -77,3 +77,7 @@
 ## 2026-06-01 - [Animation Delay Bypass for Reduced Motion]
 **Learning:** Hardcoded animation delays (e.g., matching CSS transition durations) create unnecessary latency for users who have opted out of animations. Detecting `prefers-reduced-motion` in JS allows bypassing these delays, providing a ~300ms speedup per interaction.
 **Action:** Always check `prefers-reduced-motion` before awaiting animation timeouts or using `smooth` scroll behavior.
+
+## 2026-06-02 - [Symbol-based Metadata Indexing]
+**Learning:** Using a `Symbol` to store internal metadata (like fragment indices) directly on objects is more efficient than maintaining a secondary `Map`. It provides faster (1)$ access (direct property access vs. hash map lookup), reduces memory overhead by eliminating redundant keys, and naturally hides the metadata from `JSON.stringify` and standard object iteration.
+**Action:** When tracking metadata for objects in a collection, prefer Symbol-based properties over secondary lookup Maps to minimize overhead and prevent serialization leaks.
