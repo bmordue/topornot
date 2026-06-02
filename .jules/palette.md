@@ -53,3 +53,7 @@
 ## 2026-05-31 - [Keyboard-Driven Content Visibility & Sensory Feedback]
 **Learning:** In keyboard-centric interfaces, expanding hidden content (like a <details> block) via shortcut can leave the newly revealed information off-screen or poorly positioned. Coupling the state change with a delayed `scrollIntoView({ behavior: 'smooth' })` ensures the user's focus and viewport follow the action. Additionally, adding subtle haptics to non-primary shortcuts (like help or context toggles) provides a satisfying tactile confirmation that "the system heard you" without the visual noise of a toast for every toggle.
 **Action:** Always pair keyboard-triggered content expansions with smooth scrolling; use micro-vibrations to reinforce utility shortcuts.
+
+## 2026-06-02 - [High-Contrast Semantic Actions in Dark Mode]
+**Learning:** Semantic colors (like green for approve or red for reject) that work well in light mode often lack sufficient contrast in dark mode when applied to large surface areas or icons. Shifting to lighter, more vibrant "neon" variants (e.g., Green 400 instead of Green 700) significantly improves visibility. Furthermore, when using these vibrant backgrounds for buttons in dark mode, flipping the foreground text to a dark "ink" color (matching the surface background) ensures maximum legibility and a consistent "premium" aesthetic.
+**Action:** Always audit semantic color contrast in dark mode; use dark foreground text on light/vibrant semantic button backgrounds to maintain accessibility.
