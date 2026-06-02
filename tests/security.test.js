@@ -128,7 +128,8 @@ describe('Rate Limiting', () => {
     expect(res.headers['ratelimit-remaining']).toBeDefined();
   });
 
-  it('should set Cache-Control: no-store on 429 rate limit responses', async () => {
+  it('should set Cache-Control: no-store and log audit entry on 429 rate limit responses', async () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
     // We'll trigger the limiter by making many requests.
     // Use a unique user to avoid affecting other tests.
     const uniqueUser = `rate-limit-user-${Date.now()}`;
@@ -145,6 +146,10 @@ describe('Rate Limiting', () => {
     expect(tooManyRequests).toBeDefined();
     expect(tooManyRequests.headers['cache-control']).toBe('no-store, max-age=0');
     expect(tooManyRequests.body.error).toMatch(/Too many suggestions/);
+
+    // Verify audit log
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringMatching(/\[audit\] RATE_LIMIT_EXCEEDED: POST \/api\/suggestions – user=rate-limit-user-\d+ ip=[a-f\d\.:]+/));
+    warnSpy.mockRestore();
   });
 });
 
