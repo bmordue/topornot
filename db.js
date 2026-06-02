@@ -9,8 +9,9 @@ let _pending = new Map();
 let _version = 0;
 
 // Fragment caches for fast O(1) serialization
+// Performance: Use a Symbol to store fragment index directly on objects for faster O(1) lookup than Map.
+const FRAGMENT_INDEX = Symbol('fragmentIndex');
 let _fragments = [];
-let _fragmentMap = new Map(); // id -> index in _fragments
 
 // Persistence throttling
 let _pendingSave = null;
@@ -38,7 +39,6 @@ function _load() {
   }
   _index.clear();
   _pending.clear();
-  _fragmentMap.clear();
   _cachePending = null;
   _cacheAll = null;
   _cachePendingJson = null;
@@ -56,7 +56,7 @@ function _load() {
     const s = suggestions[i];
     const id = s.id;
     _index.set(id, s);
-    _fragmentMap.set(id, i);
+    s[FRAGMENT_INDEX] = i;
     if (s.status === 'pending') {
       _pending.set(id, s);
     }
@@ -175,10 +175,10 @@ function getPendingSuggestionsJson() {
       // Performance: Optimized fragment joining for API response.
       // Avoids O(N) object graph traversal of JSON.stringify.
       const pendingFragments = new Map();
-      for (const id of _pending.keys()) {
-        const fIdx = _fragmentMap.get(id);
+      for (const s of _pending.values()) {
+        const fIdx = s[FRAGMENT_INDEX];
         if (fIdx !== undefined) {
-          pendingFragments.set(id, _getFragment(fIdx));
+          pendingFragments.set(s.id, _getFragment(fIdx));
         }
       }
       _cachePendingJson = pendingFragments;
@@ -237,7 +237,7 @@ function createSuggestion({ title, description, context, agent, user }) {
 
   // Performance: Incremental fragment and array cache updates
   const newFragment = JSON.stringify(suggestion);
-  _fragmentMap.set(suggestion.id, _fragments.length);
+  suggestion[FRAGMENT_INDEX] = _fragments.length;
   _fragments.push(newFragment);
 
   // Performance: Invalidate LIFO caches to avoid O(N) unshift cost.
@@ -269,7 +269,7 @@ function updateStatus(id, status, user) {
   if (suggestion.status === status) return suggestion;
 
   const oldStatus = suggestion.status;
-  const fIdx = _fragmentMap.get(id);
+  const fIdx = suggestion[FRAGMENT_INDEX];
 
   suggestion.status = status;
   suggestion.updated_at = _getNow();
