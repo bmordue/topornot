@@ -42,16 +42,13 @@ const sanitize = (val, maxLen = 255) => {
   const raw = Array.isArray(val) ? val[0] : val;
   if (raw === undefined || raw === null) return null;
 
-  // Performance: Fast-path for common case where string is within limits and contains no control characters.
-  // This avoids slicing and string replacement overhead.
-  if (typeof raw === 'string' && raw.length <= maxLen && !CONTROL_CHARS.test(raw)) {
-    return raw;
-  }
+  const str = (typeof raw === 'string') ? raw : String(raw);
+  // Performance: Truncate BEFORE testing or replacing to avoid scanning large inputs.
+  // This ensures we only perform O(maxLen) work regardless of input size.
+  const truncated = str.length <= maxLen ? str : str.slice(0, maxLen);
 
-  const str = String(raw);
-  if (str.length <= maxLen && !CONTROL_CHARS.test(str)) return str;
-  // Performance: Truncate before regex replacement to avoid unnecessary processing of large inputs.
-  return str.slice(0, maxLen).replace(CONTROL_CHARS_G, '_');
+  // Performance: Fast-path for clean strings (test() is faster than replace() and avoids new string allocation).
+  return CONTROL_CHARS.test(truncated) ? truncated.replace(CONTROL_CHARS_G, '_') : truncated;
 };
 
 /**

@@ -25,6 +25,7 @@
   const cardTitle    = document.getElementById('card-title');
   const cardDesc     = document.getElementById('card-description');
   const cardCtxWrap  = document.getElementById('card-context-wrap');
+  const cardCtxDetails = cardCtxWrap.querySelector('details');
   const cardCtx      = document.getElementById('card-context');
   const cardPos      = document.getElementById('card-pos');
   const cardProgress = document.getElementById('card-progress');
@@ -101,8 +102,9 @@
   window.addEventListener('online', flushPendingActions);
 
   // -- Format relative time --
-  function relativeTime(dateStr) {
-    const diff = Date.now() - new Date(dateStr + 'Z').getTime();
+  // Performance: Accept a Date object instead of a string to avoid redundant parsing.
+  function relativeTime(date) {
+    const diff = Date.now() - date.getTime();
     const m = Math.floor(diff / 60000);
     if (m < 1)  return 'just now';
     if (m < 60) return `${m}m ago`;
@@ -158,16 +160,19 @@
     cardTitle.focus();
 
     // Reset details expansion state
-    const details = cardCtxWrap.querySelector('details');
-    if (details) details.open = false;
+    if (cardCtxDetails) cardCtxDetails.open = false;
 
     const s = suggestions[currentIndex % pendingCount];
 
+    // Performance: Cache parsed Date object on the suggestion to avoid redundant parsing.
+    if (!s._date) {
+      const dateStr = s.created_at.includes('Z') ? s.created_at : s.created_at.replace(' ', 'T') + 'Z';
+      s._date = new Date(dateStr);
+    }
+    const date = s._date;
+
     cardAgent.textContent = s.agent || 'agent';
-    cardTime.textContent  = relativeTime(s.created_at);
-    // suggestions.json dates are 'YYYY-MM-DD HH:mm:ss' without TZ, assume UTC
-    const dateStr = s.created_at.includes('Z') ? s.created_at : s.created_at.replace(' ', 'T') + 'Z';
-    const date = new Date(dateStr);
+    cardTime.textContent  = relativeTime(date);
     cardTime.title = isNaN(date) ? '' : date.toLocaleString();
     if (!isNaN(date)) cardTime.setAttribute('datetime', date.toISOString());
     cardTitle.textContent = s.title;
@@ -501,22 +506,20 @@
     if (key === 'c') {
       if (navigator.vibrate) navigator.vibrate(10);
       flashButton('card-context-summary');
-      const details = cardCtxWrap.querySelector('details');
-      if (details) {
-        details.open = !details.open;
-        if (details.open) {
+      if (cardCtxDetails) {
+        cardCtxDetails.open = !cardCtxDetails.open;
+        if (cardCtxDetails.open) {
           // Performance: Use instant scroll if user prefers reduced motion.
           // Eliminates ~300ms scroll animation latency.
           const behavior = prefersReducedMotion ? 'auto' : 'smooth';
-          setTimeout(() => details.scrollIntoView({ behavior, block: 'nearest' }), 50);
+          setTimeout(() => cardCtxDetails.scrollIntoView({ behavior, block: 'nearest' }), 50);
         }
       }
     }
     if (key === 'escape') {
-      const details = cardCtxWrap.querySelector('details');
-      if (details && details.open) {
+      if (cardCtxDetails && cardCtxDetails.open) {
         if (navigator.vibrate) navigator.vibrate(10);
-        details.open = false;
+        cardCtxDetails.open = false;
       }
     }
     if (key === 's') {
