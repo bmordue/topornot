@@ -81,3 +81,7 @@
 ## 2026-06-02 - [Symbol-based Metadata Indexing]
 **Learning:** Using a `Symbol` to store internal metadata (like fragment indices) directly on objects is more efficient than maintaining a secondary `Map`. It provides faster (1)$ access (direct property access vs. hash map lookup), reduces memory overhead by eliminating redundant keys, and naturally hides the metadata from `JSON.stringify` and standard object iteration.
 **Action:** When tracking metadata for objects in a collection, prefer Symbol-based properties over secondary lookup Maps to minimize overhead and prevent serialization leaks.
+
+## 2026-06-03 - [Lazy Date Parsing & Memoization]
+**Learning:** Repeatedly parsing the same date string into a `Date` object and performing string replacements (e.g., for UTC formatting) in a high-frequency rendering loop (like card swiping) adds unnecessary CPU overhead and garbage collection pressure.
+**Action:** Lazily parse date strings into `Date` objects and memoize them on the data objects themselves. This ensures O(1) access for subsequent renders and updates.
