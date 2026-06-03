@@ -148,7 +148,7 @@ describe('Rate Limiting', () => {
     expect(tooManyRequests.body.error).toMatch(/Too many suggestions/);
 
     // Verify audit log
-    expect(warnSpy).toHaveBeenCalledWith(expect.stringMatching(/\[audit\] RATE_LIMIT_EXCEEDED: POST \/api\/suggestions – user=rate-limit-user-\d+ ip=[a-f\d\.:]+/));
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringMatching(/\[audit\] RATE_LIMIT_EXCEEDED: POST \/api\/suggestions user=rate-limit-user-\d+ ip=[a-f\d\.:]+/));
     warnSpy.mockRestore();
   });
 });
@@ -161,12 +161,16 @@ describe('API Cache Control', () => {
 });
 
 describe('API Error Handling', () => {
-  it('should return JSON 404 for non-existent API routes and set no-store', async () => {
+  it('should return JSON 404 and log an audit entry for non-existent API routes', async () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
     const res = await request(app).get('/api/non-existent-route');
     expect(res.status).toBe(404);
     expect(res.headers['content-type']).toMatch(/json/);
     expect(res.body.error).toBe('API endpoint not found');
     expect(res.headers['cache-control']).toBe('no-store, max-age=0');
+
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringMatching(/\[audit\] API_NOT_FOUND: GET \/api\/non-existent-route user=dev-user ip=[a-f\d\.:]+/));
+    warnSpy.mockRestore();
   });
 
   it('should return plain text 404 for non-existent non-API routes and set no-store', async () => {
@@ -258,6 +262,7 @@ describe('API Error Handling', () => {
     const req = {
       method: 'POST\nInjected',
       path: '/api/suggestions\r\nInjected',
+      originalUrl: '/api/suggestions\r\nInjected',
       ip: '127.0.0.1\nInjected',
       headers: {} // No remote-user
     };
@@ -275,7 +280,7 @@ describe('API Error Handling', () => {
     authMiddleware(req, res, next);
 
     if (AUTH_MODE === 'proxy') {
-      expect(spy).toHaveBeenCalledWith(expect.stringContaining('POST_Injected /api/suggestions__Injected – Missing Remote-User from 127.0.0.1_Injected'));
+      expect(spy).toHaveBeenCalledWith(expect.stringContaining('POST_Injected /api/suggestions__Injected user=anonymous ip=127.0.0.1_Injected'));
       expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'no-store, max-age=0');
       expect(res.status).toHaveBeenCalledWith(401);
     }
@@ -287,7 +292,7 @@ describe('API Error Handling', () => {
     const spy = jest.spyOn(console, 'log').mockImplementation();
     const req = {
       method: 'GET\nInjected-Method',
-      path: '/api/suggestions\r\nInjected-Path',
+      originalUrl: '/api/suggestions\r\nInjected-Path',
       ip: '127.0.0.1\nInjected-IP',
       headers: {
         'remote-user': 'alice'
@@ -298,7 +303,7 @@ describe('API Error Handling', () => {
 
     authMiddleware(req, res, next);
 
-    expect(spy).toHaveBeenCalledWith(expect.stringContaining('[auth] GET_Injected-Method /api/suggestions__Injected-Path – user=alice ip=127.0.0.1_Injected-IP'));
+    expect(spy).toHaveBeenCalledWith(expect.stringContaining('[auth] GET_Injected-Method /api/suggestions__Injected-Path user=alice ip=127.0.0.1_Injected-IP'));
     spy.mockRestore();
   });
 
@@ -409,6 +414,29 @@ describe('API Error Handling', () => {
     expect(req.identity.user).toBe('alice_hyphen');
     expect(req.identity.groups).toBe('admin_separator');
     expect(req.identity.email).toBe('alice_paragraph@example.com');
+    expect(next).toHaveBeenCalled();
+  });
+
+  it('should sanitize Mongolian Vowel Separator and invisible characters in \u2060-\u206F block (unit test)', () => {
+    const req = {
+      method: 'GET',
+      path: '/api/suggestions',
+      headers: {
+        'remote-user': 'alice\u180Evowel',
+        'remote-groups': 'admin\u2060wj', // Word Joiner
+        'remote-email': 'alice\u206Bpop@example.com', // Pop Directional Formatting
+        'remote-name': 'Alice\u206F' // Nominal Digit Shapes
+      }
+    };
+    const res = {};
+    const next = jest.fn();
+
+    authMiddleware(req, res, next);
+
+    expect(req.identity.user).toBe('alice_vowel');
+    expect(req.identity.groups).toBe('admin_wj');
+    expect(req.identity.email).toBe('alice_pop@example.com');
+    expect(req.identity.name).toBe('Alice_');
     expect(next).toHaveBeenCalled();
   });
 });

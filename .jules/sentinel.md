@@ -103,3 +103,8 @@
 **Vulnerability:** Rate limiting without audit logging makes it difficult to detect and investigate brute-force or DoS attacks in progress.
 **Learning:** Security headers (like `Cache-Control: no-store`) on 429 responses protect privacy, but server-side visibility into *who* is triggering limits and *on which endpoints* is essential for forensic auditability.
 **Prevention:** Always implement descriptive audit logging within rate limit handlers, ensuring that request metadata (method, path) and principal identifiers (user, IP) are sanitized before logging to prevent injection.
+
+## 2026-07-02 - Comprehensive Forensic Audit Logging with originalUrl
+**Vulnerability:** Audit logs used `req.path`, which in Express can be truncated when using routers or mount points, potentially losing critical context like the full URL or mount prefix in catch-all handlers.
+**Learning:** `req.path` is relative to the mount point of the middleware. For global audit logging and catch-all error/404 handlers, `req.originalUrl` must be used to ensure the complete request target is captured.
+**Prevention:** Always use `req.originalUrl` for security-related logging to maintain full visibility of the request URI across all routing layers.

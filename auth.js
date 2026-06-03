@@ -32,8 +32,9 @@ const DEV_DEFAULTS = {
 // Robustly handles array inputs from Express headers.
 
 // C0/C1 control characters, DEL, soft hyphen, and Unicode BiDi/zero-width/separator formatting characters.
+// Includes Mongolian Vowel Separator and the full General Punctuation invisible block.
 // Hoisted to module scope for performance.
-const CONTROL_CHARS = /[\x00-\x1F\x7F-\x9F\u00AD\u200B-\u200F\u2028\u2029\u202A-\u202E\u2060\u2066-\u2069\uFEFF]/;
+const CONTROL_CHARS = /[\x00-\x1F\x7F-\x9F\u00AD\u180E\u200B-\u200F\u2028\u2029\u202A-\u202E\u2060-\u206F\uFEFF]/;
 const CONTROL_CHARS_G = new RegExp(CONTROL_CHARS.source, 'g');
 
 const sanitize = (val, maxLen = 255) => {
@@ -73,7 +74,8 @@ function authMiddleware(req, res, next) {
   if (AUTH_MODE !== 'dev' && !user) {
     // Security: Log unauthorized access attempts for auditability.
     // Sanitize method, path, and IP to prevent log injection.
-    console.warn(`[auth] Unauthorized access attempt: ${sanitize(req.method)} ${sanitize(req.path)} – Missing Remote-User from ${sanitize(req.ip)}`);
+    // Use originalUrl to ensure the full path is logged.
+    console.warn(`[auth] Unauthorized access attempt: ${sanitize(req.method)} ${sanitize(req.originalUrl)} user=anonymous ip=${sanitize(req.ip)}`);
     // Security: Prevent caching of unauthorized responses to protect privacy.
     res.setHeader('Cache-Control', 'no-store, max-age=0');
     return res.status(401).json({ error: 'Missing upstream identity header (Remote-User)' });
@@ -90,8 +92,9 @@ function authMiddleware(req, res, next) {
 
   // Audit log – principal only, never tokens.
   // Security: Sanitize method, path, and IP to prevent log injection.
+  // Use originalUrl to ensure the full path is logged.
   if (req.identity.user) {
-    console.log(`[auth] ${sanitize(req.method)} ${sanitize(req.path)} – user=${req.identity.user} ip=${sanitize(req.ip)}`);
+    console.log(`[auth] ${sanitize(req.method)} ${sanitize(req.originalUrl)} user=${req.identity.user} ip=${sanitize(req.ip)}`);
   }
 
   next();
