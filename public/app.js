@@ -529,6 +529,14 @@
     }
   });
 
+  // -- Live relative time updates --
+  setInterval(() => {
+    const s = suggestions[currentIndex % suggestions.length];
+    if (s && !cardEl.hidden) {
+      cardTime.textContent = relativeTime(s.created_at);
+    }
+  }, 60000);
+
   // -- Register service worker --
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').catch(() => {});

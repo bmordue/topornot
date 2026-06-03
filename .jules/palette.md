@@ -57,3 +57,7 @@
 ## 2026-06-02 - [High-Contrast Semantic Actions in Dark Mode]
 **Learning:** Semantic colors (like green for approve or red for reject) that work well in light mode often lack sufficient contrast in dark mode when applied to large surface areas or icons. Shifting to lighter, more vibrant "neon" variants (e.g., Green 400 instead of Green 700) significantly improves visibility. Furthermore, when using these vibrant backgrounds for buttons in dark mode, flipping the foreground text to a dark "ink" color (matching the surface background) ensures maximum legibility and a consistent "premium" aesthetic.
 **Action:** Always audit semantic color contrast in dark mode; use dark foreground text on light/vibrant semantic button backgrounds to maintain accessibility.
+
+## 2026-06-03 - [Temporal Freshness via Live Updates]
+**Learning:** In time-sensitive UIs, static relative timestamps (e.g., "just now") quickly become misleading if the user remains on the page without interacting. Implementing a low-overhead background interval to refresh these strings ensures the UI remains truthful and reduces the user's perceived need to manually refresh the page.
+**Action:** Always pair relative time displays with a background refresh mechanism (e.g., every 60s) to maintain accuracy during long-lived sessions.
