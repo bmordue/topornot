@@ -105,8 +105,9 @@
   // Performance: Accept a Date object instead of a string to avoid redundant parsing.
   function relativeTime(date) {
     const diff = Date.now() - date.getTime();
+    // Performance: Fast-path for recent items to avoid division/floor operations.
+    if (diff < 60000) return 'just now';
     const m = Math.floor(diff / 60000);
-    if (m < 1)  return 'just now';
     if (m < 60) return `${m}m ago`;
     const h = Math.floor(m / 60);
     if (h < 24) return `${h}h ago`;
@@ -163,12 +164,6 @@
     if (cardCtxDetails) cardCtxDetails.open = false;
 
     const s = suggestions[currentIndex % pendingCount];
-
-    // Performance: Cache parsed Date object on the suggestion to avoid redundant parsing.
-    if (!s._date) {
-      const dateStr = s.created_at.includes('Z') ? s.created_at : s.created_at.replace(' ', 'T') + 'Z';
-      s._date = new Date(dateStr);
-    }
     const date = s._date;
 
     cardAgent.textContent = s.agent || 'agent';
@@ -196,9 +191,20 @@
 
   // -- Load suggestions from server (or cache) --
   async function loadSuggestions() {
+    // Performance: Helper to pre-parse dates on suggestions.
+    const prepare = (list) => {
+      for (const s of list) {
+        if (!s._date) {
+          const dateStr = s.created_at.includes('Z') ? s.created_at : s.created_at.replace(' ', 'T') + 'Z';
+          s._date = new Date(dateStr);
+        }
+      }
+      return list;
+    };
+
     // Performance: Immediate cache-first load to eliminate loading screen
     try {
-      suggestions = JSON.parse(localStorage.getItem('cachedSuggestions') || '[]');
+      suggestions = prepare(JSON.parse(localStorage.getItem('cachedSuggestions') || '[]'));
     } catch {
       suggestions = [];
     }
@@ -227,7 +233,7 @@
       if (!res.ok) throw new Error('Network error');
 
       const text = await res.text();
-      suggestions = JSON.parse(text);
+      suggestions = prepare(JSON.parse(text));
       const newEtag = res.headers.get('ETag');
 
       localStorage.setItem('cachedSuggestions', text);
@@ -533,12 +539,31 @@
   });
 
   // -- Live relative time updates --
-  setInterval(() => {
-    const s = suggestions[currentIndex % suggestions.length];
-    if (s && !cardEl.hidden) {
-      cardTime.textContent = relativeTime(s.created_at);
-    }
-  }, 60000);
+  // Performance: Use Visibility API to pause updates when tab is in background.
+  let updateTimer;
+  function startUpdateTimer() {
+    if (updateTimer) return;
+    updateTimer = setInterval(() => {
+      if (suggestions.length === 0) return;
+      const s = suggestions[currentIndex % suggestions.length];
+      // Performance: Use pre-parsed _date object to avoid redundant parsing and fix runtime bug.
+      if (s && !cardEl.hidden) {
+        cardTime.textContent = relativeTime(s._date);
+      }
+    }, 60000);
+  }
+
+  function stopUpdateTimer() {
+    clearInterval(updateTimer);
+    updateTimer = null;
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) stopUpdateTimer();
+    else startUpdateTimer();
+  });
+
+  if (!document.hidden) startUpdateTimer();
 
   // -- Register service worker --
   if ('serviceWorker' in navigator) {
