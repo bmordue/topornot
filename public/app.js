@@ -40,7 +40,7 @@
 
   function showHelp() {
     if (navigator.vibrate) navigator.vibrate(10);
-    showToast('Shortcuts: A/Enter/→: Approve, Z/←: Reject, D/↑: Defer, R: Refresh, C: Context, S: Copy, ?, /: Help', 'info', 5000);
+    showToast('Shortcuts: A/Enter/→: Approve, Z/←: Reject, D/↑: Defer, R: Refresh, C: Context, S: Copy, Esc: Close toast/context, ?, /: Help', 'info', 6000);
   }
 
   function flashButton(id) {
@@ -370,6 +370,10 @@
     flashButton('btn-header-help');
     showHelp();
   });
+  toastEl.addEventListener('click', () => {
+    clearTimeout(toastTimer);
+    toastEl.classList.remove('show');
+  });
 
   // -- Swipe gestures --
   let touchStartX = 0;
@@ -523,10 +527,17 @@
       }
     }
     if (key === 'escape') {
-      if (cardCtxDetails && cardCtxDetails.open) {
-        if (navigator.vibrate) navigator.vibrate(10);
-        cardCtxDetails.open = false;
+      let handled = false;
+      if (toastEl.classList.contains('show')) {
+        clearTimeout(toastTimer);
+        toastEl.classList.remove('show');
+        handled = true;
       }
+      if (cardCtxDetails && cardCtxDetails.open) {
+        cardCtxDetails.open = false;
+        handled = true;
+      }
+      if (handled && navigator.vibrate) navigator.vibrate(10);
     }
     if (key === 's') {
       flashButton('btn-copy');
