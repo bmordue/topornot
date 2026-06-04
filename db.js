@@ -91,15 +91,19 @@ function flush() {
     _getFragment(i);
   }
   const json = `{"nextId":${_data.nextId},"suggestions":[${_fragments.join(',')}]}`;
+  const tmpPath = `${DB_PATH}.tmp`;
+
   // Security: Set file permissions to 0o600 (owner read/write only) to protect sensitive data.
   // We use chmodSync because writeFileSync mode only applies to new files.
-  fs.writeFileSync(DB_PATH, json, { encoding: 'utf8', mode: 0o600 });
+  // Performance: Atomic write via temp file + rename to prevent data corruption on crash.
+  fs.writeFileSync(tmpPath, json, { encoding: 'utf8', mode: 0o600 });
   try {
-    fs.chmodSync(DB_PATH, 0o600);
+    fs.chmodSync(tmpPath, 0o600);
   } catch (err) {
     // Non-critical if chmod fails (e.g. on Windows or restricted filesystems)
-    console.warn(`[db] Failed to set file permissions on ${DB_PATH}: ${err.message}`);
+    console.warn(`[db] Failed to set file permissions on ${tmpPath}: ${err.message}`);
   }
+  fs.renameSync(tmpPath, DB_PATH);
 
   _needsSave = false;
   if (_pendingSave) {
