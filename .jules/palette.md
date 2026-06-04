@@ -61,3 +61,7 @@
 ## 2026-06-03 - [Temporal Freshness via Live Updates]
 **Learning:** In time-sensitive UIs, static relative timestamps (e.g., "just now") quickly become misleading if the user remains on the page without interacting. Implementing a low-overhead background interval to refresh these strings ensures the UI remains truthful and reduces the user's perceived need to manually refresh the page.
 **Action:** Always pair relative time displays with a background refresh mechanism (e.g., every 60s) to maintain accuracy during long-lived sessions.
+
+## 2026-06-04 - [Accessible & Dismissible Toast Notifications]
+**Learning:** Toast notifications that convey transient info can be annoying if they persist too long or block the UI. Implementing them as semantic <button> elements allows for easy click-to-dismiss and keyboard focusability. Coupling this with the Escape key for global dismissal and using 'visibility' in CSS transitions ensures they are truly inert when hidden, preventing unintended interaction blocks and improving testability with automation tools like Playwright.
+**Action:** Use semantic <button> tags for interactive toasts; pair 'opacity' with 'visibility' for clean enter/exit transitions; always provide a keyboard shortcut (Esc) for dismissal.
