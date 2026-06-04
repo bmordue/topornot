@@ -85,3 +85,7 @@
 ## 2026-06-03 - [Lazy Date Parsing & Memoization]
 **Learning:** Repeatedly parsing the same date string into a `Date` object and performing string replacements (e.g., for UTC formatting) in a high-frequency rendering loop (like card swiping) adds unnecessary CPU overhead and garbage collection pressure.
 **Action:** Lazily parse date strings into `Date` objects and memoize them on the data objects themselves. This ensures O(1) access for subsequent renders and updates.
+
+## 2026-06-04 - [Visibility API & Pre-parsed Date Objects]
+**Learning:** Background timers in browser tabs consume unnecessary CPU and battery. Using the Visibility API to pause non-essential UI updates (like relative timestamps) significantly reduces resource consumption for inactive tabs. Additionally, pre-parsing date strings into Date objects during data load avoids redundant parsing in high-frequency rendering and timer loops, eliminating potential runtime exceptions from uninitialized metadata.
+**Action:** Always utilize the Visibility API to manage recurring UI timers. Pre-parse and memoize complex data structures (like Dates or nested JSON) during the fetch/load phase to keep the rendering path and background intervals lean and error-free.
