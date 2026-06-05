@@ -65,3 +65,7 @@
 ## 2026-06-04 - [Accessible & Dismissible Toast Notifications]
 **Learning:** Toast notifications that convey transient info can be annoying if they persist too long or block the UI. Implementing them as semantic <button> elements allows for easy click-to-dismiss and keyboard focusability. Coupling this with the Escape key for global dismissal and using 'visibility' in CSS transitions ensures they are truly inert when hidden, preventing unintended interaction blocks and improving testability with automation tools like Playwright.
 **Action:** Use semantic <button> tags for interactive toasts; pair 'opacity' with 'visibility' for clean enter/exit transitions; always provide a keyboard shortcut (Esc) for dismissal.
+
+## 2026-06-05 - [Visual Queue Depth via Card Stacking]
+**Learning:** In list-based or queue-based interfaces, a simple counter can feel abstract. Providing a visual "stack" effect (using offset pseudo-elements that scale and fade) creates a tangible sense of volume and progress, making the queue depth immediately obvious without additional UI clutter.
+**Action:** Use CSS pseudo-elements (`::before`/`::after`) on container elements to simulate physical depth for item stacks; toggle these states based on the collection size.

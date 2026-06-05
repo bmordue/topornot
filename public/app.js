@@ -15,6 +15,7 @@
   });
 
   // -- DOM refs --
+  const cardStack    = document.getElementById('card-stack');
   const cardEl       = document.getElementById('current-card');
   const loadingEl    = document.getElementById('loading-state');
   const emptyEl      = document.getElementById('empty-state');
@@ -141,11 +142,17 @@
     document.title = pendingCount > 0 ? `(${pendingCount}) topornot` : '✓ All clear - topornot';
 
     if (pendingCount === 0) {
+      if (cardStack) cardStack.classList.remove('has-next', 'has-many');
       cardEl.hidden = true;
       actionBar.hidden = true;
       emptyEl.hidden = false;
       document.getElementById('btn-refresh').focus();
       return;
+    }
+
+    if (cardStack) {
+      cardStack.classList.toggle('has-next', pendingCount > 1);
+      cardStack.classList.toggle('has-many', pendingCount > 2);
     }
 
     emptyEl.hidden = true;
@@ -370,6 +377,12 @@
     flashButton('btn-header-help');
     showHelp();
   });
+  const cardSummary = cardCtxDetails ? cardCtxDetails.querySelector('summary') : null;
+  if (cardSummary) {
+    cardSummary.addEventListener('click', () => {
+      if (navigator.vibrate) navigator.vibrate(10);
+    });
+  }
   toastEl.addEventListener('click', () => {
     clearTimeout(toastTimer);
     toastEl.classList.remove('show');
