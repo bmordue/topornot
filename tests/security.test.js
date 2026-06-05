@@ -439,6 +439,51 @@ describe('API Error Handling', () => {
     expect(req.identity.name).toBe('Alice_');
     expect(next).toHaveBeenCalled();
   });
+
+  it('should sanitize Unicode Variation Selectors (unit test)', () => {
+    const req = {
+      method: 'GET',
+      path: '/api/suggestions',
+      headers: {
+        'remote-user': 'alice\uFE00vs1', // Variation Selector-1
+        'remote-groups': 'admin\uFE0Fvs16', // Variation Selector-16
+        'remote-email': 'alice@example.com',
+        'remote-name': 'Alice'
+      }
+    };
+    const res = {};
+    const next = jest.fn();
+
+    authMiddleware(req, res, next);
+
+    expect(req.identity.user).toBe('alice_vs1');
+    expect(req.identity.groups).toBe('admin_vs16');
+    expect(next).toHaveBeenCalled();
+  });
+
+  it('should apply Unicode Normalization (NFKC) during sanitization (unit test)', () => {
+    // Example: 'e' + combining acute accent (U+0301) becomes 'é' (U+00E9) in NFC/NFKC
+    const combined = 'e\u0301';
+    const normalized = '\u00E9';
+
+    const req = {
+      method: 'GET',
+      path: '/api/suggestions',
+      headers: {
+        'remote-user': combined,
+        'remote-groups': 'dev',
+        'remote-email': 'dev@example.com',
+        'remote-name': 'Developer'
+      }
+    };
+    const res = {};
+    const next = jest.fn();
+
+    authMiddleware(req, res, next);
+
+    expect(req.identity.user).toBe(normalized);
+    expect(next).toHaveBeenCalled();
+  });
 });
 
 describe('Database File Security', () => {
