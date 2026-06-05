@@ -32,9 +32,9 @@ const DEV_DEFAULTS = {
 // Robustly handles array inputs from Express headers.
 
 // C0/C1 control characters, DEL, soft hyphen, and Unicode BiDi/zero-width/separator formatting characters.
-// Includes Mongolian Vowel Separator and the full General Punctuation invisible block.
+// Includes Mongolian Vowel Separator, Variation Selectors, and the full General Punctuation invisible block.
 // Hoisted to module scope for performance.
-const CONTROL_CHARS = /[\x00-\x1F\x7F-\x9F\u00AD\u180E\u200B-\u200F\u2028\u2029\u202A-\u202E\u2060-\u206F\uFEFF]/;
+const CONTROL_CHARS = /[\x00-\x1F\x7F-\x9F\u00AD\u180E\u200B-\u200F\u2028\u2029\u202A-\u202E\u2060-\u206F\uFE00-\uFE0F\uFEFF]/;
 const CONTROL_CHARS_G = new RegExp(CONTROL_CHARS.source, 'g');
 
 const sanitize = (val, maxLen = 255) => {
@@ -42,7 +42,11 @@ const sanitize = (val, maxLen = 255) => {
   const raw = Array.isArray(val) ? val[0] : val;
   if (raw === undefined || raw === null) return null;
 
-  const str = (typeof raw === 'string') ? raw : String(raw);
+  let str = (typeof raw === 'string') ? raw : String(raw);
+  // Security: Apply Unicode Normalization (NFKC) to ensure consistent representation
+  // and prevent bypasses using visually similar characters.
+  str = str.normalize('NFKC');
+
   // Performance: Truncate BEFORE testing or replacing to avoid scanning large inputs.
   // This ensures we only perform O(maxLen) work regardless of input size.
   const truncated = str.length <= maxLen ? str : str.slice(0, maxLen);

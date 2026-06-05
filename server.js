@@ -8,8 +8,8 @@ const { authMiddleware, sanitize } = require('./auth');
 const app = express();
 
 // Security: Restrict unnecessary browser features via Permissions-Policy.
-// Explicitly disable features that the application does not require.
-const PERMISSIONS_POLICY = 'accelerometer=(), camera=(), fullscreen=(), geolocation=(), gyroscope=(), interest-cohort=(), browsing-topics=(), run-ad-auction=(), join-ad-interest-group=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), sync-xhr=(), usb=(), web-share=(), xr-spatial-tracking=()';
+// Explicitly disable features that the application does not require to reduce browser attack surface.
+const PERMISSIONS_POLICY = 'accelerometer=(), bluetooth=(), camera=(), display-capture=(), fullscreen=(), geolocation=(), gyroscope=(), hid=(), interest-cohort=(), browsing-topics=(), run-ad-auction=(), join-ad-interest-group=(), local-fonts=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), serial=(), sync-xhr=(), usb=(), web-share=(), window-management=(), xr-spatial-tracking=()';
 
 // Trust the first proxy in front of us
 app.set('trust proxy', 1);
