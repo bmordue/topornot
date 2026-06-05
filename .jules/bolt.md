@@ -89,3 +89,7 @@
 ## 2026-06-04 - [Visibility API & Pre-parsed Date Objects]
 **Learning:** Background timers in browser tabs consume unnecessary CPU and battery. Using the Visibility API to pause non-essential UI updates (like relative timestamps) significantly reduces resource consumption for inactive tabs. Additionally, pre-parsing date strings into Date objects during data load avoids redundant parsing in high-frequency rendering and timer loops, eliminating potential runtime exceptions from uninitialized metadata.
 **Action:** Always utilize the Visibility API to manage recurring UI timers. Pre-parse and memoize complex data structures (like Dates or nested JSON) during the fetch/load phase to keep the rendering path and background intervals lean and error-free.
+
+## 2025-06-05 - [Lazy Date Parsing & Startup Optimization]
+**Learning:** Eagerly parsing date strings into Date objects for large collections (e.g., 50,000 items) during initial load can block the main thread for over 200ms, delaying Time to Interactive.
+**Action:** Use a lazy parsing and memoization helper (e.g., `getSuggestionDate(s)`) to defer the cost of parsing until the specific item is rendered or required for calculations.

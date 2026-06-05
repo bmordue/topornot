@@ -103,6 +103,16 @@
   window.addEventListener('online', flushPendingActions);
 
   // -- Format relative time --
+  // Performance: Lazy date parsing and memoization helper.
+  // Avoids O(N) parsing overhead at startup for large datasets.
+  function getSuggestionDate(s) {
+    if (!s._date) {
+      const dateStr = s.created_at.includes('Z') ? s.created_at : s.created_at.replace(' ', 'T') + 'Z';
+      s._date = new Date(dateStr);
+    }
+    return s._date;
+  }
+
   // Performance: Accept a Date object instead of a string to avoid redundant parsing.
   function relativeTime(date) {
     const diff = Date.now() - date.getTime();
@@ -171,7 +181,7 @@
     if (cardCtxDetails) cardCtxDetails.open = false;
 
     const s = suggestions[currentIndex % pendingCount];
-    const date = s._date;
+    const date = getSuggestionDate(s);
 
     cardAgent.textContent = s.agent || 'agent';
     cardTime.textContent  = relativeTime(date);
@@ -198,20 +208,9 @@
 
   // -- Load suggestions from server (or cache) --
   async function loadSuggestions() {
-    // Performance: Helper to pre-parse dates on suggestions.
-    const prepare = (list) => {
-      for (const s of list) {
-        if (!s._date) {
-          const dateStr = s.created_at.includes('Z') ? s.created_at : s.created_at.replace(' ', 'T') + 'Z';
-          s._date = new Date(dateStr);
-        }
-      }
-      return list;
-    };
-
     // Performance: Immediate cache-first load to eliminate loading screen
     try {
-      suggestions = prepare(JSON.parse(localStorage.getItem('cachedSuggestions') || '[]'));
+      suggestions = JSON.parse(localStorage.getItem('cachedSuggestions') || '[]');
     } catch {
       suggestions = [];
     }
@@ -240,7 +239,7 @@
       if (!res.ok) throw new Error('Network error');
 
       const text = await res.text();
-      suggestions = prepare(JSON.parse(text));
+      suggestions = JSON.parse(text);
       const newEtag = res.headers.get('ETag');
 
       localStorage.setItem('cachedSuggestions', text);
@@ -570,9 +569,9 @@
     updateTimer = setInterval(() => {
       if (suggestions.length === 0) return;
       const s = suggestions[currentIndex % suggestions.length];
-      // Performance: Use pre-parsed _date object to avoid redundant parsing and fix runtime bug.
+      // Performance: Use lazy getSuggestionDate() to avoid redundant parsing and fix runtime bug.
       if (s && !cardEl.hidden) {
-        cardTime.textContent = relativeTime(s._date);
+        cardTime.textContent = relativeTime(getSuggestionDate(s));
       }
     }, 60000);
   }
