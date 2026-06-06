@@ -36,6 +36,8 @@ const DEV_DEFAULTS = {
 // Hoisted to module scope for performance.
 const CONTROL_CHARS = /[\x00-\x1F\x7F-\x9F\u00AD\u180E\u200B-\u200F\u2028\u2029\u202A-\u202E\u2060-\u206F\uFE00-\uFE0F\uFEFF]/;
 const CONTROL_CHARS_G = new RegExp(CONTROL_CHARS.source, 'g');
+// Performance: Hoist printable ASCII regex for fast-path check.
+const IS_SIMPLE = /^[\x20-\x7E]*$/;
 
 const sanitize = (val, maxLen = 255) => {
   if (val === undefined || val === null) return null;
@@ -43,6 +45,11 @@ const sanitize = (val, maxLen = 255) => {
   if (raw === undefined || raw === null) return null;
 
   let str = (typeof raw === 'string') ? raw : String(raw);
+
+  // Performance: Fast-path for printable ASCII strings within length limits.
+  // This avoids normalize() and regex scanning for the majority of inputs like IPs and simple names.
+  if (str.length <= maxLen && IS_SIMPLE.test(str)) return str;
+
   // Security: Apply Unicode Normalization (NFKC) to ensure consistent representation
   // and prevent bypasses using visually similar characters.
   str = str.normalize('NFKC');
