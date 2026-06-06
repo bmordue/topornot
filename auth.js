@@ -33,8 +33,9 @@ const DEV_DEFAULTS = {
 
 // C0/C1 control characters, DEL, soft hyphen, and Unicode BiDi/zero-width/separator formatting characters.
 // Includes Mongolian Vowel Separator, Variation Selectors, and the full General Punctuation invisible block.
+// Also includes Unicode non-characters and specials to prevent visual spoofing and log injection.
 // Hoisted to module scope for performance.
-const CONTROL_CHARS = /[\x00-\x1F\x7F-\x9F\u00AD\u180E\u200B-\u200F\u2028\u2029\u202A-\u202E\u2060-\u206F\uFE00-\uFE0F\uFEFF]/;
+const CONTROL_CHARS = /[\x00-\x1F\x7F-\x9F\u00AD\u180E\u200B-\u200F\u2028\u2029\u202A-\u202E\u2060-\u206F\uFE00-\uFE0F\uFEFF\uFDD0-\uFDEF\uFFF0-\uFFFF]/;
 const CONTROL_CHARS_G = new RegExp(CONTROL_CHARS.source, 'g');
 
 const sanitize = (val, maxLen = 255) => {
@@ -43,16 +44,17 @@ const sanitize = (val, maxLen = 255) => {
   if (raw === undefined || raw === null) return null;
 
   let str = (typeof raw === 'string') ? raw : String(raw);
-  // Security: Apply Unicode Normalization (NFKC) to ensure consistent representation
-  // and prevent bypasses using visually similar characters.
-  str = str.normalize('NFKC');
 
-  // Performance: Truncate BEFORE testing or replacing to avoid scanning large inputs.
+  // Performance: Truncate BEFORE normalization to avoid expensive CPU cycles on oversized inputs (DoS mitigation).
   // This ensures we only perform O(maxLen) work regardless of input size.
   const truncated = str.length <= maxLen ? str : str.slice(0, maxLen);
 
+  // Security: Apply Unicode Normalization (NFKC) to ensure consistent representation
+  // and prevent bypasses using visually similar characters.
+  const normalized = truncated.normalize('NFKC');
+
   // Performance: Fast-path for clean strings (test() is faster than replace() and avoids new string allocation).
-  return CONTROL_CHARS.test(truncated) ? truncated.replace(CONTROL_CHARS_G, '_') : truncated;
+  return CONTROL_CHARS.test(normalized) ? normalized.replace(CONTROL_CHARS_G, '_') : normalized;
 };
 
 /**
@@ -76,7 +78,8 @@ function authMiddleware(req, res, next) {
     // Security: Log unauthorized access attempts for auditability.
     // Sanitize method, path, and IP to prevent log injection.
     // Use originalUrl to ensure the full path is logged.
-    console.warn(`[auth] Unauthorized access attempt: ${sanitize(req.method)} ${sanitize(req.originalUrl)} user=anonymous ip=${sanitize(req.ip)}`);
+    // Increase maxLen for originalUrl to ensure forensic context is preserved.
+    console.warn(`[auth] Unauthorized access attempt: ${sanitize(req.method)} ${sanitize(req.originalUrl, 1024)} user=anonymous ip=${sanitize(req.ip)}`);
     // Security: Prevent caching of unauthorized responses to protect privacy.
     res.setHeader('Cache-Control', 'no-store, max-age=0');
     return res.status(401).json({ error: 'Missing upstream identity header (Remote-User)' });
@@ -94,8 +97,9 @@ function authMiddleware(req, res, next) {
   // Audit log – principal only, never tokens.
   // Security: Sanitize method, path, and IP to prevent log injection.
   // Use originalUrl to ensure the full path is logged.
+  // Increase maxLen for originalUrl to ensure forensic context is preserved.
   if (req.identity.user) {
-    console.log(`[auth] ${sanitize(req.method)} ${sanitize(req.originalUrl)} user=${req.identity.user} ip=${sanitize(req.ip)}`);
+    console.log(`[auth] ${sanitize(req.method)} ${sanitize(req.originalUrl, 1024)} user=${req.identity.user} ip=${sanitize(req.ip)}`);
   }
 
   next();

@@ -484,6 +484,68 @@ describe('API Error Handling', () => {
     expect(req.identity.user).toBe(normalized);
     expect(next).toHaveBeenCalled();
   });
+
+  it('should sanitize Unicode non-characters and specials (unit test)', () => {
+    const req = {
+      method: 'GET',
+      path: '/api/suggestions',
+      headers: {
+        'remote-user': 'alice\uFDD0nonchar',
+        'remote-groups': 'admin\uFFFFspecial',
+        'remote-email': 'alice@example.com',
+        'remote-name': 'Alice'
+      }
+    };
+    const res = {};
+    const next = jest.fn();
+
+    authMiddleware(req, res, next);
+
+    expect(req.identity.user).toBe('alice_nonchar');
+    expect(req.identity.groups).toBe('admin_special');
+    expect(next).toHaveBeenCalled();
+  });
+
+  it('should support up to 1024 characters for originalUrl in logs (unit test)', () => {
+    const spy = jest.spyOn(console, 'log').mockImplementation();
+    const longPath = '/' + 'a'.repeat(1023);
+    const req = {
+      method: 'GET',
+      originalUrl: longPath,
+      ip: '127.0.0.1',
+      headers: {
+        'remote-user': 'alice'
+      }
+    };
+    const res = {};
+    const next = jest.fn();
+
+    authMiddleware(req, res, next);
+
+    expect(spy).toHaveBeenCalledWith(expect.stringContaining(`[auth] GET ${longPath} user=alice ip=127.0.0.1`));
+    spy.mockRestore();
+  });
+
+  it('should truncate originalUrl to 1024 characters in logs (unit test)', () => {
+    const spy = jest.spyOn(console, 'log').mockImplementation();
+    const overlyLongPath = '/' + 'a'.repeat(1050);
+    const expectedTruncatedPath = '/' + 'a'.repeat(1023);
+    const req = {
+      method: 'GET',
+      originalUrl: overlyLongPath,
+      ip: '127.0.0.1',
+      headers: {
+        'remote-user': 'alice'
+      }
+    };
+    const res = {};
+    const next = jest.fn();
+
+    authMiddleware(req, res, next);
+
+    expect(spy).toHaveBeenCalledWith(expect.stringContaining(`[auth] GET ${expectedTruncatedPath} user=alice ip=127.0.0.1`));
+    spy.mockRestore();
+  });
 });
 
 describe('Database File Security', () => {

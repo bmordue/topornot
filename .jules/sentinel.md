@@ -123,3 +123,8 @@
 **Vulnerability:** Modern browser APIs like Bluetooth, HID, Serial, and local fonts provide extensive system access and tracking capabilities that increase the attack surface if a site is compromised via XSS.
 **Learning:** Most web applications do not require access to hardware or low-level OS features. Leaving these enabled by default provides additional vectors for data exfiltration or system manipulation.
 **Prevention:** Explicitly disable all unused browser features (including `bluetooth`, `hid`, `serial`, `display-capture`, and `local-fonts`) via a restrictive `Permissions-Policy` header to minimize the potential impact of a client-side compromise.
+
+## 2026-07-10 - Normalization-based DoS and Expanded Unicode Sanitization
+**Vulnerability:** Potential Denial of Service (DoS) via expensive Unicode normalization on oversized inputs, and visual spoofing/log injection via Unicode non-characters and specials.
+**Learning:** Normalizing large untrusted strings before truncation can lead to CPU exhaustion. Furthermore, basic control character filters often miss dangerous Unicode ranges like non-characters (U+FDD0–U+FDEF) and specials (U+FFF0–U+FFFF) that can maliciously alter text presentation.
+**Prevention:** Always truncate untrusted input to a safe maximum length *before* performing expensive operations like Unicode normalization. Maintain a comprehensive, multi-layer sanitization regex that includes C0/C1, BiDi, Variation Selectors, non-characters, and specials.
