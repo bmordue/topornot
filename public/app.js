@@ -69,7 +69,9 @@
   offlineBanner.setAttribute('role', 'status');
   offlineBanner.setAttribute('aria-live', 'polite');
   offlineBanner.textContent = '⚠ You are offline. Actions will sync when reconnected.';
-  document.body.prepend(offlineBanner);
+  const skipLink = document.querySelector('.skip-link');
+  if (skipLink) skipLink.after(offlineBanner);
+  else document.body.prepend(offlineBanner);
 
   window.addEventListener('online',  () => offlineBanner.classList.remove('visible'));
   window.addEventListener('offline', () => offlineBanner.classList.add('visible'));
