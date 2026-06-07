@@ -123,3 +123,8 @@
 **Vulnerability:** Modern browser APIs like Bluetooth, HID, Serial, and local fonts provide extensive system access and tracking capabilities that increase the attack surface if a site is compromised via XSS.
 **Learning:** Most web applications do not require access to hardware or low-level OS features. Leaving these enabled by default provides additional vectors for data exfiltration or system manipulation.
 **Prevention:** Explicitly disable all unused browser features (including `bluetooth`, `hid`, `serial`, `display-capture`, and `local-fonts`) via a restrictive `Permissions-Policy` header to minimize the potential impact of a client-side compromise.
+
+## 2026-07-08 - Forensic Depth Truncation for Audit Logs
+**Vulnerability:** Log entries for `req.originalUrl` used a default truncation of 255 characters, which could lose critical forensic context (e.g., long query parameters or exploit payloads) during security investigations.
+**Learning:** Audit logs need a balance between resource protection (preventing log DoS) and forensic utility. 255 characters is often too short for modern web request paths and parameters.
+**Prevention:** Explicitly define a higher truncation limit (e.g., 1024) specifically for request identifiers in security audit logs to preserve actionable intelligence while still capping maximum line length.
