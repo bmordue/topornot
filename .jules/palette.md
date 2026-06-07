@@ -69,3 +69,7 @@
 ## 2026-06-05 - [Visual Queue Depth via Card Stacking]
 **Learning:** In list-based or queue-based interfaces, a simple counter can feel abstract. Providing a visual "stack" effect (using offset pseudo-elements that scale and fade) creates a tangible sense of volume and progress, making the queue depth immediately obvious without additional UI clutter.
 **Action:** Use CSS pseudo-elements (`::before`/`::after`) on container elements to simulate physical depth for item stacks; toggle these states based on the collection size.
+
+## 2026-06-06 - [Offline Banner Accessibility & Layout]
+**Learning:** Fixed-position notification banners (like an offline alert) that are prepended to the body can interfere with both visual layouts (obscuring sticky headers) and accessibility flows (breaking 'Skip to content' links). Inserting these banners after the skip link in the DOM and using relative positioning ensures they are reachable by screen readers in a logical order without compromising the UI's interactive integrity.
+**Action:** Always insert dynamic global banners after the 'Skip to content' link; use relative or sticky positioning instead of fixed to prevent content overlapping.

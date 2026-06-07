@@ -703,10 +703,7 @@ kbd {
   padding: 8px;
   font-size: 0.82rem;
   font-weight: 600;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
+  position: relative;
   z-index: 20;
 }
 
