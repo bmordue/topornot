@@ -41,7 +41,7 @@
 
   function showHelp() {
     if (navigator.vibrate) navigator.vibrate(10);
-    showToast('Shortcuts: A/Enter/→: Approve, Z/←: Reject, D/↑: Defer, R: Refresh, C: Context, S: Copy, Esc: Close toast/context, ?, /: Help', 'info', 6000);
+    showToast('Shortcuts: A/Enter/→: Approve, Z/←: Reject, D/↑: Defer, R: Refresh, C: Context, S: Copy, Esc: Close toast/context, ?, /: Help. Gestures: Swipe Right to Approve, Left to Reject, Up to Defer.', 'info', 7000);
   }
 
   function flashButton(id) {
@@ -268,12 +268,18 @@
                       action === 'reject'  ? 'exiting-reject'  : 'exiting-defer';
     cardEl.classList.add(animClass);
 
+    // Show the corresponding hint to provide visual confirmation for non-swipe actions
+    const hint = action === 'approve' ? hintApprove :
+                 action === 'reject'  ? hintReject : hintDefer;
+    if (hint) hint.style.opacity = '1';
+
     // Performance: Skip animation delay if user prefers reduced motion.
     // Saves 320ms of execution time per card action.
     if (!prefersReducedMotion) {
       await new Promise(r => setTimeout(r, 320));
     }
     cardEl.classList.remove(animClass);
+    if (hint) hint.style.opacity = '0';
 
     // Optimistic update for defer: it stays pending, just move to next
     if (action === 'defer') {
