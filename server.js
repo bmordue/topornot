@@ -68,7 +68,8 @@ const rateLimitKey = (req) => req.identity?.user || sanitize(req.ip);
 const rateLimitHandler = (req, res, next, options) => {
   // Security: Log rate limit events for auditability.
   // Use originalUrl to ensure the full path is logged even when mounted on a prefix.
-  console.warn(`[audit] RATE_LIMIT_EXCEEDED: ${sanitize(req.method)} ${sanitize(req.originalUrl)} user=${req.identity?.user || 'anonymous'} ip=${sanitize(req.ip)}`);
+  // Forensic Depth: Limit originalUrl to 1024 chars for audit logs.
+  console.warn(`[audit] RATE_LIMIT_EXCEEDED: ${sanitize(req.method)} ${sanitize(req.originalUrl, 1024)} user=${req.identity?.user || 'anonymous'} ip=${sanitize(req.ip)}`);
   res.setHeader('Cache-Control', 'no-store, max-age=0');
   res.status(options.statusCode).send(options.message);
 };
@@ -199,7 +200,8 @@ app.patch('/api/suggestions/:id/:action', actionLimiter, (req, res) => {
 app.use('/api', (req, res) => {
   // Security: Log API 404s to detect probing/scanning.
   // Use originalUrl to ensure the full path is logged even when mounted on a prefix.
-  console.warn(`[audit] API_NOT_FOUND: ${sanitize(req.method)} ${sanitize(req.originalUrl)} user=${req.identity?.user || 'anonymous'} ip=${sanitize(req.ip)}`);
+  // Forensic Depth: Limit originalUrl to 1024 chars for audit logs.
+  console.warn(`[audit] API_NOT_FOUND: ${sanitize(req.method)} ${sanitize(req.originalUrl, 1024)} user=${req.identity?.user || 'anonymous'} ip=${sanitize(req.ip)}`);
   // Security: Prevent caching of error responses to avoid leaking info.
   res.setHeader('Cache-Control', 'no-store, max-age=0');
   res.status(404).json({ error: 'API endpoint not found' });
@@ -229,7 +231,8 @@ app.use((err, req, res, next) => {
   // Generic error handler
   // Security: Log unexpected errors with forensic context.
   // Use originalUrl to ensure the full path is logged.
-  console.error(`[audit] SERVER_ERROR: ${sanitize(req.method)} ${sanitize(req.originalUrl)} user=${req.identity?.user || 'anonymous'} ip=${sanitize(req.ip)}`);
+  // Forensic Depth: Limit originalUrl to 1024 chars for audit logs.
+  console.error(`[audit] SERVER_ERROR: ${sanitize(req.method)} ${sanitize(req.originalUrl, 1024)} user=${req.identity?.user || 'anonymous'} ip=${sanitize(req.ip)}`);
   console.error(err.stack);
   res.status(500).json({ error: 'Internal Server Error' });
 });

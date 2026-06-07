@@ -76,7 +76,8 @@ function authMiddleware(req, res, next) {
     // Security: Log unauthorized access attempts for auditability.
     // Sanitize method, path, and IP to prevent log injection.
     // Use originalUrl to ensure the full path is logged.
-    console.warn(`[auth] Unauthorized access attempt: ${sanitize(req.method)} ${sanitize(req.originalUrl)} user=anonymous ip=${sanitize(req.ip)}`);
+    // Forensic Depth: Limit originalUrl to 1024 chars for audit logs.
+    console.warn(`[auth] Unauthorized access attempt: ${sanitize(req.method)} ${sanitize(req.originalUrl, 1024)} user=anonymous ip=${sanitize(req.ip)}`);
     // Security: Prevent caching of unauthorized responses to protect privacy.
     res.setHeader('Cache-Control', 'no-store, max-age=0');
     return res.status(401).json({ error: 'Missing upstream identity header (Remote-User)' });
@@ -94,8 +95,9 @@ function authMiddleware(req, res, next) {
   // Audit log – principal only, never tokens.
   // Security: Sanitize method, path, and IP to prevent log injection.
   // Use originalUrl to ensure the full path is logged.
+  // Forensic Depth: Limit originalUrl to 1024 chars for audit logs.
   if (req.identity.user) {
-    console.log(`[auth] ${sanitize(req.method)} ${sanitize(req.originalUrl)} user=${req.identity.user} ip=${sanitize(req.ip)}`);
+    console.log(`[auth] ${sanitize(req.method)} ${sanitize(req.originalUrl, 1024)} user=${req.identity.user} ip=${sanitize(req.ip)}`);
   }
 
   next();

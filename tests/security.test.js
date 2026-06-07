@@ -540,4 +540,21 @@ describe('Audit Logging', () => {
 
     expect(logSpy).toHaveBeenCalledWith(expect.stringMatching(/\[audit\] SUGGESTION_UPDATE: id=\d+ action=approve user=dev-user ip=[a-f\d\.:]+ status=approved/));
   });
+
+  it('should truncate originalUrl at 1024 characters in audit logs (forensic depth)', async () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
+    const longPath = '/api/' + 'a'.repeat(1100);
+    const expectedPath = '/api/' + 'a'.repeat(1024 - 5); // 1024 total
+
+    await request(app).get(longPath);
+
+    // Check [auth] log (console.log)
+    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining(`[auth] GET ${expectedPath} user=dev-user`));
+    // Check [audit] API_NOT_FOUND log (console.warn)
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining(`[audit] API_NOT_FOUND: GET ${expectedPath} user=dev-user`));
+
+    expect(logSpy).not.toHaveBeenCalledWith(expect.stringContaining('a'.repeat(1025)));
+    expect(warnSpy).not.toHaveBeenCalledWith(expect.stringContaining('a'.repeat(1025)));
+    warnSpy.mockRestore();
+  });
 });
