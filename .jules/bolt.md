@@ -97,3 +97,7 @@
 ## 2025-06-11 - [Bypassing Normalization with Printable ASCII Fast-Path]
 **Learning:** Unicode normalization (`.normalize('NFKC')`) is an O(N) operation that can be bypassed for printable ASCII strings (`/^[\x20-\x7E]*$/`), as they are invariant under normalization. Moving this check before normalization provides a significant speedup (~3.7x) for the most frequent inputs like IPs and HTTP methods.
 **Action:** When normalization is required for security, use a restrictive fast-path check to bypass it for safe, common character sets.
+
+## 2025-06-12 - [DoS Mitigation via Rough Truncation]
+**Learning:** Performing expensive operations like Unicode normalization or complex regex replacements on unsanitized, potentially multi-megabyte inputs can lead to CPU exhaustion (DoS). Implementing a "rough truncation" (e.g., `maxLen + 64`) before these operations ensures we only process a small, constant amount of data regardless of input size, while preserving correctness for characters at the boundary.
+**Action:** Always apply rough truncation to large, untrusted inputs before performing O(N) operations like normalization, complex regex scanning, or deep object traversal.

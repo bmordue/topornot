@@ -47,20 +47,26 @@ const sanitize = (val, maxLen = 255) => {
 
   let str = (typeof raw === 'string') ? raw : String(raw);
 
-  // Performance: Fast-path for simple ASCII strings within length limit.
+  // Performance: Rough truncation to prevent DoS on extremely large payloads
+  // while ensuring we don't break multi-code-point sequences at the boundary
+  // before normalization.
+  const roughLimit = maxLen + 64;
+  const rough = str.length <= roughLimit ? str : str.slice(0, roughLimit);
+
+  // Performance: Fast-path for simple ASCII strings.
   // test() is faster than normalize() + test() + replace() and avoids new string allocation.
   // This covers common cases like IPs, HTTP methods, and standard usernames.
-  if (str.length <= maxLen && SIMPLE_ASCII.test(str)) {
-    return str;
+  if (SIMPLE_ASCII.test(rough)) {
+    return rough.length <= maxLen ? rough : rough.slice(0, maxLen);
   }
 
   // Security: Apply Unicode Normalization (NFKC) to ensure consistent representation
   // and prevent bypasses using visually similar characters.
-  str = str.normalize('NFKC');
+  const normalized = rough.normalize('NFKC');
 
   // Performance: Truncate BEFORE testing or replacing to avoid scanning large inputs.
   // This ensures we only perform O(maxLen) work regardless of input size.
-  const truncated = str.length <= maxLen ? str : str.slice(0, maxLen);
+  const truncated = normalized.length <= maxLen ? normalized : normalized.slice(0, maxLen);
 
   // Performance: Fast-path for clean strings (test() is faster than replace() and avoids new string allocation).
   return CONTROL_CHARS.test(truncated) ? truncated.replace(CONTROL_CHARS_G, '_') : truncated;
