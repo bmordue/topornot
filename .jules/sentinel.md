@@ -128,3 +128,8 @@
 **Vulnerability:** Log entries for `req.originalUrl` used a default truncation of 255 characters, which could lose critical forensic context (e.g., long query parameters or exploit payloads) during security investigations.
 **Learning:** Audit logs need a balance between resource protection (preventing log DoS) and forensic utility. 255 characters is often too short for modern web request paths and parameters.
 **Prevention:** Explicitly define a higher truncation limit (e.g., 1024) specifically for request identifiers in security audit logs to preserve actionable intelligence while still capping maximum line length.
+
+## 2026-07-15 - Fail-Closed Persistence and Startup
+**Vulnerability:** "Fail-open" database loading allowed the application to ignore corruption and overwrite a corrupted database with an empty state, leading to permanent data loss (DoS).
+**Learning:** Security-sensitive systems must prioritize data integrity. Defaulting to an empty state on parse failure is dangerous for persistent storage.
+**Prevention:** Implement "fail-closed" database loading that throws on corruption, and ensure the server explicitly validates database connectivity/integrity during its startup sequence to prevent running in an inconsistent state.
