@@ -709,6 +709,12 @@ kbd {
 
 .offline-banner.visible { display: block; }
 
+@media (prefers-color-scheme: dark) {
+  .offline-banner {
+    color: #0f172a;
+  }
+}
+
 [hidden] { display: none !important; }
 
 /* Performance: Disable animations/transitions if user prefers reduced motion */
