@@ -73,3 +73,7 @@
 ## 2026-06-06 - [Offline Banner Accessibility & Layout]
 **Learning:** Fixed-position notification banners (like an offline alert) that are prepended to the body can interfere with both visual layouts (obscuring sticky headers) and accessibility flows (breaking 'Skip to content' links). Inserting these banners after the skip link in the DOM and using relative positioning ensures they are reachable by screen readers in a logical order without compromising the UI's interactive integrity.
 **Action:** Always insert dynamic global banners after the 'Skip to content' link; use relative or sticky positioning instead of fixed to prevent content overlapping.
+
+## 2026-06-07 - [Cascading Theme-Level Contrast Fixes]
+**Learning:** Fixing color contrast for primary components often overlooks secondary or dynamically injected elements (like offline banners) that share the same semantic color tokens. In dark mode, vibrant backgrounds like amber/orange require dark foreground text to remain accessible. Ensuring these fixes are applied globally or through shared theme overrides prevents "pockets" of inaccessible UI.
+**Action:** Always audit dynamically injected components for theme-specific contrast compliance, especially when using vibrant semantic backgrounds.
