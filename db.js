@@ -31,8 +31,10 @@ function _load() {
   if (fs.existsSync(DB_PATH)) {
     try {
       _data = JSON.parse(fs.readFileSync(DB_PATH, 'utf8'));
-    } catch {
-      _data = { nextId: 1, suggestions: [] };
+    } catch (err) {
+      // Security: Throw on corruption to prevent silent data loss and DoS.
+      // Defaulting to an empty state would cause the corrupted file to be overwritten on next save.
+      throw new Error(`[db] Failed to parse database file ${DB_PATH}: ${err.message}`);
     }
   } else {
     _data = { nextId: 1, suggestions: [] };
@@ -266,6 +268,13 @@ function createSuggestion({ title, description, context, agent, user }) {
 
 function updateStatus(id, status, user) {
   _load();
+
+  // Security: Defense-in-depth whitelist check for valid statuses.
+  // This prevents persistence of unexpected status values if the API layer is bypassed.
+  if (!['pending', 'approved', 'rejected'].includes(status)) {
+    throw new Error(`[db] Invalid status: ${status}`);
+  }
+
   const suggestion = _index.get(id);
   if (!suggestion) return null;
 

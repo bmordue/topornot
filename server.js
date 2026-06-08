@@ -241,6 +241,11 @@ module.exports = app;
 module.exports.PERMISSIONS_POLICY = PERMISSIONS_POLICY;
 
 if (require.main === module) {
+  // Security: Implement "Fail-Closed" startup.
+  // Explicitly trigger database load and version check.
+  // If the database is corrupted, the application will fail to start.
+  db.getVersion();
+
   const PORT = process.env.PORT || 3000;
   const HOST = process.env.HOST || '127.0.0.1';
   const server = app.listen(PORT, HOST, () => {
