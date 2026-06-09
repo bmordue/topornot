@@ -41,11 +41,11 @@ self.addEventListener('fetch', (event) => {
             'X-Frame-Options': 'DENY',
             'X-Robots-Tag': 'noindex, nofollow',
             'Referrer-Policy': 'no-referrer',
-            'Content-Security-Policy': "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'",
+            'Content-Security-Policy': "default-src 'none'; object-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'",
             'Cross-Origin-Opener-Policy': 'same-origin',
             'Cross-Origin-Embedder-Policy': 'require-corp',
             'Cross-Origin-Resource-Policy': 'same-origin',
-            'Permissions-Policy': 'accelerometer=(), camera=(), fullscreen=(), geolocation=(), gyroscope=(), interest-cohort=(), browsing-topics=(), run-ad-auction=(), join-ad-interest-group=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), sync-xhr=(), usb=(), web-share=(), xr-spatial-tracking=()'
+            'Permissions-Policy': 'accelerometer=(), bluetooth=(), camera=(), display-capture=(), fullscreen=(), geolocation=(), gyroscope=(), hid=(), interest-cohort=(), browsing-topics=(), run-ad-auction=(), join-ad-interest-group=(), local-fonts=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), serial=(), sync-xhr=(), usb=(), web-share=(), window-management=(), xr-spatial-tracking=()'
           }
         })
       )
