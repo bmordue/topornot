@@ -18,6 +18,10 @@ let _pendingSave = null;
 let _needsSave = false;
 const SAVE_INTERVAL = 1000; // 1 second batching
 
+// Timestamp caching for performance
+let _lastNow = 0;
+let _lastNowStr = '';
+
 // Result caches to avoid repeated O(N) conversions
 let _cachePending = null;
 let _cacheAll = null;
@@ -218,8 +222,17 @@ function getSuggestionById(id) {
   return _index.get(id) || null;
 }
 
+/**
+ * Returns the current timestamp in "YYYY-MM-DD HH:MM:SS" format.
+ * Performance: Uses second-level caching to avoid redundant Date creation and string manipulation.
+ */
 function _getNow() {
-  return new Date().toISOString().replace('T', ' ').slice(0, 19);
+  const now = Math.floor(Date.now() / 1000);
+  if (now === _lastNow) return _lastNowStr;
+
+  _lastNow = now;
+  _lastNowStr = new Date().toISOString().replace('T', ' ').slice(0, 19);
+  return _lastNowStr;
 }
 
 function createSuggestion({ title, description, context, agent, user }) {
