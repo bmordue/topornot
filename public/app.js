@@ -41,7 +41,20 @@
 
   function showHelp() {
     if (navigator.vibrate) navigator.vibrate(10);
-    showToast('Shortcuts: A/Enter/→: Approve, Z/←: Reject, D/↑: Defer, R: Refresh, C: Context, S: Copy, Esc: Close toast/context, ?, /: Help. Gestures: Swipe Right to Approve, Left to Reject, Up to Defer.', 'info', 7000);
+    const helpHtml = `
+      <div style="display:grid;grid-template-columns:repeat(2, 1fr);gap:10px;text-align:left;font-size:0.8rem;">
+        <div><kbd>A</kbd> <kbd>↵</kbd> <kbd>→</kbd> Approve</div>
+        <div><kbd>Z</kbd> <kbd>←</kbd> Reject</div>
+        <div><kbd>D</kbd> <kbd>↑</kbd> Defer</div>
+        <div><kbd>C</kbd> Context / <kbd>S</kbd> Copy</div>
+        <div><kbd>R</kbd> Refresh / <kbd>?</kbd> <kbd>/</kbd> Help</div>
+        <div><kbd>Esc</kbd> Close</div>
+        <div style="grid-column: span 2; border-top: 1px solid color-mix(in srgb, currentColor, transparent 85%); padding-top: 4px; font-style: italic;">
+          Gestures: Swipe Right (Approve), Left (Reject), Up (Defer)
+        </div>
+      </div>
+    `;
+    showToast(helpHtml, 'info', 10000, true);
   }
 
   function flashButton(id) {
@@ -55,9 +68,13 @@
 
   // -- Toast --
   let toastTimer;
-  function showToast(msg, type = 'info', duration = 2200) {
+  function showToast(msg, type = 'info', duration = 2200, isHTML = false) {
     clearTimeout(toastTimer);
-    toastEl.textContent = msg;
+    if (isHTML) {
+      toastEl.innerHTML = msg;
+    } else {
+      toastEl.textContent = msg;
+    }
     toastEl.classList.remove('toast-approve', 'toast-reject', 'toast-defer', 'toast-info');
     toastEl.classList.add('show', `toast-${type}`);
     toastTimer = setTimeout(() => toastEl.classList.remove('show'), duration);
@@ -151,9 +168,9 @@
     lastCount = pendingCount;
 
     queueCount.textContent = `${pendingCount} pending`;
-    document.title = pendingCount > 0 ? `(${pendingCount}) topornot` : '✓ All clear - topornot';
 
     if (pendingCount === 0) {
+      document.title = '✓ All clear - topornot';
       if (cardStack) cardStack.classList.remove('has-next', 'has-many');
       cardEl.hidden = true;
       actionBar.hidden = true;
@@ -200,6 +217,7 @@
     }
 
     const currentPos = (currentIndex % pendingCount) + 1;
+    document.title = `(${currentPos}/${pendingCount}) topornot`;
     cardPos.textContent = `${currentPos} of ${pendingCount}`;
     cardPos.setAttribute('aria-label', `Suggestion ${currentPos} of ${pendingCount}`);
     const progressPercent = Math.round((currentPos / pendingCount) * 100);
