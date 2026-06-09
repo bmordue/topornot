@@ -133,3 +133,8 @@
 **Vulnerability:** "Fail-open" database loading allowed the application to ignore corruption and overwrite a corrupted database with an empty state, leading to permanent data loss (DoS).
 **Learning:** Security-sensitive systems must prioritize data integrity. Defaulting to an empty state on parse failure is dangerous for persistent storage.
 **Prevention:** Implement "fail-closed" database loading that throws on corruption, and ensure the server explicitly validates database connectivity/integrity during its startup sequence to prevent running in an inconsistent state.
+
+## 2026-07-20 - Security Header Parity in Service Worker
+**Vulnerability:** Service Worker synthetic responses (503 Offline) were missing critical security headers (`object-src 'none'`) and comprehensive `Permissions-Policy` directives present on the server, creating a security disparity between online and offline states.
+**Learning:** Security hardening must be applied consistently across all response-generating layers, including client-side workers. A browser-side proxy can be a blind spot for security posture if not audited alongside the server.
+**Prevention:** Always synchronize security header configurations between the server and Service Worker synthetic responses to ensure a consistent defense-in-depth posture.
