@@ -607,6 +607,29 @@ kbd {
   filter: brightness(1.1);
 }
 
+.toast kbd {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: inherit;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-size: 0.75rem;
+  display: inline-block;
+  min-width: 1.2em;
+  text-align: center;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+@media (prefers-color-scheme: dark) {
+  .toast kbd {
+    background: rgba(0, 0, 0, 0.2);
+    border-color: rgba(0, 0, 0, 0.3);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+}
+
 .toast.toast-approve { border-left: 4px solid var(--color-approve); }
 .toast.toast-reject  { border-left: 4px solid var(--color-reject); }
 .toast.toast-defer   { border-left: 4px solid var(--color-defer); }
