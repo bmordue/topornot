@@ -484,6 +484,29 @@ describe('API Error Handling', () => {
     expect(req.identity.user).toBe(normalized);
     expect(next).toHaveBeenCalled();
   });
+
+  it('should sanitize additional invisible and confusable Unicode characters (unit test)', () => {
+    const confusable = 'alice\u2000quad\u115Ffiller\u3000ideographic\u034Fcj';
+    const req = {
+      method: 'GET',
+      path: '/api/suggestions',
+      headers: {
+        'remote-user': confusable,
+        'remote-groups': 'dev',
+        'remote-email': 'dev@example.com',
+        'remote-name': 'Developer'
+      }
+    };
+    const res = {};
+    const next = jest.fn();
+
+    authMiddleware(req, res, next);
+
+    // Note: NFKC normalization converts various space-like characters (e.g., \u2000, \u3000)
+    // to standard spaces (\u0020) before the CONTROL_CHARS regex is applied.
+    expect(req.identity.user).toBe('alice quad_filler ideographic_cj');
+    expect(next).toHaveBeenCalled();
+  });
 });
 
 describe('Database File Security', () => {
