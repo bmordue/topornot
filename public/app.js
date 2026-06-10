@@ -304,22 +304,23 @@
     // Optimistic update for defer: it stays pending, just move to next
     if (action === 'defer') {
       currentIndex = (currentIndex + 1) % Math.max(suggestions.length, 1);
-      showToast(`Deferred: ${truncate(suggestionTitle)}`, 'defer');
     } else {
       // Optimistically remove from pending view by updating suggestions array
-      const sIdx = currentIndex % suggestions.length;
-      suggestions.splice(sIdx, 1);
+      suggestions.splice(currentIndex % suggestions.length, 1);
 
       if (suggestions.length === 0 || currentIndex >= suggestions.length) {
         currentIndex = 0;
       }
-      if (suggestions.length === 0) {
-        showToast('🎉 All caught up!', 'info', 3000);
-        if (navigator.vibrate) navigator.vibrate([50, 30, 50, 30, 80]);
-      } else {
-        const prefix = action === 'approve' ? '✓ Approved' : '✗ Rejected';
-        showToast(`${prefix}: ${truncate(suggestionTitle)}`, action);
-      }
+    }
+
+    if (suggestions.length === 0) {
+      showToast('🎉 All caught up!', 'info', 3000);
+      if (navigator.vibrate) navigator.vibrate([50, 30, 50, 30, 80]);
+    } else {
+      const suffix = ` (${suggestions.length} left)`;
+      const prefix = action === 'approve' ? '✓ Approved' :
+                     action === 'reject'  ? '✗ Rejected'  : 'Deferred';
+      showToast(`${prefix}: ${truncate(suggestionTitle)}${suffix}`, action);
     }
 
     renderCard();

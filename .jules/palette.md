@@ -77,3 +77,7 @@
 ## 2026-06-07 - [Cascading Theme-Level Contrast Fixes]
 **Learning:** Fixing color contrast for primary components often overlooks secondary or dynamically injected elements (like offline banners) that share the same semantic color tokens. In dark mode, vibrant backgrounds like amber/orange require dark foreground text to remain accessible. Ensuring these fixes are applied globally or through shared theme overrides prevents "pockets" of inaccessible UI.
 **Action:** Always audit dynamically injected components for theme-specific contrast compliance, especially when using vibrant semantic backgrounds.
+
+## 2026-06-10 - [Progress Affordance via Contextual Feedback]
+**Learning:** In high-volume review queues, users often lose track of their progress if it's only displayed in a distant header. Injecting the remaining item count directly into the action feedback toasts provides immediate, contextual reinforcement of the user's progress, reducing cognitive load and providing a satisfying sense of "chipping away" at the workload.
+**Action:** Always include specific progress metrics (like remaining counts) in transient feedback notifications for repetitive task workflows.
