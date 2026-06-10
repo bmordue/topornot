@@ -204,11 +204,15 @@ function getAllSuggestionsJson() {
     if (!_cacheAllJson) {
       // Performance: Optimized fragment joining for API response.
       // Joins pre-stringified fragments in reverse order to match getAllSuggestions().
-      // Using a pre-allocated array for better performance in V8.
+      // Inlined _getFragment logic to avoid function call overhead in loop.
       const len = _fragments.length;
       const reversed = new Array(len);
       for (let i = 0; i < len; i++) {
-        reversed[i] = _getFragment(len - 1 - i);
+        const idx = len - 1 - i;
+        if (_fragments[idx] === null) {
+          _fragments[idx] = JSON.stringify(_data.suggestions[idx]);
+        }
+        reversed[i] = _fragments[idx];
       }
       _cacheAllJson = reversed;
     }
@@ -259,10 +263,10 @@ function createSuggestion({ title, description, context, agent, user }) {
   suggestion[FRAGMENT_INDEX] = _fragments.length;
   _fragments.push(newFragment);
 
-  // Performance: Invalidate LIFO caches to avoid O(N) unshift cost.
-  // Next read will rebuild these in O(N).
-  _cacheAll = null;
-  _cacheAllJson = null;
+  // Performance: Incremental updates for LIFO caches.
+  // unshift() is O(N) but significantly faster than full rebuild in V8.
+  if (_cacheAll) _cacheAll.unshift(suggestion);
+  if (_cacheAllJson) _cacheAllJson.unshift(newFragment);
   _cacheAllJsonString = null;
 
   // Incremental update for pending cache (FIFO) is O(1) via push.
