@@ -9,7 +9,7 @@ const app = express();
 
 // Security: Restrict unnecessary browser features via Permissions-Policy.
 // Explicitly disable features that the application does not require to reduce browser attack surface.
-const PERMISSIONS_POLICY = 'accelerometer=(), bluetooth=(), camera=(), display-capture=(), fullscreen=(), geolocation=(), gyroscope=(), hid=(), interest-cohort=(), browsing-topics=(), run-ad-auction=(), join-ad-interest-group=(), local-fonts=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), serial=(), sync-xhr=(), usb=(), web-share=(), window-management=(), xr-spatial-tracking=()';
+const PERMISSIONS_POLICY = 'accelerometer=(), attribution-reporting=(), bluetooth=(), browsing-topics=(), camera=(), compute-pressure=(), display-capture=(), fullscreen=(), geolocation=(), gyroscope=(), hid=(), identity-credentials-get=(), interest-cohort=(), join-ad-interest-group=(), local-fonts=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), run-ad-auction=(), screen-wake-lock=(), serial=(), storage-access=(), sync-xhr=(), usb=(), web-share=(), window-management=(), xr-spatial-tracking=()';
 
 // Trust the first proxy in front of us
 app.set('trust proxy', 1);

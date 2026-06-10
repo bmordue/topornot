@@ -138,3 +138,8 @@
 **Vulnerability:** Service Worker synthetic responses (503 Offline) were missing critical security headers (`object-src 'none'`) and comprehensive `Permissions-Policy` directives present on the server, creating a security disparity between online and offline states.
 **Learning:** Security hardening must be applied consistently across all response-generating layers, including client-side workers. A browser-side proxy can be a blind spot for security posture if not audited alongside the server.
 **Prevention:** Always synchronize security header configurations between the server and Service Worker synthetic responses to ensure a consistent defense-in-depth posture.
+
+## 2026-07-22 - Multi-layered Security Posture Synchronization and Confusable Character Hardening
+**Vulnerability:** Security posture disparity between server and Service Worker, and vulnerability to visual spoofing via a wider range of "invisible" or "confusable" Unicode characters.
+**Learning:** Hardening only a subset of control characters leaves the application vulnerable to more advanced visual spoofing and homograph attacks using characters like Hangul fillers or specific invisible spaces. Furthermore, security headers like HSTS and CSP directives (e.g., upgrade-insecure-requests) must be synchronized across all response-generating layers, including client-side Service Workers, to maintain a consistent defense-in-depth boundary.
+**Prevention:** Regularly expand sanitization filters to include newly identified confusable characters and ensure that all security header configurations are mirrored in both server-side and client-side (Service Worker) synthetic response logic.
