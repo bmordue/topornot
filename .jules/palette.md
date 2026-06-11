@@ -81,3 +81,7 @@
 ## 2026-06-10 - [Progress Affordance via Contextual Feedback]
 **Learning:** In high-volume review queues, users often lose track of their progress if it's only displayed in a distant header. Injecting the remaining item count directly into the action feedback toasts provides immediate, contextual reinforcement of the user's progress, reducing cognitive load and providing a satisfying sense of "chipping away" at the workload.
 **Action:** Always include specific progress metrics (like remaining counts) in transient feedback notifications for repetitive task workflows.
+
+## 2026-06-11 - [Multi-Modal Reinforcement in Gestures]
+**Learning:** In gesture-driven interfaces, relying on color or text alone for swipe hints can be limiting for accessibility. Adding semantic icons (like ✓ or ✗) to these overlays provides a third, redundant layer of information that reinforces the user's intent. Similarly, contextualizing utility feedback (like "Copied: [Title]" instead of just "Copied") mirrors the patterns used for primary actions, creating a more cohesive and predictable interaction model.
+**Action:** Always provide redundant visual cues (icons + text + color) for gesture-based action hints; ensure utility feedback matches the granularity of primary action notifications.
