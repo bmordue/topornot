@@ -263,10 +263,11 @@ function createSuggestion({ title, description, context, agent, user }) {
   suggestion[FRAGMENT_INDEX] = _fragments.length;
   _fragments.push(newFragment);
 
-  // Performance: Incremental updates for LIFO caches.
-  // unshift() is O(N) but significantly faster than full rebuild in V8.
-  if (_cacheAll) _cacheAll.unshift(suggestion);
-  if (_cacheAllJson) _cacheAllJson.unshift(newFragment);
+  // Performance: Lazy invalidation for LIFO caches.
+  // unshift() is O(N) and becomes a bottleneck as the dataset grows.
+  // We move this cost to the next read to keep creation O(1).
+  _cacheAll = null;
+  _cacheAllJson = null;
   _cacheAllJsonString = null;
 
   // Incremental update for pending cache (FIFO) is O(1) via push.
@@ -279,7 +280,7 @@ function createSuggestion({ title, description, context, agent, user }) {
     _cachePendingJsonString = null;
   }
 
-  _save({ invalidatePending: false, invalidateAll: false });
+  _save({ invalidatePending: false, invalidateAll: true });
   return suggestion;
 }
 
