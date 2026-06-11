@@ -361,7 +361,7 @@
 
     const text = `Suggestion from ${s.agent || 'agent'}:\n\n${s.title}\n${s.description}${s.context ? '\n\nContext:\n' + s.context : ''}`;
     navigator.clipboard.writeText(text).then(() => {
-      showToast('Copied to clipboard', 'info');
+      showToast(`Copied: ${truncate(s.title)}`, 'info');
       if (navigator.vibrate) navigator.vibrate(10);
 
       label.textContent = 'Copied!';
