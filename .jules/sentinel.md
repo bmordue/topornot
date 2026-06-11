@@ -143,3 +143,8 @@
 **Vulnerability:** Security posture disparity between server and Service Worker, and vulnerability to visual spoofing via a wider range of "invisible" or "confusable" Unicode characters.
 **Learning:** Hardening only a subset of control characters leaves the application vulnerable to more advanced visual spoofing and homograph attacks using characters like Hangul fillers or specific invisible spaces. Furthermore, security headers like HSTS and CSP directives (e.g., upgrade-insecure-requests) must be synchronized across all response-generating layers, including client-side Service Workers, to maintain a consistent defense-in-depth boundary.
 **Prevention:** Regularly expand sanitization filters to include newly identified confusable characters and ensure that all security header configurations are mirrored in both server-side and client-side (Service Worker) synthetic response logic.
+
+## 2026-08-01 - Robust Request Body Validation for Non-Object Payloads
+**Vulnerability:** Unhandled exceptions (500 Internal Server Error) when receiving valid but non-object JSON payloads (e.g., `null`, `[]`) that pass through middleware but fail during destructuring in route handlers.
+**Learning:** Even with `express.json()`, certain valid JSON payloads like `null` or arrays can bypass initial checks and cause crashes if the code assumes the body is always a non-null object.
+**Prevention:** Always validate that `req.body` is a non-null object before attempting to destructure properties in route handlers, returning a 400 Bad Request if the payload shape is incorrect.
