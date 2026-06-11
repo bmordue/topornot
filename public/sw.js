@@ -39,6 +39,8 @@ self.addEventListener('fetch', (event) => {
             'Content-Type': 'application/json',
             'X-Content-Type-Options': 'nosniff',
             'X-Frame-Options': 'DENY',
+            'X-Permitted-Cross-Domain-Policies': 'none',
+            'X-XSS-Protection': '0',
             'X-Robots-Tag': 'noindex, nofollow',
             'Referrer-Policy': 'no-referrer',
             'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
@@ -46,7 +48,7 @@ self.addEventListener('fetch', (event) => {
             'Cross-Origin-Opener-Policy': 'same-origin',
             'Cross-Origin-Embedder-Policy': 'require-corp',
             'Cross-Origin-Resource-Policy': 'same-origin',
-            'Permissions-Policy': 'accelerometer=(), attribution-reporting=(), bluetooth=(), browsing-topics=(), camera=(), compute-pressure=(), display-capture=(), fullscreen=(), geolocation=(), gyroscope=(), hid=(), identity-credentials-get=(), interest-cohort=(), join-ad-interest-group=(), local-fonts=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), run-ad-auction=(), screen-wake-lock=(), serial=(), storage-access=(), sync-xhr=(), usb=(), web-share=(), window-management=(), xr-spatial-tracking=()'
+            'Permissions-Policy': 'accelerometer=(), attribution-reporting=(), bluetooth=(), browsing-topics=(), camera=(), compute-pressure=(), display-capture=(), document-domain=(), fullscreen=(), gamepad=(), geolocation=(), gyroscope=(), hid=(), identity-credentials-get=(), idle-detection=(), interest-cohort=(), join-ad-interest-group=(), keyboard-map=(), local-fonts=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), run-ad-auction=(), screen-wake-lock=(), serial=(), storage-access=(), sync-xhr=(), usb=(), web-share=(), window-management=(), xr-spatial-tracking=()'
           }
         })
       )

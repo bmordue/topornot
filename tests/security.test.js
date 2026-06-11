@@ -109,6 +109,30 @@ describe('Input Validation', () => {
     expect(res.body.error).toBeDefined();
     expect(res.headers['cache-control']).toBe('no-store, max-age=0');
   });
+
+  it('should reject non-object JSON payloads in POST /api/suggestions', async () => {
+    // These are rejected by express.json() strict mode (default true)
+    const strictRejections = [null, 123, "string"];
+    for (const val of strictRejections) {
+      const res = await request(app)
+        .post('/api/suggestions')
+        .set('Content-Type', 'application/json')
+        .send(JSON.stringify(val));
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toBe('Invalid JSON payload');
+    }
+
+    // Arrays are accepted by express.json() but should be rejected by our route handler
+    const resArr = await request(app)
+      .post('/api/suggestions')
+      .set('Content-Type', 'application/json')
+      .send(JSON.stringify([1, 2, 3]));
+
+    expect(resArr.status).toBe(400);
+    expect(resArr.body.error).toBe('Invalid request body. Expected a JSON object.');
+    expect(resArr.headers['cache-control']).toBe('no-store, max-age=0');
+  });
 });
 
 describe('Rate Limiting', () => {
