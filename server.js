@@ -9,7 +9,7 @@ const app = express();
 
 // Security: Restrict unnecessary browser features via Permissions-Policy.
 // Explicitly disable features that the application does not require to reduce browser attack surface.
-const PERMISSIONS_POLICY = 'accelerometer=(), attribution-reporting=(), bluetooth=(), browsing-topics=(), camera=(), compute-pressure=(), display-capture=(), document-domain=(), fullscreen=(), gamepad=(), geolocation=(), gyroscope=(), hid=(), identity-credentials-get=(), idle-detection=(), interest-cohort=(), join-ad-interest-group=(), keyboard-map=(), local-fonts=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), run-ad-auction=(), screen-wake-lock=(), serial=(), storage-access=(), sync-xhr=(), usb=(), web-share=(), window-management=(), xr-spatial-tracking=()';
+const PERMISSIONS_POLICY = 'accelerometer=(), attribution-reporting=(), autoplay=(), bluetooth=(), browsing-topics=(), camera=(), captured-surface-control=(), clipboard-read=(), clipboard-write=(self), compute-pressure=(), display-capture=(), document-domain=(), fenced-frame-api=(), fullscreen=(), gamepad=(), geolocation=(), gyroscope=(), hid=(), identity-credentials-get=(), idle-detection=(), interest-cohort=(), join-ad-interest-group=(), keyboard-map=(), local-fonts=(), magnetometer=(), microphone=(), midi=(), otp-credentials=(), payment=(), picture-in-picture=(), private-state-token-issuance=(), private-state-token-redemption=(), publickey-credentials-get=(), run-ad-auction=(), screen-wake-lock=(), serial=(), speaker-selection=(), storage-access=(), sync-xhr=(), usb=(), web-share=(), window-management=(), xr-spatial-tracking=()';
 
 // Trust the first proxy in front of us
 app.set('trust proxy', 1);
