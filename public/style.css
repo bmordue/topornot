@@ -440,6 +440,12 @@ body {
   font-weight: 400;
 }
 
+.empty-stats {
+  margin-top: 8px;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
 /* Action bar */
 .action-bar {
   display: flex;
