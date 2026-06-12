@@ -46,6 +46,12 @@ const sanitize = (val, maxLen = 255) => {
   const raw = Array.isArray(val) ? val[0] : val;
   if (raw === undefined || raw === null) return null;
 
+  // Performance: Immediate early-exit for simple ASCII strings already within limits.
+  // This avoids redundant type conversion, rough truncation, and extra length checks.
+  if (typeof raw === 'string' && raw.length <= maxLen && SIMPLE_ASCII.test(raw)) {
+    return raw;
+  }
+
   let str = (typeof raw === 'string') ? raw : String(raw);
 
   // Performance: Rough truncation to prevent DoS on extremely large payloads
