@@ -7,6 +7,7 @@
   let currentIndex = 0;
   let processing = false;
   let loading = false;
+  let sessionCount = parseInt(sessionStorage.getItem('sessionCount') || '0', 10);
 
   // Performance: Track reduced motion preference to skip animations/delays
   let prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -43,10 +44,10 @@
     if (navigator.vibrate) navigator.vibrate(10);
     const helpHtml = `
       <div style="display:grid;grid-template-columns:repeat(2, 1fr);gap:10px;text-align:left;font-size:0.8rem;">
-        <div><kbd>A</kbd> <kbd>↵</kbd> <kbd>→</kbd> Approve</div>
+        <div><kbd>A</kbd> <kbd>Enter</kbd> <kbd>→</kbd> Approve</div>
         <div><kbd>Z</kbd> <kbd>←</kbd> Reject</div>
         <div><kbd>D</kbd> <kbd>↑</kbd> Defer</div>
-        <div><kbd>C</kbd> Context / <kbd>S</kbd> Copy</div>
+        <div><kbd>C</kbd> <kbd>↓</kbd> Context / <kbd>S</kbd> Copy</div>
         <div><kbd>R</kbd> Refresh / <kbd>?</kbd> <kbd>/</kbd> Help</div>
         <div><kbd>Esc</kbd> Close</div>
         <div style="grid-column: span 2; border-top: 1px solid color-mix(in srgb, currentColor, transparent 85%); padding-top: 4px; font-style: italic;">
@@ -175,6 +176,12 @@
       cardEl.hidden = true;
       actionBar.hidden = true;
       emptyEl.hidden = false;
+
+      const statsEl = document.getElementById('session-stats');
+      if (statsEl) {
+        statsEl.textContent = sessionCount > 0 ? `You've reviewed ${sessionCount} item${sessionCount === 1 ? '' : 's'} this session!` : '';
+      }
+
       document.getElementById('btn-refresh').focus();
       return;
     }
@@ -311,6 +318,9 @@
       if (suggestions.length === 0 || currentIndex >= suggestions.length) {
         currentIndex = 0;
       }
+
+      sessionCount++;
+      sessionStorage.setItem('sessionCount', sessionCount);
     }
 
     if (suggestions.length === 0) {
@@ -552,7 +562,7 @@
       flashButton(emptyEl.hidden ? 'btn-header-refresh' : 'btn-refresh');
       refreshHandler();
     }
-    if (key === 'c') {
+    if (key === 'c' || key === 'arrowdown') {
       if (navigator.vibrate) navigator.vibrate(10);
       flashButton('card-context-summary');
       if (cardCtxDetails) {

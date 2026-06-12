@@ -85,3 +85,7 @@
 ## 2026-06-11 - [Multi-Modal Reinforcement in Gestures]
 **Learning:** In gesture-driven interfaces, relying on color or text alone for swipe hints can be limiting for accessibility. Adding semantic icons (like ✓ or ✗) to these overlays provides a third, redundant layer of information that reinforces the user's intent. Similarly, contextualizing utility feedback (like "Copied: [Title]" instead of just "Copied") mirrors the patterns used for primary actions, creating a more cohesive and predictable interaction model.
 **Action:** Always provide redundant visual cues (icons + text + color) for gesture-based action hints; ensure utility feedback matches the granularity of primary action notifications.
+
+## 2026-06-12 - [Session-Level Progress & Directional Navigation Mapping]
+**Learning:** Providing session-level progress metrics (persisted via `sessionStorage`) in the empty state transforms a static "all clear" message into a celebratory milestone, reinforcing the user's sense of accomplishment for high-volume tasks. Furthermore, completing a directional keyboard navigation model (e.g., mapping `ArrowDown` to content expansion) makes utility actions more discoverable and intuitive by aligning with common spatial mental models.
+**Action:** Use session-level counters to provide contextual "delight" in completion states; always evaluate directional navigation models for logical completeness (Up/Down/Left/Right).
