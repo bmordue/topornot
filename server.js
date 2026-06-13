@@ -141,26 +141,32 @@ app.post('/api/suggestions', suggestionLimiter, (req, res) => {
 
   // Security: Ensure body is a non-null object before destructuring to prevent unhandled exceptions.
   if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body)) {
+    console.warn(`[audit] VALIDATION_FAILED: POST /api/suggestions reason=invalid_body user=${req.identity.user} ip=${sanitize(req.ip)}`);
     return res.status(400).json({ error: 'Invalid request body. Expected a JSON object.' });
   }
 
   const { title, description, context, agent } = req.body;
 
   if (!title || !description) {
+    console.warn(`[audit] VALIDATION_FAILED: POST /api/suggestions reason=missing_fields user=${req.identity.user} ip=${sanitize(req.ip)}`);
     return res.status(400).json({ error: 'title and description are required' });
   }
 
   // Basic input validation
   if (typeof title !== 'string' || title.length > 100) {
+    console.warn(`[audit] VALIDATION_FAILED: POST /api/suggestions reason=invalid_title user=${req.identity.user} ip=${sanitize(req.ip)}`);
     return res.status(400).json({ error: 'title must be a string up to 100 characters' });
   }
   if (typeof description !== 'string' || description.length > 1000) {
+    console.warn(`[audit] VALIDATION_FAILED: POST /api/suggestions reason=invalid_description user=${req.identity.user} ip=${sanitize(req.ip)}`);
     return res.status(400).json({ error: 'description must be a string up to 1000 characters' });
   }
   if (context && (typeof context !== 'string' || context.length > 5000)) {
+    console.warn(`[audit] VALIDATION_FAILED: POST /api/suggestions reason=invalid_context user=${req.identity.user} ip=${sanitize(req.ip)}`);
     return res.status(400).json({ error: 'context must be a string up to 5000 characters' });
   }
   if (agent && (typeof agent !== 'string' || agent.length > 100)) {
+    console.warn(`[audit] VALIDATION_FAILED: POST /api/suggestions reason=invalid_agent user=${req.identity.user} ip=${sanitize(req.ip)}`);
     return res.status(400).json({ error: 'agent must be a string up to 100 characters' });
   }
 
@@ -185,16 +191,19 @@ app.patch('/api/suggestions/:id/:action', actionLimiter, (req, res) => {
   // Input validation: ensure ID is a safe numeric integer
   const numId = Number(id);
   if (!Number.isSafeInteger(numId) || numId <= 0) {
+    console.warn(`[audit] VALIDATION_FAILED: PATCH /api/suggestions/:id/:action reason=invalid_id id=${sanitize(id)} user=${req.identity.user} ip=${sanitize(req.ip)}`);
     return res.status(400).json({ error: 'Invalid ID. Must be a positive safe integer.' });
   }
 
   const validActions = ['approve', 'reject', 'defer'];
   if (!validActions.includes(action)) {
+    console.warn(`[audit] VALIDATION_FAILED: PATCH /api/suggestions/:id/:action reason=invalid_action action=${sanitize(action)} user=${req.identity.user} ip=${sanitize(req.ip)}`);
     return res.status(400).json({ error: `Invalid action. Must be one of: ${validActions.join(', ')}` });
   }
   const statusMap = { approve: 'approved', reject: 'rejected', defer: 'pending' };
   const suggestion = db.updateStatus(Number(id), statusMap[action], req.identity.user);
   if (!suggestion) {
+    console.warn(`[audit] SUGGESTION_NOT_FOUND: PATCH /api/suggestions/${numId}/${sanitize(action)} user=${req.identity.user} ip=${sanitize(req.ip)}`);
     return res.status(404).json({ error: 'Suggestion not found' });
   }
   // Security: Audit log for status change
@@ -226,11 +235,13 @@ app.use((err, req, res, next) => {
 
   // If it's a JSON parsing error from express.json()
   if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+    console.warn(`[audit] MALFORMED_JSON: ${sanitize(req.method)} ${sanitize(req.originalUrl, 1024)} user=${req.identity?.user || 'anonymous'} ip=${sanitize(req.ip)}`);
     return res.status(400).json({ error: 'Invalid JSON payload' });
   }
 
   // Handle entity too large error
   if (err.status === 413) {
+    console.warn(`[audit] PAYLOAD_TOO_LARGE: ${sanitize(req.method)} ${sanitize(req.originalUrl, 1024)} user=${req.identity?.user || 'anonymous'} ip=${sanitize(req.ip)}`);
     return res.status(413).json({ error: 'Payload too large' });
   }
 

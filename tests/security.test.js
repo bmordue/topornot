@@ -50,12 +50,15 @@ describe('Security Headers', () => {
 });
 
 describe('Payload Size Limit', () => {
-  it('should reject large payloads (over 10kb)', async () => {
+  it('should reject large payloads (over 10kb) and log audit entry', async () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
     const largeTitle = 'a'.repeat(11000);
     const res = await request(app)
       .post('/api/suggestions')
       .send({ title: largeTitle, description: 'short' });
     expect(res.status).toBe(413); // Payload Too Large
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringMatching(/\[audit\] PAYLOAD_TOO_LARGE: POST \/api\/suggestions user=dev-user ip=[a-f\d\.:]+/));
+    warnSpy.mockRestore();
   });
 });
 
@@ -86,15 +89,19 @@ describe('Input Validation', () => {
     expect(res.body.error).toMatch(/title must be a string/);
   });
 
-  it('should set Cache-Control: no-store on route-level validation errors', async () => {
+  it('should set Cache-Control: no-store and log audit entry on route-level validation errors', async () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
     const res = await request(app)
       .post('/api/suggestions')
       .send({ description: 'missing title' }); // Triggers 400
     expect(res.status).toBe(400);
     expect(res.headers['cache-control']).toBe('no-store, max-age=0');
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringMatching(/\[audit\] VALIDATION_FAILED: POST \/api\/suggestions reason=missing_fields/));
+    warnSpy.mockRestore();
   });
 
-  it('should not leak stack traces on invalid JSON and set no-store', async () => {
+  it('should not leak stack traces on invalid JSON, set no-store, and log audit entry', async () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
     const res = await request(app)
       .post('/api/suggestions')
       .set('Content-Type', 'application/json')
@@ -108,9 +115,12 @@ describe('Input Validation', () => {
     expect(res.headers['content-type']).toMatch(/json/);
     expect(res.body.error).toBeDefined();
     expect(res.headers['cache-control']).toBe('no-store, max-age=0');
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringMatching(/\[audit\] MALFORMED_JSON: POST \/api\/suggestions user=dev-user ip=[a-f\d\.:]+/));
+    warnSpy.mockRestore();
   });
 
-  it('should reject non-object JSON payloads in POST /api/suggestions', async () => {
+  it('should reject non-object JSON payloads in POST /api/suggestions and log audit entry', async () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
     // These are rejected by express.json() strict mode (default true)
     const strictRejections = [null, 123, "string"];
     for (const val of strictRejections) {
@@ -132,6 +142,8 @@ describe('Input Validation', () => {
     expect(resArr.status).toBe(400);
     expect(resArr.body.error).toBe('Invalid request body. Expected a JSON object.');
     expect(resArr.headers['cache-control']).toBe('no-store, max-age=0');
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringMatching(/\[audit\] VALIDATION_FAILED: POST \/api\/suggestions reason=invalid_body/));
+    warnSpy.mockRestore();
   });
 });
 
@@ -205,10 +217,13 @@ describe('API Error Handling', () => {
     expect(res.headers['cache-control']).toBe('no-store, max-age=0');
   });
 
-  it('should reject non-numeric IDs in PATCH route', async () => {
+  it('should reject non-numeric IDs in PATCH route and log audit entry', async () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
     const res = await request(app).patch('/api/suggestions/invalid-id/approve');
     expect(res.status).toBe(400);
     expect(res.body.error).toMatch(/Invalid ID/);
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringMatching(/\[audit\] VALIDATION_FAILED: PATCH \/api\/suggestions\/:id\/:action reason=invalid_id id=invalid-id/));
+    warnSpy.mockRestore();
   });
 
   it('should reject unsafe integer IDs in PATCH route', async () => {
@@ -602,6 +617,14 @@ describe('Audit Logging', () => {
 
     expect(logSpy).not.toHaveBeenCalledWith(expect.stringContaining('a'.repeat(1025)));
     expect(warnSpy).not.toHaveBeenCalledWith(expect.stringContaining('a'.repeat(1025)));
+    warnSpy.mockRestore();
+  });
+
+  it('should log an audit entry for suggestion not found in PATCH route', async () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
+    const res = await request(app).patch('/api/suggestions/999999/approve');
+    expect(res.status).toBe(404);
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringMatching(/\[audit\] SUGGESTION_NOT_FOUND: PATCH \/api\/suggestions\/999999\/approve/));
     warnSpy.mockRestore();
   });
 });

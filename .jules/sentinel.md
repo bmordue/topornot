@@ -148,3 +148,8 @@
 **Vulnerability:** Unhandled exceptions (500 Internal Server Error) when receiving valid but non-object JSON payloads (e.g., `null`, `[]`) that pass through middleware but fail during destructuring in route handlers.
 **Learning:** Even with `express.json()`, certain valid JSON payloads like `null` or arrays can bypass initial checks and cause crashes if the code assumes the body is always a non-null object.
 **Prevention:** Always validate that `req.body` is a non-null object before attempting to destructure properties in route handlers, returning a 400 Bad Request if the payload shape is incorrect.
+
+## 2026-08-05 - Forensic Visibility for Validation and Client Errors
+**Vulnerability:** Lack of server-side visibility into input validation failures and client-side errors (400, 413, 404) hindered the detection of probing, fuzzing, or exploitation attempts.
+**Learning:** Detailed, sanitized audit logging for every failure point in security-sensitive routes (like POST/PATCH) is essential for effective security monitoring and incident response.
+**Prevention:** Implement comprehensive audit logging for all input validation failures and client-side errors, ensuring all logged metadata (method, URL, user, IP) is sanitized to prevent log injection attacks.
