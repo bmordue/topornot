@@ -8,6 +8,8 @@
   let processing = false;
   let loading = false;
   let sessionCount = parseInt(sessionStorage.getItem('sessionCount') || '0', 10);
+  let sessionApproved = parseInt(sessionStorage.getItem('sessionApproved') || '0', 10);
+  let sessionRejected = parseInt(sessionStorage.getItem('sessionRejected') || '0', 10);
 
   // Performance: Track reduced motion preference to skip animations/delays
   let prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -179,7 +181,11 @@
 
       const statsEl = document.getElementById('session-stats');
       if (statsEl) {
-        statsEl.textContent = sessionCount > 0 ? `You've reviewed ${sessionCount} item${sessionCount === 1 ? '' : 's'} this session!` : '';
+        if (sessionCount > 0) {
+          statsEl.textContent = `You've reviewed ${sessionCount} item${sessionCount === 1 ? '' : 's'} this session (${sessionApproved} approved, ${sessionRejected} rejected)!`;
+        } else {
+          statsEl.textContent = '';
+        }
       }
 
       document.getElementById('btn-refresh').focus();
@@ -321,6 +327,13 @@
 
       sessionCount++;
       sessionStorage.setItem('sessionCount', sessionCount);
+      if (action === 'approve') {
+        sessionApproved++;
+        sessionStorage.setItem('sessionApproved', sessionApproved);
+      } else if (action === 'reject') {
+        sessionRejected++;
+        sessionStorage.setItem('sessionRejected', sessionRejected);
+      }
     }
 
     if (suggestions.length === 0) {
