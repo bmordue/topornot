@@ -304,7 +304,7 @@ describe('API Error Handling', () => {
     authMiddleware(req, res, next);
 
     if (AUTH_MODE === 'proxy') {
-      expect(spy).toHaveBeenCalledWith(expect.stringContaining('POST_Injected /api/suggestions__Injected user=anonymous ip=127.0.0.1_Injected'));
+      expect(spy).toHaveBeenCalledWith(expect.stringContaining('[audit] AUTH_FAILED: POST_Injected /api/suggestions__Injected user=anonymous ip=127.0.0.1_Injected'));
       expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'no-store, max-age=0');
       expect(res.status).toHaveBeenCalledWith(401);
     }
@@ -557,13 +557,16 @@ describe('Database File Security', () => {
 
 describe('Audit Logging', () => {
   let logSpy;
+  let warnSpy;
 
   beforeEach(() => {
     logSpy = jest.spyOn(console, 'log').mockImplementation();
+    warnSpy = jest.spyOn(console, 'warn').mockImplementation();
   });
 
   afterEach(() => {
     logSpy.mockRestore();
+    warnSpy.mockRestore();
   });
 
   it('should log an audit entry with IP when creating a suggestion', async () => {
@@ -571,7 +574,7 @@ describe('Audit Logging', () => {
       .post('/api/suggestions')
       .send({ title: 'Audit Test', description: 'Testing logs' });
 
-    expect(logSpy).toHaveBeenCalledWith(expect.stringMatching(/\[audit\] SUGGESTION_CREATE: id=\d+ user=dev-user ip=[a-f\d\.:]+/));
+    expect(logSpy).toHaveBeenCalledWith(expect.stringMatching(/\[audit\] SUGGESTION_CREATE: POST \/api\/suggestions id=\d+ user=dev-user ip=[a-f\d\.:]+/));
   });
 
   it('should log an audit entry with IP when updating a suggestion status', async () => {
@@ -585,11 +588,10 @@ describe('Audit Logging', () => {
 
     await request(app).patch(`/api/suggestions/${id}/approve`);
 
-    expect(logSpy).toHaveBeenCalledWith(expect.stringMatching(/\[audit\] SUGGESTION_UPDATE: id=\d+ action=approve user=dev-user ip=[a-f\d\.:]+ status=approved/));
+    expect(logSpy).toHaveBeenCalledWith(expect.stringMatching(/\[audit\] SUGGESTION_UPDATE: PATCH \/api\/suggestions\/\d+\/approve id=\d+ action=approve user=dev-user ip=[a-f\d\.:]+ status=approved/));
   });
 
   it('should truncate originalUrl at 1024 characters in audit logs (forensic depth)', async () => {
-    const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
     const longPath = '/api/' + 'a'.repeat(1100);
     const expectedPath = '/api/' + 'a'.repeat(1024 - 5); // 1024 total
 
@@ -602,6 +604,46 @@ describe('Audit Logging', () => {
 
     expect(logSpy).not.toHaveBeenCalledWith(expect.stringContaining('a'.repeat(1025)));
     expect(warnSpy).not.toHaveBeenCalledWith(expect.stringContaining('a'.repeat(1025)));
-    warnSpy.mockRestore();
+  });
+
+  it('should log [audit] VALIDATION_FAILED on invalid POST /api/suggestions', async () => {
+    await request(app)
+      .post('/api/suggestions')
+      .send({ title: 'Missing description' });
+
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringMatching(/\[audit\] VALIDATION_FAILED: POST \/api\/suggestions user=dev-user ip=[a-f\d\.:]+ reason=missing_fields/));
+  });
+
+  it('should log [audit] VALIDATION_FAILED on invalid ID in PATCH', async () => {
+    await request(app).patch('/api/suggestions/invalid/approve');
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringMatching(/\[audit\] VALIDATION_FAILED: PATCH \/api\/suggestions\/invalid\/approve user=dev-user ip=[a-f\d\.:]+ reason=invalid_id/));
+  });
+
+  it('should log [audit] VALIDATION_FAILED on invalid action in PATCH', async () => {
+    await request(app).patch('/api/suggestions/1/invalid-action');
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringMatching(/\[audit\] VALIDATION_FAILED: PATCH \/api\/suggestions\/1\/invalid-action user=dev-user ip=[a-f\d\.:]+ reason=invalid_action/));
+  });
+
+  it('should log [audit] SUGGESTION_NOT_FOUND on non-existent ID in PATCH', async () => {
+    await request(app).patch('/api/suggestions/999999/approve');
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringMatching(/\[audit\] SUGGESTION_NOT_FOUND: PATCH \/api\/suggestions\/999999\/approve user=dev-user ip=[a-f\d\.:]+ id=999999/));
+  });
+
+  it('should log [audit] MALFORMED_JSON on invalid JSON body', async () => {
+    await request(app)
+      .post('/api/suggestions')
+      .set('Content-Type', 'application/json')
+      .send('{"invalid": json');
+
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringMatching(/\[audit\] MALFORMED_JSON: POST \/api\/suggestions user=dev-user ip=[a-f\d\.:]+/));
+  });
+
+  it('should log [audit] PAYLOAD_TOO_LARGE on overly large body', async () => {
+    const largeTitle = 'a'.repeat(11000);
+    await request(app)
+      .post('/api/suggestions')
+      .send({ title: largeTitle });
+
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringMatching(/\[audit\] PAYLOAD_TOO_LARGE: POST \/api\/suggestions user=dev-user ip=[a-f\d\.:]+/));
   });
 });
