@@ -101,7 +101,7 @@ function authMiddleware(req, res, next) {
     // Sanitize method, path, and IP to prevent log injection.
     // Use originalUrl to ensure the full path is logged.
     // Forensic Depth: Limit originalUrl to 1024 chars for audit logs.
-    console.warn(`[auth] Unauthorized access attempt: ${sanitize(req.method)} ${sanitize(req.originalUrl, 1024)} user=anonymous ip=${sanitize(req.ip)}`);
+    console.warn(`[audit] AUTH_FAILED: ${sanitize(req.method)} ${sanitize(req.originalUrl, 1024)} user=anonymous ip=${sanitize(req.ip)}`);
     // Security: Prevent caching of unauthorized responses to protect privacy.
     res.setHeader('Cache-Control', 'no-store, max-age=0');
     return res.status(401).json({ error: 'Missing upstream identity header (Remote-User)' });
