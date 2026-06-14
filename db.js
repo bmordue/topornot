@@ -71,17 +71,6 @@ function _load() {
 }
 
 /**
- * Lazy fragment stringification helper.
- * Returns a pre-stringified JSON fragment for a suggestion, stringifying it on demand if needed.
- */
-function _getFragment(i) {
-  if (_fragments[i] === null) {
-    _fragments[i] = JSON.stringify(_data.suggestions[i]);
-  }
-  return _fragments[i];
-}
-
-/**
  * Forces a write of any pending data to disk.
  * Performance: Batches multiple writes into a single synchronous I/O operation.
  */
@@ -93,8 +82,11 @@ function flush() {
 
   // Performance: Optimized serialization using fragment joining.
   // We ensure all fragments are stringified first.
+  // Inlined _getFragment logic to avoid function call overhead in loop.
   for (let i = 0; i < _fragments.length; i++) {
-    _getFragment(i);
+    if (_fragments[i] === null) {
+      _fragments[i] = JSON.stringify(_data.suggestions[i]);
+    }
   }
   const json = `{"nextId":${_data.nextId},"suggestions":[${_fragments.join(',')}]}`;
   const tmpPath = `${DB_PATH}.tmp`;
@@ -184,11 +176,15 @@ function getPendingSuggestionsJson() {
     if (!_cachePendingJson) {
       // Performance: Optimized fragment joining for API response.
       // Avoids O(N) object graph traversal of JSON.stringify.
+      // Inlined _getFragment logic to avoid function call overhead in loop.
       const pendingFragments = new Map();
       for (const s of _pending.values()) {
         const fIdx = s[FRAGMENT_INDEX];
         if (fIdx !== undefined) {
-          pendingFragments.set(s.id, _getFragment(fIdx));
+          if (_fragments[fIdx] === null) {
+            _fragments[fIdx] = JSON.stringify(s);
+          }
+          pendingFragments.set(s.id, _fragments[fIdx]);
         }
       }
       _cachePendingJson = pendingFragments;
@@ -228,14 +224,22 @@ function getSuggestionById(id) {
 
 /**
  * Returns the current timestamp in "YYYY-MM-DD HH:MM:SS" format.
- * Performance: Uses second-level caching to avoid redundant Date creation and string manipulation.
+ * Performance: Uses second-level caching and manual UTC string construction
+ * to avoid the overhead of toISOString() and regex string manipulation.
  */
 function _getNow() {
   const now = Math.floor(Date.now() / 1000);
   if (now === _lastNow) return _lastNowStr;
 
   _lastNow = now;
-  _lastNowStr = new Date().toISOString().replace('T', ' ').slice(0, 19);
+  const d = new Date();
+  const YYYY = d.getUTCFullYear();
+  const MM = String(d.getUTCMonth() + 1).padStart(2, '0');
+  const DD = String(d.getUTCDate()).padStart(2, '0');
+  const HH = String(d.getUTCHours()).padStart(2, '0');
+  const mm = String(d.getUTCMinutes()).padStart(2, '0');
+  const ss = String(d.getUTCSeconds()).padStart(2, '0');
+  _lastNowStr = `${YYYY}-${MM}-${DD} ${HH}:${mm}:${ss}`;
   return _lastNowStr;
 }
 
