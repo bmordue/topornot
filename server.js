@@ -3,7 +3,7 @@ const path = require('path');
 const helmet = require('helmet');
 const { rateLimit } = require('express-rate-limit');
 const db = require('./db');
-const { authMiddleware, sanitize } = require('./auth');
+const { identityMiddleware, requireAuth, sanitize } = require('./auth');
 
 const app = express();
 
@@ -52,16 +52,12 @@ app.use((req, res, next) => {
   next();
 });
 
-// Proxy-based identity – must come before routes
-app.use(authMiddleware);
-
-app.use(express.json({ limit: '10kb' }));
-// Security: Prevent access to dotfiles in public directory.
-app.use(express.static(path.join(__dirname, 'public'), { dotfiles: 'deny' }));
+// Security: Extract identity headers early to establish principal for logging and rate limiting.
+app.use(identityMiddleware);
 
 // Security: Use authenticated user for rate limiting key if available.
 // When fallback to IP, it defaults to Express's req.ip.
-// Performance: req.identity.user is already sanitized by authMiddleware.
+// Performance: req.identity.user is already sanitized by identityMiddleware.
 const rateLimitKey = (req) => req.identity?.user || sanitize(req.ip);
 
 // Custom rate limit handler to ensure security headers are set on 429 responses.
@@ -110,8 +106,16 @@ const actionLimiter = rateLimit({
   handler: rateLimitHandler
 });
 
-// Apply general limiter to all /api routes
-app.use('/api', apiLimiter);
+// Security: Apply general rate limiting to all requests before authentication or body parsing.
+// This provides defense-in-depth against DoS and log spam by limiting unauthenticated traffic.
+app.use(apiLimiter);
+
+// Security: Enforce authentication for all application resources.
+app.use(requireAuth);
+
+app.use(express.json({ limit: '10kb' }));
+// Security: Prevent access to dotfiles in public directory.
+app.use(express.static(path.join(__dirname, 'public'), { dotfiles: 'deny' }));
 
 // GET pending suggestions (used by the UI)
 app.get('/api/suggestions', (req, res) => {

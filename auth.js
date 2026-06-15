@@ -80,9 +80,10 @@ const sanitize = (val, maxLen = 255) => {
 };
 
 /**
- * Express middleware – attaches req.identity and logs the principal.
+ * Express middleware – extracts and attaches req.identity.
+ * This middleware should be applied before any others that depend on identity.
  */
-function authMiddleware(req, res, next) {
+function identityMiddleware(req, res, next) {
   // In dev mode, fill in any missing identity headers with defaults
   if (AUTH_MODE === 'dev') {
     for (const [header, value] of Object.entries(DEV_DEFAULTS)) {
@@ -93,19 +94,6 @@ function authMiddleware(req, res, next) {
   }
 
   const user = req.headers[IDENTITY_HEADERS.user];
-
-  // Default to requiring authentication unless explicitly in dev mode.
-  // This ensures a fail-closed posture if AUTH_MODE is misconfigured.
-  if (AUTH_MODE !== 'dev' && !user) {
-    // Security: Log unauthorized access attempts for auditability.
-    // Sanitize method, path, and IP to prevent log injection.
-    // Use originalUrl to ensure the full path is logged.
-    // Forensic Depth: Limit originalUrl to 1024 chars for audit logs.
-    console.warn(`[audit] AUTH_FAILED: ${sanitize(req.method)} ${sanitize(req.originalUrl, 1024)} user=anonymous ip=${sanitize(req.ip)}`);
-    // Security: Prevent caching of unauthorized responses to protect privacy.
-    res.setHeader('Cache-Control', 'no-store, max-age=0');
-    return res.status(401).json({ error: 'Missing upstream identity header (Remote-User)' });
-  }
 
   // Attach parsed identity to the request for downstream handlers.
   // Groups are typically longer (comma-separated), so we allow 1024 chars.
@@ -127,4 +115,38 @@ function authMiddleware(req, res, next) {
   next();
 }
 
-module.exports = { authMiddleware, AUTH_MODE, IDENTITY_HEADERS, DEV_DEFAULTS, sanitize };
+/**
+ * Express middleware – enforces identity header presence.
+ * This middleware requires identityMiddleware to have been run previously.
+ */
+function requireAuth(req, res, next) {
+  const user = req.identity?.user;
+
+  // Default to requiring authentication unless explicitly in dev mode.
+  // This ensures a fail-closed posture if AUTH_MODE is misconfigured.
+  if (AUTH_MODE !== 'dev' && !user) {
+    // Security: Log unauthorized access attempts for auditability.
+    // Sanitize method, path, and IP to prevent log injection.
+    // Use originalUrl to ensure the full path is logged.
+    // Forensic Depth: Limit originalUrl to 1024 chars for audit logs.
+    console.warn(`[audit] AUTH_FAILED: ${sanitize(req.method)} ${sanitize(req.originalUrl, 1024)} user=anonymous ip=${sanitize(req.ip)}`);
+    // Security: Prevent caching of unauthorized responses to protect privacy.
+    res.setHeader('Cache-Control', 'no-store, max-age=0');
+    return res.status(401).json({ error: 'Missing upstream identity header (Remote-User)' });
+  }
+
+  next();
+}
+
+/**
+ * Express middleware – combined identity extraction and enforcement.
+ * Maintains backward compatibility for tests and simple setups.
+ */
+function authMiddleware(req, res, next) {
+  identityMiddleware(req, res, (err) => {
+    if (err) return next(err);
+    requireAuth(req, res, next);
+  });
+}
+
+module.exports = { identityMiddleware, requireAuth, authMiddleware, AUTH_MODE, IDENTITY_HEADERS, DEV_DEFAULTS, sanitize };

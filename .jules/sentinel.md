@@ -153,3 +153,8 @@
 **Vulnerability:** Inconsistent and missing logging for security-relevant events (validation failures, malformed JSON, authentication failures) limited the forensic utility of logs and hindered the detection of probing or scanning activities.
 **Learning:** Security logs are most effective when they share a consistent format and prefix (e.g., `[audit]`), enabling efficient filtering and monitoring. Furthermore, capturing the HTTP method and full request path (truncated but sufficient) alongside identity identifiers is essential for reconstructing malicious activity.
 **Prevention:** Implement a standardized logging pattern for all security-relevant events that consistently includes sanitized forensic context: method, originalUrl (with appropriate truncation), principal identifier (user), and IP.
+
+## 2026-07-25 - Unauthenticated Rate Limit Bypass
+**Vulnerability:** Unauthenticated requests bypassed the global rate limiter because authentication enforcement was positioned before the rate limiting middleware.
+**Learning:** Middleware order is critical. When authentication enforcement (401) occurs before rate limiting, malicious actors can flood the server with unauthenticated requests, potentially leading to DoS or log spam, without being throttled.
+**Prevention:** Always place the rate limiter as early as possible in the middleware stack, ideally after identity extraction but before enforcement, to ensure that even rejected or unauthorized requests are subject to quotas.

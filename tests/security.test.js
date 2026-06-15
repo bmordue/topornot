@@ -54,6 +54,7 @@ describe('Payload Size Limit', () => {
     const largeTitle = 'a'.repeat(11000);
     const res = await request(app)
       .post('/api/suggestions')
+      .set('Remote-User', 'dev-user')
       .send({ title: largeTitle, description: 'short' });
     expect(res.status).toBe(413); // Payload Too Large
   });
@@ -64,6 +65,7 @@ describe('Input Validation', () => {
     const longTitle = 'a'.repeat(101);
     const res = await request(app)
       .post('/api/suggestions')
+      .set('Remote-User', 'dev-user')
       .send({ title: longTitle, description: 'valid description' });
     expect(res.status).toBe(400);
     expect(res.body.error).toMatch(/title must be a string up to 100 characters/);
@@ -73,6 +75,7 @@ describe('Input Validation', () => {
     const longDesc = 'a'.repeat(1001);
     const res = await request(app)
       .post('/api/suggestions')
+      .set('Remote-User', 'dev-user')
       .send({ title: 'valid title', description: longDesc });
     expect(res.status).toBe(400);
     expect(res.body.error).toMatch(/description must be a string up to 1000 characters/);
@@ -81,6 +84,7 @@ describe('Input Validation', () => {
   it('should reject non-string inputs', async () => {
     const res = await request(app)
       .post('/api/suggestions')
+      .set('Remote-User', 'dev-user')
       .send({ title: 123, description: 'valid description' });
     expect(res.status).toBe(400);
     expect(res.body.error).toMatch(/title must be a string/);
@@ -89,6 +93,7 @@ describe('Input Validation', () => {
   it('should set Cache-Control: no-store on route-level validation errors', async () => {
     const res = await request(app)
       .post('/api/suggestions')
+      .set('Remote-User', 'dev-user')
       .send({ description: 'missing title' }); // Triggers 400
     expect(res.status).toBe(400);
     expect(res.headers['cache-control']).toBe('no-store, max-age=0');
@@ -97,6 +102,7 @@ describe('Input Validation', () => {
   it('should not leak stack traces on invalid JSON and set no-store', async () => {
     const res = await request(app)
       .post('/api/suggestions')
+      .set('Remote-User', 'dev-user')
       .set('Content-Type', 'application/json')
       .send('{"invalid": json');
 
@@ -116,6 +122,7 @@ describe('Input Validation', () => {
     for (const val of strictRejections) {
       const res = await request(app)
         .post('/api/suggestions')
+        .set('Remote-User', 'dev-user')
         .set('Content-Type', 'application/json')
         .send(JSON.stringify(val));
 
@@ -126,6 +133,7 @@ describe('Input Validation', () => {
     // Arrays are accepted by express.json() but should be rejected by our route handler
     const resArr = await request(app)
       .post('/api/suggestions')
+      .set('Remote-User', 'dev-user')
       .set('Content-Type', 'application/json')
       .send(JSON.stringify([1, 2, 3]));
 
@@ -141,13 +149,18 @@ describe('Rate Limiting', () => {
     // but we can try a few and see if it's there.
     // Given the limit is 100, we won't hit it in a normal test run easily without loop.
     // However, we can just check if the headers are present if standardHeaders: true is set.
-    const res = await request(app).post('/api/suggestions').send({title: 'a', description: 'b'});
+    const res = await request(app)
+      .post('/api/suggestions')
+      .set('Remote-User', 'dev-user')
+      .send({title: 'a', description: 'b'});
     expect(res.headers['ratelimit-limit']).toBeDefined();
     expect(res.headers['ratelimit-remaining']).toBeDefined();
   });
 
   it('should include rate limiting headers on PATCH route', async () => {
-    const res = await request(app).patch('/api/suggestions/1/approve');
+    const res = await request(app)
+      .patch('/api/suggestions/1/approve')
+      .set('Remote-User', 'dev-user');
     expect(res.headers['ratelimit-limit']).toBeDefined();
     expect(res.headers['ratelimit-remaining']).toBeDefined();
   });
@@ -179,7 +192,9 @@ describe('Rate Limiting', () => {
 
 describe('API Cache Control', () => {
   it('should set private, no-cache on /api/suggestions', async () => {
-    const res = await request(app).get('/api/suggestions');
+    const res = await request(app)
+      .get('/api/suggestions')
+      .set('Remote-User', 'dev-user');
     expect(res.headers['cache-control']).toBe('private, no-cache, must-revalidate');
   });
 });
@@ -187,7 +202,9 @@ describe('API Cache Control', () => {
 describe('API Error Handling', () => {
   it('should return JSON 404 and log an audit entry for non-existent API routes', async () => {
     const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
-    const res = await request(app).get('/api/non-existent-route');
+    const res = await request(app)
+      .get('/api/non-existent-route')
+      .set('Remote-User', 'dev-user');
     expect(res.status).toBe(404);
     expect(res.headers['content-type']).toMatch(/json/);
     expect(res.body.error).toBe('API endpoint not found');
@@ -198,7 +215,9 @@ describe('API Error Handling', () => {
   });
 
   it('should return plain text 404 for non-existent non-API routes and set no-store', async () => {
-    const res = await request(app).get('/non-existent-route');
+    const res = await request(app)
+      .get('/non-existent-route')
+      .set('Remote-User', 'dev-user');
     expect(res.status).toBe(404);
     expect(res.headers['content-type']).toMatch(/text\/plain/);
     expect(res.text).toBe('404 Not Found');
@@ -206,7 +225,9 @@ describe('API Error Handling', () => {
   });
 
   it('should reject non-numeric IDs in PATCH route', async () => {
-    const res = await request(app).patch('/api/suggestions/invalid-id/approve');
+    const res = await request(app)
+      .patch('/api/suggestions/invalid-id/approve')
+      .set('Remote-User', 'dev-user');
     expect(res.status).toBe(400);
     expect(res.body.error).toMatch(/Invalid ID/);
   });
@@ -214,7 +235,9 @@ describe('API Error Handling', () => {
   it('should reject unsafe integer IDs in PATCH route', async () => {
     // A number that is larger than Number.MAX_SAFE_INTEGER
     const unsafeId = '9007199254740992';
-    const res = await request(app).patch(`/api/suggestions/${unsafeId}/approve`);
+    const res = await request(app)
+      .patch(`/api/suggestions/${unsafeId}/approve`)
+      .set('Remote-User', 'dev-user');
     expect(res.status).toBe(400);
     expect(res.body.error).toMatch(/Invalid ID/);
   });
@@ -224,6 +247,7 @@ describe('API Error Handling', () => {
     const maliciousStatus = 'all\r\nInjected-Header: evil';
     const res = await request(app)
       .get('/api/suggestions')
+      .set('Remote-User', 'dev-user')
       .query({ status: maliciousStatus });
 
     expect(res.status).toBe(200);
@@ -237,6 +261,7 @@ describe('API Error Handling', () => {
     const req = {
       method: 'GET',
       path: '/api/suggestions',
+      originalUrl: '/api/suggestions',
       headers: {
         'remote-user': ['attacker\nInjected log line', 'secondary-value'],
         'remote-groups': 'admin\r\nevil',
@@ -262,6 +287,7 @@ describe('API Error Handling', () => {
     const req = {
       method: 'GET',
       path: '/api/suggestions',
+      originalUrl: '/api/suggestions',
       headers: {
         'remote-user': 'alice\x1b[31mRed\x1b[0m', // ANSI escape
         'remote-groups': 'admin\x00null\x7fdel',
@@ -304,6 +330,7 @@ describe('API Error Handling', () => {
     authMiddleware(req, res, next);
 
     if (AUTH_MODE === 'proxy') {
+      // Combined authMiddleware should still log AUTH_FAILED when user is missing
       expect(spy).toHaveBeenCalledWith(expect.stringContaining('[audit] AUTH_FAILED: POST_Injected /api/suggestions__Injected user=anonymous ip=127.0.0.1_Injected'));
       expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'no-store, max-age=0');
       expect(res.status).toHaveBeenCalledWith(401);
@@ -335,6 +362,7 @@ describe('API Error Handling', () => {
     const req = {
       method: 'GET',
       path: '/api/suggestions',
+      originalUrl: '/api/suggestions',
       headers: {
         'remote-user': 'a'.repeat(300),
         'remote-groups': 'g'.repeat(1200),
@@ -356,6 +384,28 @@ describe('API Error Handling', () => {
     expect(next).toHaveBeenCalled();
   });
 
+  it('should rate-limit unauthenticated (401) requests', async () => {
+    // Save original AUTH_MODE
+    const { AUTH_MODE } = require('../auth');
+    if (AUTH_MODE !== 'proxy') {
+      // This test is specifically for proxy mode where auth is enforced
+      return;
+    }
+
+    // Trigger many 401s
+    const promises = [];
+    for (let i = 0; i < 505; i++) {
+      promises.push(request(app).get('/api/suggestions')); // No Remote-User header
+    }
+    const results = await Promise.all(promises);
+    const tooManyRequests = results.find(r => r.status === 429);
+
+    expect(tooManyRequests).toBeDefined();
+    expect(tooManyRequests.status).toBe(429);
+    expect(tooManyRequests.headers['ratelimit-limit']).toBeDefined();
+    expect(tooManyRequests.headers['cache-control']).toBe('no-store, max-age=0');
+  });
+
   it('should sanitize control characters in suggestion inputs', async () => {
     const payload = {
       title: 'Title\nwith\nnewlines',
@@ -366,6 +416,7 @@ describe('API Error Handling', () => {
 
     const res = await request(app)
       .post('/api/suggestions')
+      .set('Remote-User', 'dev-user')
       .send(payload);
 
     expect(res.status).toBe(201);
@@ -379,6 +430,7 @@ describe('API Error Handling', () => {
     const req = {
       method: 'GET',
       path: '/api/suggestions',
+      originalUrl: '/api/suggestions',
       headers: {
         'remote-user': 'alice\x80C1',
         'remote-groups': 'admin\x9fC1',
@@ -400,6 +452,7 @@ describe('API Error Handling', () => {
     const req = {
       method: 'GET',
       path: '/api/suggestions',
+      originalUrl: '/api/suggestions',
       headers: {
         'remote-user': 'admin\u202Ereversed', // RLO
         'remote-groups': 'user\u200Bname',   // ZWSP
@@ -423,6 +476,7 @@ describe('API Error Handling', () => {
     const req = {
       method: 'GET',
       path: '/api/suggestions',
+      originalUrl: '/api/suggestions',
       headers: {
         'remote-user': 'alice\u00ADhyphen',
         'remote-groups': 'admin\u2028separator',
@@ -445,6 +499,7 @@ describe('API Error Handling', () => {
     const req = {
       method: 'GET',
       path: '/api/suggestions',
+      originalUrl: '/api/suggestions',
       headers: {
         'remote-user': 'alice\u180Evowel',
         'remote-groups': 'admin\u2060wj', // Word Joiner
@@ -468,6 +523,7 @@ describe('API Error Handling', () => {
     const req = {
       method: 'GET',
       path: '/api/suggestions',
+      originalUrl: '/api/suggestions',
       headers: {
         'remote-user': 'alice\uFE00vs1', // Variation Selector-1
         'remote-groups': 'admin\uFE0Fvs16', // Variation Selector-16
@@ -493,6 +549,7 @@ describe('API Error Handling', () => {
     const req = {
       method: 'GET',
       path: '/api/suggestions',
+      originalUrl: '/api/suggestions',
       headers: {
         'remote-user': combined,
         'remote-groups': 'dev',
@@ -514,6 +571,7 @@ describe('API Error Handling', () => {
     const req = {
       method: 'GET',
       path: '/api/suggestions',
+      originalUrl: '/api/suggestions',
       headers: {
         'remote-user': confusable,
         'remote-groups': 'dev',
@@ -572,6 +630,7 @@ describe('Audit Logging', () => {
   it('should log an audit entry with IP when creating a suggestion', async () => {
     await request(app)
       .post('/api/suggestions')
+      .set('Remote-User', 'dev-user')
       .send({ title: 'Audit Test', description: 'Testing logs' });
 
     expect(logSpy).toHaveBeenCalledWith(expect.stringMatching(/\[audit\] SUGGESTION_CREATE: POST \/api\/suggestions id=\d+ user=dev-user ip=[a-f\d\.:]+/));
@@ -581,12 +640,15 @@ describe('Audit Logging', () => {
     // First create one
     const createRes = await request(app)
       .post('/api/suggestions')
+      .set('Remote-User', 'dev-user')
       .send({ title: 'Update Test', description: 'Testing logs' });
 
     const id = createRes.body.id;
     logSpy.mockClear();
 
-    await request(app).patch(`/api/suggestions/${id}/approve`);
+    await request(app)
+      .patch(`/api/suggestions/${id}/approve`)
+      .set('Remote-User', 'dev-user');
 
     expect(logSpy).toHaveBeenCalledWith(expect.stringMatching(/\[audit\] SUGGESTION_UPDATE: PATCH \/api\/suggestions\/\d+\/approve id=\d+ action=approve user=dev-user ip=[a-f\d\.:]+ status=approved/));
   });
@@ -595,7 +657,9 @@ describe('Audit Logging', () => {
     const longPath = '/api/' + 'a'.repeat(1100);
     const expectedPath = '/api/' + 'a'.repeat(1024 - 5); // 1024 total
 
-    await request(app).get(longPath);
+    await request(app)
+      .get(longPath)
+      .set('Remote-User', 'dev-user');
 
     // Check [auth] log (console.log)
     expect(logSpy).toHaveBeenCalledWith(expect.stringContaining(`[auth] GET ${expectedPath} user=dev-user`));
@@ -609,29 +673,37 @@ describe('Audit Logging', () => {
   it('should log [audit] VALIDATION_FAILED on invalid POST /api/suggestions', async () => {
     await request(app)
       .post('/api/suggestions')
+      .set('Remote-User', 'dev-user')
       .send({ title: 'Missing description' });
 
     expect(warnSpy).toHaveBeenCalledWith(expect.stringMatching(/\[audit\] VALIDATION_FAILED: POST \/api\/suggestions user=dev-user ip=[a-f\d\.:]+ reason=missing_fields/));
   });
 
   it('should log [audit] VALIDATION_FAILED on invalid ID in PATCH', async () => {
-    await request(app).patch('/api/suggestions/invalid/approve');
+    await request(app)
+      .patch('/api/suggestions/invalid/approve')
+      .set('Remote-User', 'dev-user');
     expect(warnSpy).toHaveBeenCalledWith(expect.stringMatching(/\[audit\] VALIDATION_FAILED: PATCH \/api\/suggestions\/invalid\/approve user=dev-user ip=[a-f\d\.:]+ reason=invalid_id/));
   });
 
   it('should log [audit] VALIDATION_FAILED on invalid action in PATCH', async () => {
-    await request(app).patch('/api/suggestions/1/invalid-action');
+    await request(app)
+      .patch('/api/suggestions/1/invalid-action')
+      .set('Remote-User', 'dev-user');
     expect(warnSpy).toHaveBeenCalledWith(expect.stringMatching(/\[audit\] VALIDATION_FAILED: PATCH \/api\/suggestions\/1\/invalid-action user=dev-user ip=[a-f\d\.:]+ reason=invalid_action/));
   });
 
   it('should log [audit] SUGGESTION_NOT_FOUND on non-existent ID in PATCH', async () => {
-    await request(app).patch('/api/suggestions/999999/approve');
+    await request(app)
+      .patch('/api/suggestions/999999/approve')
+      .set('Remote-User', 'dev-user');
     expect(warnSpy).toHaveBeenCalledWith(expect.stringMatching(/\[audit\] SUGGESTION_NOT_FOUND: PATCH \/api\/suggestions\/999999\/approve user=dev-user ip=[a-f\d\.:]+ id=999999/));
   });
 
   it('should log [audit] MALFORMED_JSON on invalid JSON body', async () => {
     await request(app)
       .post('/api/suggestions')
+      .set('Remote-User', 'dev-user')
       .set('Content-Type', 'application/json')
       .send('{"invalid": json');
 
@@ -642,6 +714,7 @@ describe('Audit Logging', () => {
     const largeTitle = 'a'.repeat(11000);
     await request(app)
       .post('/api/suggestions')
+      .set('Remote-User', 'dev-user')
       .send({ title: largeTitle });
 
     expect(warnSpy).toHaveBeenCalledWith(expect.stringMatching(/\[audit\] PAYLOAD_TOO_LARGE: POST \/api\/suggestions user=dev-user ip=[a-f\d\.:]+/));
