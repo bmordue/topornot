@@ -55,7 +55,6 @@ app.use((req, res, next) => {
 // Proxy-based identity – must come before routes
 app.use(authMiddleware);
 
-app.use(express.json({ limit: '10kb' }));
 // Security: Prevent access to dotfiles in public directory.
 app.use(express.static(path.join(__dirname, 'public'), { dotfiles: 'deny' }));
 
@@ -135,7 +134,9 @@ app.get('/api/suggestions', (req, res) => {
 });
 
 // POST a new suggestion (used by agents)
-app.post('/api/suggestions', suggestionLimiter, (req, res) => {
+// Performance: Move express.json() to route-specific to avoid overhead on GET/PATCH.
+// Security: Place parser AFTER rate limiter to avoid DoS via large JSON payloads.
+app.post('/api/suggestions', suggestionLimiter, express.json({ limit: '10kb' }), (req, res) => {
   // Security: Prevent caching of validation errors or sensitive created data.
   res.setHeader('Cache-Control', 'no-store, max-age=0');
 
