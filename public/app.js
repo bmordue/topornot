@@ -220,10 +220,10 @@
     cardTime.title = isNaN(date) ? '' : date.toLocaleString();
     if (!isNaN(date)) cardTime.setAttribute('datetime', date.toISOString());
     cardTitle.textContent = s.title;
-    cardDesc.textContent  = s.description;
+    cardDesc.innerHTML = linkify(s.description);
 
     if (s.context) {
-      cardCtx.textContent = s.context;
+      cardCtx.innerHTML = linkify(s.context);
       cardCtxWrap.hidden = false;
     } else {
       cardCtxWrap.hidden = true;
@@ -641,6 +641,30 @@
   // -- Register service worker --
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').catch(() => {});
+  }
+
+  // -- Linkify helper --
+  function linkify(text) {
+    if (!text) return '';
+    // Escape HTML first to prevent XSS
+    const div = document.createElement('div');
+    div.textContent = text;
+    const escaped = div.innerHTML;
+
+    // Match http/https URLs. We stop at common delimiters.
+    const urlRegex = /https?:\/\/[^\s<"']+/g;
+    return escaped.replace(urlRegex, (url) => {
+      // Clean up trailing punctuation that might be part of the sentence but not the URL
+      let cleanUrl = url;
+      const trailingPunctuation = /[.,;:]+$/;
+      const match = url.match(trailingPunctuation);
+      let suffix = '';
+      if (match) {
+        cleanUrl = url.substring(0, url.length - match[0].length);
+        suffix = match[0];
+      }
+      return `<a href="${cleanUrl}" class="card-link" target="_blank" rel="noopener noreferrer">${cleanUrl}</a>${suffix}`;
+    });
   }
 
   // -- Truncate helper --

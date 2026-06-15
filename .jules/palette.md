@@ -89,3 +89,7 @@
 ## 2026-06-12 - [Session-Level Progress & Directional Navigation Mapping]
 **Learning:** Providing session-level progress metrics (persisted via `sessionStorage`) in the empty state transforms a static "all clear" message into a celebratory milestone, reinforcing the user's sense of accomplishment for high-volume tasks. Furthermore, completing a directional keyboard navigation model (e.g., mapping `ArrowDown` to content expansion) makes utility actions more discoverable and intuitive by aligning with common spatial mental models.
 **Action:** Use session-level counters to provide contextual "delight" in completion states; always evaluate directional navigation models for logical completeness (Up/Down/Left/Right).
+
+## 2026-06-15 - [Secure & Contextual Linkification]
+**Learning:** Automatically converting plain-text URLs into clickable hyperlinks significantly reduces friction for users needing to verify external sources. Implementing this safely requires a two-step process: first escaping all HTML via `textContent` to prevent XSS, then applying a regex for link replacement. Additionally, cleaning trailing punctuation (periods, commas) from the matched URL ensures that sentence-ending links remain functional without manual correction.
+**Action:** Always escape HTML before using regex-based text-to-HTML conversions; implement trailing-punctuation cleanup for automated link generators.
