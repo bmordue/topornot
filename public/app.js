@@ -71,7 +71,7 @@
 
   // -- Toast --
   let toastTimer;
-  function showToast(msg, type = 'info', duration = 2200, isHTML = false) {
+  function showToast(msg, type = 'info', duration = 3000, isHTML = false) {
     clearTimeout(toastTimer);
     if (isHTML) {
       toastEl.innerHTML = msg;
@@ -170,7 +170,8 @@
     }
     lastCount = pendingCount;
 
-    queueCount.textContent = `${pendingCount} pending`;
+    const doneText = sessionCount > 0 ? ` · ${sessionCount} reviewed` : '';
+    queueCount.textContent = `${pendingCount} pending${doneText}`;
 
     if (pendingCount === 0) {
       document.title = '✓ All clear - topornot';
@@ -342,7 +343,7 @@
     } else {
       const suffix = ` (${suggestions.length} left)`;
       const prefix = action === 'approve' ? '✓ Approved' :
-                     action === 'reject'  ? '✗ Rejected'  : 'Deferred';
+                     action === 'reject'  ? '✗ Rejected'  : '↩ Deferred';
       showToast(`${prefix}: ${truncate(suggestionTitle)}${suffix}`, action);
     }
 
@@ -563,7 +564,7 @@
       flashButton('btn-approve');
       doAction('approve');
     }
-    if (key === 'arrowleft'  || key === 'z') {
+    if (key === 'arrowleft'  || key === 'z' || key === 'x') {
       flashButton('btn-reject');
       doAction('reject');
     }
@@ -605,7 +606,7 @@
       flashButton('btn-copy');
       copyToClipboard();
     }
-    if (key === '?' || key === '/') {
+    if (key === '?' || key === '/' || key === 'h') {
       flashButton('btn-header-help');
       showHelp();
     }
