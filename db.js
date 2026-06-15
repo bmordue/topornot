@@ -70,7 +70,6 @@ function _load() {
   return _data;
 }
 
-
 /**
  * Forces a write of any pending data to disk.
  * Performance: Batches multiple writes into a single synchronous I/O operation.
@@ -225,7 +224,8 @@ function getSuggestionById(id) {
 
 /**
  * Returns the current timestamp in "YYYY-MM-DD HH:MM:SS" format.
- * Performance: Uses second-level caching to avoid redundant Date creation and string manipulation.
+ * Performance: Uses second-level caching and manual UTC string construction
+ * to avoid the overhead of toISOString() and regex string manipulation.
  */
 function _getNow() {
   const now = Math.floor(Date.now() / 1000);

@@ -8,6 +8,8 @@
   let processing = false;
   let loading = false;
   let sessionCount = parseInt(sessionStorage.getItem('sessionCount') || '0', 10);
+  let sessionApproved = parseInt(sessionStorage.getItem('sessionApproved') || '0', 10);
+  let sessionRejected = parseInt(sessionStorage.getItem('sessionRejected') || '0', 10);
 
   // Performance: Track reduced motion preference to skip animations/delays
   let prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -69,7 +71,7 @@
 
   // -- Toast --
   let toastTimer;
-  function showToast(msg, type = 'info', duration = 2200, isHTML = false) {
+  function showToast(msg, type = 'info', duration = 3000, isHTML = false) {
     clearTimeout(toastTimer);
     if (isHTML) {
       toastEl.innerHTML = msg;
@@ -168,7 +170,8 @@
     }
     lastCount = pendingCount;
 
-    queueCount.textContent = `${pendingCount} pending`;
+    const doneText = sessionCount > 0 ? ` · ${sessionCount} reviewed` : '';
+    queueCount.textContent = `${pendingCount} pending${doneText}`;
 
     if (pendingCount === 0) {
       document.title = '✓ All clear - topornot';
@@ -179,7 +182,11 @@
 
       const statsEl = document.getElementById('session-stats');
       if (statsEl) {
-        statsEl.textContent = sessionCount > 0 ? `You've reviewed ${sessionCount} item${sessionCount === 1 ? '' : 's'} this session!` : '';
+        if (sessionCount > 0) {
+          statsEl.textContent = `You've reviewed ${sessionCount} item${sessionCount === 1 ? '' : 's'} this session (${sessionApproved} approved, ${sessionRejected} rejected)!`;
+        } else {
+          statsEl.textContent = '';
+        }
       }
 
       document.getElementById('btn-refresh').focus();
@@ -214,10 +221,10 @@
     cardTime.title = isNaN(date) ? '' : date.toLocaleString();
     if (!isNaN(date)) cardTime.setAttribute('datetime', date.toISOString());
     cardTitle.textContent = s.title;
-    cardDesc.textContent  = s.description;
+    cardDesc.innerHTML = linkify(s.description);
 
     if (s.context) {
-      cardCtx.textContent = s.context;
+      cardCtx.innerHTML = linkify(s.context);
       cardCtxWrap.hidden = false;
     } else {
       cardCtxWrap.hidden = true;
@@ -321,6 +328,13 @@
 
       sessionCount++;
       sessionStorage.setItem('sessionCount', sessionCount);
+      if (action === 'approve') {
+        sessionApproved++;
+        sessionStorage.setItem('sessionApproved', sessionApproved);
+      } else if (action === 'reject') {
+        sessionRejected++;
+        sessionStorage.setItem('sessionRejected', sessionRejected);
+      }
     }
 
     if (suggestions.length === 0) {
@@ -329,7 +343,7 @@
     } else {
       const suffix = ` (${suggestions.length} left)`;
       const prefix = action === 'approve' ? '✓ Approved' :
-                     action === 'reject'  ? '✗ Rejected'  : 'Deferred';
+                     action === 'reject'  ? '✗ Rejected'  : '↩ Deferred';
       showToast(`${prefix}: ${truncate(suggestionTitle)}${suffix}`, action);
     }
 
@@ -550,7 +564,7 @@
       flashButton('btn-approve');
       doAction('approve');
     }
-    if (key === 'arrowleft'  || key === 'z') {
+    if (key === 'arrowleft'  || key === 'z' || key === 'x') {
       flashButton('btn-reject');
       doAction('reject');
     }
@@ -592,7 +606,7 @@
       flashButton('btn-copy');
       copyToClipboard();
     }
-    if (key === '?' || key === '/') {
+    if (key === '?' || key === '/' || key === 'h') {
       flashButton('btn-header-help');
       showHelp();
     }
@@ -628,6 +642,30 @@
   // -- Register service worker --
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').catch(() => {});
+  }
+
+  // -- Linkify helper --
+  function linkify(text) {
+    if (!text) return '';
+    // Escape HTML first to prevent XSS
+    const div = document.createElement('div');
+    div.textContent = text;
+    const escaped = div.innerHTML;
+
+    // Match http/https URLs. We stop at common delimiters.
+    const urlRegex = /https?:\/\/[^\s<"']+/g;
+    return escaped.replace(urlRegex, (url) => {
+      // Clean up trailing punctuation that might be part of the sentence but not the URL
+      let cleanUrl = url;
+      const trailingPunctuation = /[.,;:]+$/;
+      const match = url.match(trailingPunctuation);
+      let suffix = '';
+      if (match) {
+        cleanUrl = url.substring(0, url.length - match[0].length);
+        suffix = match[0];
+      }
+      return `<a href="${cleanUrl}" class="card-link" target="_blank" rel="noopener noreferrer">${cleanUrl}</a>${suffix}`;
+    });
   }
 
   // -- Truncate helper --
