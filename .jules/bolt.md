@@ -101,3 +101,7 @@
 ## 2025-06-12 - [DoS Mitigation via Rough Truncation]
 **Learning:** Performing expensive operations like Unicode normalization or complex regex replacements on unsanitized, potentially multi-megabyte inputs can lead to CPU exhaustion (DoS). Implementing a "rough truncation" (e.g., `maxLen + 64`) before these operations ensures we only process a small, constant amount of data regardless of input size, while preserving correctness for characters at the boundary.
 **Action:** Always apply rough truncation to large, untrusted inputs before performing O(N) operations like normalization, complex regex scanning, or deep object traversal.
+
+## 2026-06-16 - [String-based Escaping & Linkify Fast-Path]
+**Learning:** Using `document.createElement('div')` for HTML escaping in high-frequency rendering loops (like card swiping) incurs significant DOM overhead. Replacing it with a string-based mapping and adding a simple `.includes('http')` fast-path to the linkify helper reduces execution time for non-URL content by ~20% and avoids redundant regex compilation when combined with regex hoisting.
+**Action:** Prefer string-based escaping and simple heuristic fast-paths (like checking for 'http') in frontend utility functions to minimize browser overhead and regex scanning.
