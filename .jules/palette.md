@@ -93,3 +93,7 @@
 ## 2026-06-15 - [Secure & Contextual Linkification]
 **Learning:** Automatically converting plain-text URLs into clickable hyperlinks significantly reduces friction for users needing to verify external sources. Implementing this safely requires a two-step process: first escaping all HTML via `textContent` to prevent XSS, then applying a regex for link replacement. Additionally, cleaning trailing punctuation (periods, commas) from the matched URL ensures that sentence-ending links remain functional without manual correction.
 **Action:** Always escape HTML before using regex-based text-to-HTML conversions; implement trailing-punctuation cleanup for automated link generators.
+
+## 2026-06-16 - [Safe HTML Toasts & Non-Destructive Undo]
+**Learning:** When extending toast systems to support HTML (e.g., for "Undo" links), dynamic content must be explicitly escaped using a temporary element's `textContent` before insertion to prevent XSS. Furthermore, providing a non-destructive "Undo" action for repetitive queue tasks (like approving items) significantly reduces user anxiety and error-correction friction by allowing immediate reversal of both local UI state and server-side status.
+**Action:** Always escape untrusted strings before including them in HTML-capable toast notifications; implement a single-level "Undo" buffer for primary queue actions.
