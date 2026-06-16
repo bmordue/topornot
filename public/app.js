@@ -7,6 +7,7 @@
   let currentIndex = 0;
   let processing = false;
   let loading = false;
+  let lastAction = null;
   let sessionCount = parseInt(sessionStorage.getItem('sessionCount') || '0', 10);
   let sessionApproved = parseInt(sessionStorage.getItem('sessionApproved') || '0', 10);
   let sessionRejected = parseInt(sessionStorage.getItem('sessionRejected') || '0', 10);
@@ -50,7 +51,8 @@
         <div><kbd>Z</kbd> <kbd>←</kbd> Reject</div>
         <div><kbd>D</kbd> <kbd>↑</kbd> Defer</div>
         <div><kbd>C</kbd> <kbd>↓</kbd> Context / <kbd>S</kbd> Copy</div>
-        <div><kbd>R</kbd> Refresh / <kbd>?</kbd> <kbd>/</kbd> Help</div>
+        <div><kbd>U</kbd> Undo / <kbd>R</kbd> Refresh</div>
+        <div><kbd>?</kbd> <kbd>/</kbd> <kbd>H</kbd> Help</div>
         <div><kbd>Esc</kbd> Close</div>
         <div style="grid-column: span 2; border-top: 1px solid color-mix(in srgb, currentColor, transparent 85%); padding-top: 4px; font-style: italic;">
           Gestures: Swipe Right (Approve), Left (Reject), Up (Defer)
@@ -279,6 +281,7 @@
       localStorage.setItem('cachedSuggestions', text);
       if (newEtag) localStorage.setItem('suggestionsEtag', newEtag);
       currentIndex = 0;
+      lastAction = null;
     } catch (err) {
       console.warn('Sync failed, using cached data:', err);
     }
@@ -288,14 +291,63 @@
   }
 
   // -- Perform action --
+  async function undoLastAction() {
+    if (!lastAction || processing) return;
+    const { suggestion, action, index } = lastAction;
+    lastAction = null; // Clear to prevent double undo
+
+    if (navigator.vibrate) navigator.vibrate(10);
+    processing = true;
+
+    // Local state restoration
+    if (action !== 'defer') {
+      suggestions.splice(index, 0, suggestion);
+      sessionCount = Math.max(0, sessionCount - 1);
+      sessionStorage.setItem('sessionCount', sessionCount);
+      if (action === 'approve') {
+        sessionApproved = Math.max(0, sessionApproved - 1);
+        sessionStorage.setItem('sessionApproved', sessionApproved);
+      } else if (action === 'reject') {
+        sessionRejected = Math.max(0, sessionRejected - 1);
+        sessionStorage.setItem('sessionRejected', sessionRejected);
+      }
+      currentIndex = index;
+    } else {
+      // For defer, we just moved the pointer, so move it back
+      currentIndex = (currentIndex - 1 + suggestions.length) % suggestions.length;
+    }
+
+    showToast('Action undone', 'info');
+    renderCard();
+    processing = false;
+
+    // Sync with server: revert to pending
+    if (navigator.onLine) {
+      try {
+        await fetch(`/api/suggestions/${suggestion.id}/defer`, { method: 'PATCH' });
+        // The endpoint 'defer' sets status back to 'pending'
+      } catch (err) {
+        console.warn('Undo sync failed:', err);
+      }
+    }
+  }
+
   async function doAction(action) {
     if (processing) return;
     if (!suggestions.length) return;
 
     if (navigator.vibrate) navigator.vibrate(10);
     processing = true;
-    const s = suggestions[currentIndex % suggestions.length];
+    const currentIdx = currentIndex % suggestions.length;
+    const s = suggestions[currentIdx];
     const suggestionTitle = s.title || '';
+
+    // Store for undo
+    lastAction = {
+      suggestion: s,
+      action: action,
+      index: currentIdx
+    };
 
     // Animate card out
     const animClass = action === 'approve' ? 'exiting-approve' :
@@ -338,13 +390,16 @@
     }
 
     if (suggestions.length === 0) {
-      showToast('🎉 All caught up!', 'info', 3000);
+      showToast('🎉 All caught up! <a href="#" class="undo-link">Undo</a>', 'info', 3000, true);
       if (navigator.vibrate) navigator.vibrate([50, 30, 50, 30, 80]);
     } else {
       const suffix = ` (${suggestions.length} left)`;
       const prefix = action === 'approve' ? '✓ Approved' :
                      action === 'reject'  ? '✗ Rejected'  : '↩ Deferred';
-      showToast(`${prefix}: ${truncate(suggestionTitle)}${suffix}`, action);
+      // Safety: Escape title before including in HTML toast
+      const escapedTitle = document.createElement('div');
+      escapedTitle.textContent = truncate(suggestionTitle);
+      showToast(`${prefix}: ${escapedTitle.innerHTML}${suffix} <a href="#" class="undo-link">Undo</a>`, action, 3000, true);
     }
 
     renderCard();
@@ -433,7 +488,11 @@
       if (navigator.vibrate) navigator.vibrate(10);
     });
   }
-  toastEl.addEventListener('click', () => {
+  toastEl.addEventListener('click', (e) => {
+    if (e.target.classList.contains('undo-link')) {
+      e.preventDefault();
+      undoLastAction();
+    }
     clearTimeout(toastTimer);
     toastEl.classList.remove('show');
   });
@@ -609,6 +668,9 @@
     if (key === '?' || key === '/' || key === 'h') {
       flashButton('btn-header-help');
       showHelp();
+    }
+    if (key === 'u') {
+      undoLastAction();
     }
   });
 
