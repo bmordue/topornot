@@ -42,6 +42,25 @@
   const btnReject    = document.getElementById('btn-reject');
   const btnDefer     = document.getElementById('btn-defer');
 
+  // Performance: Hoist regular expressions to avoid redundant compilation in every linkify call.
+  // We match http/https URLs and stop at common delimiters.
+  const URL_REGEX = /https?:\/\/[^\s<"']+/g;
+  const TRAILING_PUNCTUATION = /[.,;:]+$/;
+
+  // Performance: High-performance string-based escaping.
+  // Significantly faster than creating a DOM element (document.createElement('div'))
+  // and setting textContent on every render.
+  const ESCAPE_MAP = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  };
+  function escapeHTML(text) {
+    return text.replace(/[&<>"']/g, s => ESCAPE_MAP[s]);
+  }
+
   function showHelp() {
     if (navigator.vibrate) navigator.vibrate(10);
     const helpHtml = `
@@ -221,10 +240,15 @@
     cardTime.title = isNaN(date) ? '' : date.toLocaleString();
     if (!isNaN(date)) cardTime.setAttribute('datetime', date.toISOString());
     cardTitle.textContent = s.title;
-    cardDesc.innerHTML = linkify(s.description);
+
+    // Performance: Memoize linkified HTML on the suggestion object to eliminate
+    // redundant processing and regex scanning on subsequent renders of the same card.
+    if (!s._htmlDesc) s._htmlDesc = linkify(s.description);
+    cardDesc.innerHTML = s._htmlDesc;
 
     if (s.context) {
-      cardCtx.innerHTML = linkify(s.context);
+      if (!s._htmlCtx) s._htmlCtx = linkify(s.context);
+      cardCtx.innerHTML = s._htmlCtx;
       cardCtxWrap.hidden = false;
     } else {
       cardCtxWrap.hidden = true;
@@ -645,20 +669,26 @@
   }
 
   // -- Linkify helper --
+  /**
+   * Converts URLs in text to clickable links.
+   * Performance: Uses string-based escaping, hoisted regexes, and a fast-path for non-URL content.
+   */
   function linkify(text) {
     if (!text) return '';
-    // Escape HTML first to prevent XSS
-    const div = document.createElement('div');
-    div.textContent = text;
-    const escaped = div.innerHTML;
 
-    // Match http/https URLs. We stop at common delimiters.
-    const urlRegex = /https?:\/\/[^\s<"']+/g;
-    return escaped.replace(urlRegex, (url) => {
+    // Performance: Fast-path for strings that do not contain URLs.
+    // Skips regex scanning and complex replacement logic for typical non-URL descriptions.
+    if (!text.includes('http')) {
+      return escapeHTML(text);
+    }
+
+    // Security: Escape HTML first to prevent XSS.
+    const escaped = escapeHTML(text);
+
+    return escaped.replace(URL_REGEX, (url) => {
       // Clean up trailing punctuation that might be part of the sentence but not the URL
       let cleanUrl = url;
-      const trailingPunctuation = /[.,;:]+$/;
-      const match = url.match(trailingPunctuation);
+      const match = url.match(TRAILING_PUNCTUATION);
       let suffix = '';
       if (match) {
         cleanUrl = url.substring(0, url.length - match[0].length);
