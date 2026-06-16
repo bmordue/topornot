@@ -121,7 +121,7 @@ function authMiddleware(req, res, next) {
   // Use originalUrl to ensure the full path is logged.
   // Forensic Depth: Limit originalUrl to 1024 chars for audit logs.
   if (req.identity.user) {
-    console.log(`[auth] ${sanitize(req.method)} ${sanitize(req.originalUrl, 1024)} user=${req.identity.user} ip=${sanitize(req.ip)}`);
+    console.log(`[audit] AUTH_SUCCESS: ${sanitize(req.method)} ${sanitize(req.originalUrl, 1024)} user=${req.identity.user} ip=${sanitize(req.ip)}`);
   }
 
   next();

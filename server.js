@@ -45,6 +45,24 @@ app.use(helmet({
   },
 }));
 
+// Security: Global rate limiter to provide defense-in-depth against DoS.
+// Applies to all requests, including static files and authentication layer.
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  limit: 1000, // Limit each IP/principal to 1000 requests per `window`
+  keyGenerator: (req) => req.identity?.user || sanitize(req.ip),
+  validate: { keyGeneratorIpFallback: false },
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests' },
+  handler: (req, res, next, options) => {
+    console.warn(`[audit] RATE_LIMIT_EXCEEDED: ${sanitize(req.method)} ${sanitize(req.originalUrl, 1024)} user=${req.identity?.user || 'anonymous'} ip=${sanitize(req.ip)}`);
+    res.setHeader('Cache-Control', 'no-store, max-age=0');
+    res.status(options.statusCode).send(options.message);
+  }
+});
+app.use(globalLimiter);
+
 // Security: Apply restrictive Permissions-Policy and prevent indexing by search engines.
 app.use((req, res, next) => {
   res.setHeader('Permissions-Policy', PERMISSIONS_POLICY);

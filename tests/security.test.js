@@ -327,7 +327,7 @@ describe('API Error Handling', () => {
 
     authMiddleware(req, res, next);
 
-    expect(spy).toHaveBeenCalledWith(expect.stringContaining('[auth] GET_Injected-Method /api/suggestions__Injected-Path user=alice ip=127.0.0.1_Injected-IP'));
+    expect(spy).toHaveBeenCalledWith(expect.stringContaining('[audit] AUTH_SUCCESS: GET_Injected-Method /api/suggestions__Injected-Path user=alice ip=127.0.0.1_Injected-IP'));
     spy.mockRestore();
   });
 
@@ -597,8 +597,8 @@ describe('Audit Logging', () => {
 
     await request(app).get(longPath);
 
-    // Check [auth] log (console.log)
-    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining(`[auth] GET ${expectedPath} user=dev-user`));
+    // Check [audit] AUTH_SUCCESS log (console.log)
+    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining(`[audit] AUTH_SUCCESS: GET ${expectedPath} user=dev-user`));
     // Check [audit] API_NOT_FOUND log (console.warn)
     expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining(`[audit] API_NOT_FOUND: GET ${expectedPath} user=dev-user`));
 

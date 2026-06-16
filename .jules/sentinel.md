@@ -153,3 +153,8 @@
 **Vulnerability:** Inconsistent and missing logging for security-relevant events (validation failures, malformed JSON, authentication failures) limited the forensic utility of logs and hindered the detection of probing or scanning activities.
 **Learning:** Security logs are most effective when they share a consistent format and prefix (e.g., `[audit]`), enabling efficient filtering and monitoring. Furthermore, capturing the HTTP method and full request path (truncated but sufficient) alongside identity identifiers is essential for reconstructing malicious activity.
 **Prevention:** Implement a standardized logging pattern for all security-relevant events that consistently includes sanitized forensic context: method, originalUrl (with appropriate truncation), principal identifier (user), and IP.
+
+## 2026-11-20 - Multi-layered Rate Limiting for Defense-in-Depth
+**Vulnerability:** Exposure to unauthenticated DoS attacks and brute-forcing of the authentication handshake before identity-aware rate limiters can engage.
+**Learning:** While authenticated rate limiting is critical for fairness, it does not protect the authentication layer itself. A "fail-closed" defense-in-depth posture requires a global unauthenticated limiter as the first line of defense to cap resource consumption for all incoming requests.
+**Prevention:** Position a global rate limiter at the very top of the middleware stack (immediately after security headers) that defaults to IP-based tracking. This ensures that even unauthenticated probing or volumetric attacks are mitigated before reaching more expensive application logic.
