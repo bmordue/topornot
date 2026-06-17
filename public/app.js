@@ -45,7 +45,8 @@
 
   // Performance: Hoist regular expressions to avoid redundant compilation in every linkify call.
   // We match http/https URLs and stop at common delimiters.
-  const URL_REGEX = /https?:\/\/[^\s<"']+/g;
+  // Security: Capture group used for split/linkify; excluded > for safety.
+  const URL_REGEX = /(https?:\/\/[^\s<>"']+)/g;
   const TRAILING_PUNCTUATION = /[.,;:]+$/;
 
   // Performance: High-performance string-based escaping.
@@ -744,20 +745,33 @@
       return escapeHTML(text);
     }
 
-    // Security: Escape HTML first to prevent XSS.
-    const escaped = escapeHTML(text);
+    // Security: We split the text by URLs and handle escaping for each segment individually.
+    // This prevents attribute injection attacks where escaped characters in the input
+    // could break out of the href attribute after being decoded by the browser.
+    const parts = text.split(URL_REGEX);
+    let html = '';
 
-    return escaped.replace(URL_REGEX, (url) => {
-      // Clean up trailing punctuation that might be part of the sentence but not the URL
-      let cleanUrl = url;
-      const match = url.match(TRAILING_PUNCTUATION);
-      let suffix = '';
-      if (match) {
-        cleanUrl = url.substring(0, url.length - match[0].length);
-        suffix = match[0];
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i];
+      if (i % 2 === 0) {
+        // Non-URL segment
+        html += escapeHTML(part);
+      } else {
+        // URL segment - matched by capturing group in URL_REGEX
+        let cleanUrl = part;
+        const match = part.match(TRAILING_PUNCTUATION);
+        let suffix = '';
+        if (match) {
+          cleanUrl = part.substring(0, part.length - match[0].length);
+          suffix = match[0];
+        }
+        const escapedUrl = escapeHTML(cleanUrl);
+        // Security: Escape both the href attribute and the link text.
+        html += `<a href="${escapedUrl}" class="card-link" target="_blank" rel="noopener noreferrer">${escapedUrl}</a>${escapeHTML(suffix)}`;
       }
-      return `<a href="${cleanUrl}" class="card-link" target="_blank" rel="noopener noreferrer">${cleanUrl}</a>${suffix}`;
-    });
+    }
+
+    return html;
   }
 
   // -- Truncate helper --

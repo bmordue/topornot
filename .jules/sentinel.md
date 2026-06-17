@@ -158,3 +158,8 @@
 **Vulnerability:** Exposure to unauthenticated DoS attacks and brute-forcing of the authentication handshake before identity-aware rate limiters can engage.
 **Learning:** While authenticated rate limiting is critical for fairness, it does not protect the authentication layer itself. A "fail-closed" defense-in-depth posture requires a global unauthenticated limiter as the first line of defense to cap resource consumption for all incoming requests.
 **Prevention:** Position a global rate limiter at the very top of the middleware stack (immediately after security headers) that defaults to IP-based tracking. This ensures that even unauthenticated probing or volumetric attacks are mitigated before reaching more expensive application logic.
+
+## 2026-06-17 - XSS Attribute Injection in Linkify Logic
+**Vulnerability:** The `linkify` function performed HTML escaping on input text *before* running a regular expression to find URLs. This allowed escaped entities (like `&quot;`) in the input to be matched as part of a URL and then subsequently inserted into an `href` attribute where the browser would decode them, leading to attribute breakout and arbitrary JavaScript execution.
+**Learning:** Matching regular expressions against already-escaped HTML is inherently dangerous because it can confuse the boundaries of the string. URL linkification must operate on the original unescaped text to ensure that both the URLs and the surrounding text are correctly identified and then safely escaped for their respective contexts (attribute vs. text node).
+**Prevention:** Always perform matching and splitting on raw, unescaped data. Escape segments of the result individually just before they are joined into the final HTML string.
