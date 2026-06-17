@@ -101,7 +101,10 @@
     }
     toastEl.classList.remove('toast-approve', 'toast-reject', 'toast-defer', 'toast-info');
     toastEl.classList.add('show', `toast-${type}`);
-    toastTimer = setTimeout(() => toastEl.classList.remove('show'), duration);
+    // Performance: Avoid setTimeout if duration is 0 (keep shown until interaction)
+    if (duration > 0) {
+      toastTimer = setTimeout(() => toastEl.classList.remove('show'), duration);
+    }
   }
 
   // -- Offline banner --
@@ -414,7 +417,7 @@
     }
 
     if (suggestions.length === 0) {
-      showToast('🎉 All caught up! <a href="#" class="undo-link">Undo</a>', 'info', 3000, true);
+      showToast('🎉 All caught up! <button class="undo-btn">Undo <kbd>U</kbd></button>', 'info', 3000, true);
       if (navigator.vibrate) navigator.vibrate([50, 30, 50, 30, 80]);
     } else {
       const suffix = ` (${suggestions.length} left)`;
@@ -423,7 +426,7 @@
       // Safety: Escape title before including in HTML toast
       const escapedTitle = document.createElement('div');
       escapedTitle.textContent = truncate(suggestionTitle);
-      showToast(`${prefix}: ${escapedTitle.innerHTML}${suffix} <a href="#" class="undo-link">Undo</a>`, action, 3000, true);
+      showToast(`${prefix}: ${escapedTitle.innerHTML}${suffix} <button class="undo-btn">Undo <kbd>U</kbd></button>`, action, 3000, true);
     }
 
     renderCard();
@@ -513,12 +516,20 @@
     });
   }
   toastEl.addEventListener('click', (e) => {
-    if (e.target.classList.contains('undo-link')) {
-      e.preventDefault();
+    // Check if the click was on the undo button or any of its children (like <kbd>)
+    const undoBtn = e.target.closest('.undo-btn');
+    if (undoBtn) {
       undoLastAction();
+      return; // Don't dismiss, let undoLastAction's showToast handle the new state
     }
     clearTimeout(toastTimer);
     toastEl.classList.remove('show');
+  });
+  toastEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      toastEl.click();
+    }
   });
 
   // -- Swipe gestures --
