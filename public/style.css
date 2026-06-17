@@ -50,11 +50,6 @@
     background: rgba(255, 255, 255, 0.1);
   }
 
-  .toast {
-    background: #f1f5f9;
-    color: #0f172a;
-  }
-
   .app-header {
     background: #0f172a;
     border-bottom: 1px solid var(--color-border);
@@ -606,8 +601,9 @@ kbd {
   left: 50%;
   transform: translateX(-50%) translateY(20px);
   background: var(--color-text);
-  color: white;
+  color: var(--color-bg);
   padding: 12px 24px;
+  border: 1px solid var(--color-border);
   border-radius: 24px;
   font-size: 0.9rem;
   font-weight: 600;
@@ -635,6 +631,47 @@ kbd {
 
 .toast:hover {
   filter: brightness(1.1);
+}
+
+.undo-btn {
+  margin-left: 12px;
+  background: color-mix(in srgb, white, transparent 90%);
+  border: 1px solid color-mix(in srgb, currentColor, transparent 80%);
+  color: inherit;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.undo-btn:hover {
+  background: color-mix(in srgb, white, transparent 80%);
+}
+
+.undo-btn:active {
+  transform: scale(0.95);
+}
+
+.undo-btn kbd {
+  background: color-mix(in srgb, black, transparent 90%);
+  border-color: color-mix(in srgb, currentColor, transparent 70%);
+  color: inherit;
+  font-size: 0.65rem;
+  padding: 0 4px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .undo-btn {
+    background: color-mix(in srgb, black, transparent 90%);
+  }
+  .undo-btn kbd {
+    background: color-mix(in srgb, white, transparent 90%);
+  }
 }
 
 .toast kbd {
@@ -666,18 +703,6 @@ kbd {
 .toast.toast-defer   { border-left: 4px solid var(--color-defer); }
 .toast.toast-info    { border-left: 4px solid var(--color-primary); }
 
-.undo-link {
-  margin-left: 8px;
-  color: inherit;
-  text-decoration: underline;
-  cursor: pointer;
-  font-weight: 700;
-  opacity: 0.9;
-}
-
-.undo-link:hover {
-  opacity: 1;
-}
 
 /* Swipe indicator overlays */
 .card .swipe-hint {
@@ -822,4 +847,10 @@ kbd {
   top: 0;
   outline: 3px solid white;
   outline-offset: -4px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .toast:focus-visible {
+    outline-color: white;
+  }
 }
