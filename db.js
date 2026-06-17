@@ -21,6 +21,7 @@ const SAVE_INTERVAL = 1000; // 1 second batching
 // Timestamp caching for performance
 let _lastNow = 0;
 let _lastNowStr = '';
+const _pad = (n) => n < 10 ? '0' + n : n;
 
 // Result caches to avoid repeated O(N) conversions
 let _cachePending = null;
@@ -235,13 +236,12 @@ function _getNow() {
   // Performance: Manual string construction is ~3x faster than toISOString().replace().slice().
   // We use UTC methods to maintain parity with the previous toISOString() implementation.
   const d = new Date();
-  const pad = (n) => n < 10 ? '0' + n : n;
   _lastNowStr = d.getUTCFullYear() + '-' +
-    pad(d.getUTCMonth() + 1) + '-' +
-    pad(d.getUTCDate()) + ' ' +
-    pad(d.getUTCHours()) + ':' +
-    pad(d.getUTCMinutes()) + ':' +
-    pad(d.getUTCSeconds());
+    _pad(d.getUTCMonth() + 1) + '-' +
+    _pad(d.getUTCDate()) + ' ' +
+    _pad(d.getUTCHours()) + ':' +
+    _pad(d.getUTCMinutes()) + ':' +
+    _pad(d.getUTCSeconds());
   return _lastNowStr;
 }
 

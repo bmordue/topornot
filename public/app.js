@@ -151,7 +151,12 @@
   function getSuggestionDate(s) {
     if (!s._date) {
       const dateStr = s.created_at.includes('Z') ? s.created_at : s.created_at.replace(' ', 'T') + 'Z';
-      s._date = new Date(dateStr);
+      const date = new Date(dateStr);
+      s._date = date;
+      // Performance: Memoize formatted strings to avoid redundant O(N) work on every render.
+      const isInvalid = isNaN(date);
+      s._iso = isInvalid ? '' : date.toISOString();
+      s._local = isInvalid ? '' : date.toLocaleString();
     }
     return s._date;
   }
@@ -239,8 +244,8 @@
 
     cardAgent.textContent = s.agent || 'agent';
     cardTime.textContent  = relativeTime(date);
-    cardTime.title = isNaN(date) ? '' : date.toLocaleString();
-    if (!isNaN(date)) cardTime.setAttribute('datetime', date.toISOString());
+    cardTime.title = s._local;
+    if (s._iso) cardTime.setAttribute('datetime', s._iso);
     cardTitle.textContent = s.title;
 
     // Performance: Memoize linkified HTML on the suggestion object to eliminate
@@ -420,10 +425,10 @@
       const suffix = ` (${suggestions.length} left)`;
       const prefix = action === 'approve' ? '✓ Approved' :
                      action === 'reject'  ? '✗ Rejected'  : '↩ Deferred';
-      // Safety: Escape title before including in HTML toast
-      const escapedTitle = document.createElement('div');
-      escapedTitle.textContent = truncate(suggestionTitle);
-      showToast(`${prefix}: ${escapedTitle.innerHTML}${suffix} <a href="#" class="undo-link">Undo</a>`, action, 3000, true);
+      // Safety: Escape title before including in HTML toast.
+      // Performance: Use high-performance escapeHTML helper instead of creating a DOM element.
+      const escapedTitle = escapeHTML(truncate(suggestionTitle));
+      showToast(`${prefix}: ${escapedTitle}${suffix} <a href="#" class="undo-link">Undo</a>`, action, 3000, true);
     }
 
     renderCard();
