@@ -105,3 +105,7 @@
 ## 2026-06-16 - [String-based Escaping & Linkify Fast-Path]
 **Learning:** Using `document.createElement('div')` for HTML escaping in high-frequency rendering loops (like card swiping) incurs significant DOM overhead. Replacing it with a string-based mapping and adding a simple `.includes('http')` fast-path to the linkify helper reduces execution time for non-URL content by ~20% and avoids redundant regex compilation when combined with regex hoisting.
 **Action:** Prefer string-based escaping and simple heuristic fast-paths (like checking for 'http') in frontend utility functions to minimize browser overhead and regex scanning.
+
+## 2025-06-18 - [Memoizing String Representations of Dates]
+**Learning:** Even with memoized Date objects, repeatedly calling expensive formatting methods like `toLocaleString()` and `toISOString()` during UI updates (e.g., card renders or timer ticks) adds significant CPU overhead.
+**Action:** Memoize the resulting formatted strings alongside the Date object on the first access to ensure O(1) rendering performance for time-related fields.

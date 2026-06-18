@@ -153,10 +153,20 @@
   // -- Format relative time --
   // Performance: Lazy date parsing and memoization helper.
   // Avoids O(N) parsing overhead at startup for large datasets.
+  /**
+   * Returns the parsed Date object for a suggestion, memoizing the result
+   * and its expensive string representations for better performance.
+   */
   function getSuggestionDate(s) {
     if (!s._date) {
       const dateStr = s.created_at.includes('Z') ? s.created_at : s.created_at.replace(' ', 'T') + 'Z';
-      s._date = new Date(dateStr);
+      const d = new Date(dateStr);
+      s._date = d;
+      // Performance: Memoize expensive formatting results on the first call.
+      // This eliminates redundant work during frequent card renders.
+      const isValid = !isNaN(d);
+      s._local = isValid ? d.toLocaleString() : '';
+      s._iso = isValid ? d.toISOString() : '';
     }
     return s._date;
   }
@@ -244,8 +254,9 @@
 
     cardAgent.textContent = s.agent || 'agent';
     cardTime.textContent  = relativeTime(date);
-    cardTime.title = isNaN(date) ? '' : date.toLocaleString();
-    if (!isNaN(date)) cardTime.setAttribute('datetime', date.toISOString());
+    // Performance: Use memoized date strings to avoid redundant O(N) formatting.
+    cardTime.title = s._local;
+    if (s._iso) cardTime.setAttribute('datetime', s._iso);
     cardTitle.textContent = s.title;
 
     // Performance: Memoize linkified HTML on the suggestion object to eliminate
