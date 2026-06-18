@@ -158,3 +158,8 @@
 **Vulnerability:** Exposure to unauthenticated DoS attacks and brute-forcing of the authentication handshake before identity-aware rate limiters can engage.
 **Learning:** While authenticated rate limiting is critical for fairness, it does not protect the authentication layer itself. A "fail-closed" defense-in-depth posture requires a global unauthenticated limiter as the first line of defense to cap resource consumption for all incoming requests.
 **Prevention:** Position a global rate limiter at the very top of the middleware stack (immediately after security headers) that defaults to IP-based tracking. This ensures that even unauthenticated probing or volumetric attacks are mitigated before reaching more expensive application logic.
+
+## 2026-06-18 - Identity-Aware Global Rate Limiting and Audit Log Enrichment
+**Vulnerability:** Global rate limiting positioned before authentication logic lacks principal context, resulting in audit logs that cannot attribute volumetric attacks or probing to specific users, and preventing fair resource allocation in shared IP (NAT) environments.
+**Learning:** Decoupling authentication into identity extraction (passive) and enforcement (active) allows identity context to be established early in the middleware stack. This enables subsequent security layers like rate limiters to operate with full principal awareness while still maintaining a "fail-closed" posture for protected resources.
+**Prevention:** Always extract and sanitize identity identifiers as the first step after security headers, then use these identifiers for rate limiting keys and audit log metadata before enforcing access control.
