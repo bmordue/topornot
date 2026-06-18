@@ -97,3 +97,7 @@
 ## 2026-06-16 - [Safe HTML Toasts & Non-Destructive Undo]
 **Learning:** When extending toast systems to support HTML (e.g., for "Undo" links), dynamic content must be explicitly escaped using a temporary element's `textContent` before insertion to prevent XSS. Furthermore, providing a non-destructive "Undo" action for repetitive queue tasks (like approving items) significantly reduces user anxiety and error-correction friction by allowing immediate reversal of both local UI state and server-side status.
 **Action:** Always escape untrusted strings before including them in HTML-capable toast notifications; implement a single-level "Undo" buffer for primary queue actions.
+
+## 2026-06-18 - [Accessible Timed Content & Gated Shortcuts]
+**Learning:** For transient notifications like toasts, implementing "Pause on Hover/Focus" is a critical accessibility requirement (WCAG 2.2.1) that ensures users have sufficient time to read or interact with the content (e.g., clicking an "Undo" button). Furthermore, global keyboard shortcuts (like `Enter` for approval) must be explicitly gated against *all* interactive elements—including dynamically linkified `<a>` tags—to prevent unintended primary actions when a user is attempting to navigate content.
+**Action:** Always implement pause/resume logic for timed notifications; ensure global keyboard listeners exclude all focused interactive elements (buttons, links, summaries) from triggering shortcuts.
