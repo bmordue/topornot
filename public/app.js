@@ -92,8 +92,10 @@
 
   // -- Toast --
   let toastTimer;
+  let lastToastDuration = 0;
   function showToast(msg, type = 'info', duration = 3000, isHTML = false) {
     clearTimeout(toastTimer);
+    lastToastDuration = duration;
     if (isHTML) {
       toastEl.innerHTML = msg;
     } else {
@@ -532,6 +534,20 @@
     }
   });
 
+  const pauseToast = () => clearTimeout(toastTimer);
+  const resumeToast = () => {
+    if (toastEl.classList.contains('show') && lastToastDuration > 0) {
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toastEl.classList.remove('show', 'toast-approve', 'toast-reject', 'toast-defer', 'toast-info');
+      }, lastToastDuration);
+    }
+  };
+  toastEl.addEventListener('mouseenter', pauseToast);
+  toastEl.addEventListener('focusin', pauseToast);
+  toastEl.addEventListener('mouseleave', resumeToast);
+  toastEl.addEventListener('focusout', resumeToast);
+
   // -- Swipe gestures --
   let touchStartX = 0;
   let touchStartY = 0;
@@ -654,7 +670,7 @@
     if (e.ctrlKey || e.metaKey || e.altKey) return;
 
     const key = e.key.toLowerCase();
-    if (key === 'arrowright' || key === 'a' || (key === 'enter' && e.target.tagName !== 'BUTTON' && e.target.tagName !== 'SUMMARY')) {
+    if (key === 'arrowright' || key === 'a' || (key === 'enter' && e.target.tagName !== 'BUTTON' && e.target.tagName !== 'SUMMARY' && e.target.tagName !== 'A')) {
       flashButton('btn-approve');
       doAction('approve');
     }
