@@ -3,7 +3,7 @@ const path = require('path');
 const helmet = require('helmet');
 const { rateLimit } = require('express-rate-limit');
 const db = require('./db');
-const { authMiddleware, sanitize } = require('./auth');
+const { identityMiddleware, requireAuth, sanitize } = require('./auth');
 
 const app = express();
 
@@ -61,6 +61,9 @@ const globalLimiter = rateLimit({
     res.status(options.statusCode).send(options.message);
   }
 });
+// Security: Extract identity early to enable identity-aware rate limiting.
+app.use(identityMiddleware);
+
 app.use(globalLimiter);
 
 // Security: Apply restrictive Permissions-Policy and prevent indexing by search engines.
@@ -70,8 +73,8 @@ app.use((req, res, next) => {
   next();
 });
 
-// Proxy-based identity – must come before routes
-app.use(authMiddleware);
+// Proxy-based identity – enforce authentication after rate limiting.
+app.use(requireAuth);
 
 // Security: Prevent access to dotfiles in public directory.
 app.use(express.static(path.join(__dirname, 'public'), { dotfiles: 'deny' }));

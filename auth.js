@@ -80,9 +80,10 @@ const sanitize = (val, maxLen = 255) => {
 };
 
 /**
- * Express middleware – attaches req.identity and logs the principal.
+ * Identity extraction middleware – attaches req.identity without enforcing authentication.
+ * Allows early access to identity for rate limiting and logging purposes.
  */
-function authMiddleware(req, res, next) {
+function identityMiddleware(req, res, next) {
   // In dev mode, fill in any missing identity headers with defaults
   if (AUTH_MODE === 'dev') {
     for (const [header, value] of Object.entries(DEV_DEFAULTS)) {
@@ -93,6 +94,25 @@ function authMiddleware(req, res, next) {
   }
 
   const user = req.headers[IDENTITY_HEADERS.user];
+
+  // Attach parsed identity to the request for downstream handlers.
+  // Groups are typically longer (comma-separated), so we allow 1024 chars.
+  req.identity = {
+    user:   sanitize(user),
+    groups: sanitize(req.headers[IDENTITY_HEADERS.groups], 1024),
+    email:  sanitize(req.headers[IDENTITY_HEADERS.email]),
+    name:   sanitize(req.headers[IDENTITY_HEADERS.name]),
+  };
+
+  next();
+}
+
+/**
+ * Authentication enforcement middleware – requires req.identity.user and logs the principal.
+ * Typically placed after identityMiddleware and rate limiters.
+ */
+function requireAuth(req, res, next) {
+  const user = req.identity?.user;
 
   // Default to requiring authentication unless explicitly in dev mode.
   // This ensures a fail-closed posture if AUTH_MODE is misconfigured.
@@ -107,24 +127,22 @@ function authMiddleware(req, res, next) {
     return res.status(401).json({ error: 'Missing upstream identity header (Remote-User)' });
   }
 
-  // Attach parsed identity to the request for downstream handlers.
-  // Groups are typically longer (comma-separated), so we allow 1024 chars.
-  req.identity = {
-    user:   sanitize(user),
-    groups: sanitize(req.headers[IDENTITY_HEADERS.groups], 1024),
-    email:  sanitize(req.headers[IDENTITY_HEADERS.email]),
-    name:   sanitize(req.headers[IDENTITY_HEADERS.name]),
-  };
-
   // Audit log – principal only, never tokens.
   // Security: Sanitize method, path, and IP to prevent log injection.
   // Use originalUrl to ensure the full path is logged.
   // Forensic Depth: Limit originalUrl to 1024 chars for audit logs.
-  if (req.identity.user) {
-    console.log(`[audit] AUTH_SUCCESS: ${sanitize(req.method)} ${sanitize(req.originalUrl, 1024)} user=${req.identity.user} ip=${sanitize(req.ip)}`);
+  if (user) {
+    console.log(`[audit] AUTH_SUCCESS: ${sanitize(req.method)} ${sanitize(req.originalUrl, 1024)} user=${user} ip=${sanitize(req.ip)}`);
   }
 
   next();
 }
 
-module.exports = { authMiddleware, AUTH_MODE, IDENTITY_HEADERS, DEV_DEFAULTS, sanitize };
+/**
+ * Combined authentication middleware for backward compatibility.
+ */
+function authMiddleware(req, res, next) {
+  identityMiddleware(req, res, () => requireAuth(req, res, next));
+}
+
+module.exports = { identityMiddleware, requireAuth, authMiddleware, AUTH_MODE, IDENTITY_HEADERS, DEV_DEFAULTS, sanitize };
