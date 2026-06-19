@@ -67,7 +67,7 @@
     const helpHtml = `
       <div style="display:grid;grid-template-columns:repeat(2, 1fr);gap:10px;text-align:left;font-size:0.8rem;">
         <div><kbd>A</kbd> <kbd>Enter</kbd> <kbd>→</kbd> Approve</div>
-        <div><kbd>Z</kbd> <kbd>←</kbd> Reject</div>
+        <div><kbd>Z</kbd> <kbd>X</kbd> <kbd>←</kbd> Reject</div>
         <div><kbd>D</kbd> <kbd>↑</kbd> Defer</div>
         <div><kbd>C</kbd> <kbd>↓</kbd> Context / <kbd>S</kbd> Copy</div>
         <div><kbd>U</kbd> Undo / <kbd>R</kbd> Refresh</div>
@@ -437,9 +437,8 @@
       const prefix = action === 'approve' ? '✓ Approved' :
                      action === 'reject'  ? '✗ Rejected'  : '↩ Deferred';
       // Safety: Escape title before including in HTML toast
-      const escapedTitle = document.createElement('div');
-      escapedTitle.textContent = truncate(suggestionTitle);
-      showToast(`${prefix}: ${escapedTitle.innerHTML}${suffix} <button class="undo-btn">Undo <kbd>U</kbd></button>`, action, 3000, true);
+      const escapedTitle = escapeHTML(truncate(suggestionTitle));
+      showToast(`${prefix}: ${escapedTitle}${suffix} <button class="undo-btn">Undo <kbd>U</kbd></button>`, action, 3000, true);
     }
 
     renderCard();
@@ -770,22 +769,27 @@
 
   // -- Linkify helper --
   /**
-   * Converts URLs in text to clickable links.
-   * Performance: Uses string-based escaping, hoisted regexes, and a fast-path for non-URL content.
+   * Converts URLs in text to clickable links and adds basic formatting.
+   * Performance: Uses string-based escaping, hoisted regexes, and a fast-path for plain content.
    */
   function linkify(text) {
     if (!text) return '';
 
-    // Performance: Fast-path for strings that do not contain URLs.
-    // Skips regex scanning and complex replacement logic for typical non-URL descriptions.
-    if (!text.includes('http')) {
+    // Performance: Fast-path for strings that do not contain URLs or formatting.
+    if (!text.includes('http') && !text.includes('`') && !text.includes('*')) {
       return escapeHTML(text);
     }
 
     // Security: Escape HTML first to prevent XSS.
-    const escaped = escapeHTML(text);
+    let html = escapeHTML(text);
 
-    return escaped.replace(URL_REGEX, (url) => {
+    // Support for inline code: `code`
+    html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+    // Support for bold: **bold**
+    html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+
+    return html.replace(URL_REGEX, (url) => {
       // Clean up trailing punctuation that might be part of the sentence but not the URL
       let cleanUrl = url;
       const match = url.match(TRAILING_PUNCTUATION);
