@@ -782,20 +782,43 @@
       return escapeHTML(text);
     }
 
-    // Security: Escape HTML first to prevent XSS.
-    const escaped = escapeHTML(text);
+    const parts = [];
+    let lastIndex = 0;
+    let match;
 
-    return escaped.replace(URL_REGEX, (url) => {
-      // Clean up trailing punctuation that might be part of the sentence but not the URL
-      let cleanUrl = url;
-      const match = url.match(TRAILING_PUNCTUATION);
+    // Reset regex state since it's global.
+    URL_REGEX.lastIndex = 0;
+
+    // Security: We process the raw text and find URLs *before* escaping.
+    // This prevents malicious entities (like &quot;) from being interpreted as
+    // attribute delimiters when included in the href.
+    while ((match = URL_REGEX.exec(text)) !== null) {
+      // Escape and add the text before the match
+      const before = text.substring(lastIndex, match.index);
+      if (before) parts.push(escapeHTML(before));
+
+      let url = match[0];
       let suffix = '';
-      if (match) {
-        cleanUrl = url.substring(0, url.length - match[0].length);
-        suffix = match[0];
+
+      // Clean up trailing punctuation that might be part of the sentence but not the URL.
+      // Performance: Only run punctuation check if there's a match.
+      const pMatch = url.match(TRAILING_PUNCTUATION);
+      if (pMatch) {
+        url = url.substring(0, url.length - pMatch[0].length);
+        suffix = escapeHTML(pMatch[0]);
       }
-      return `<a href="${cleanUrl}" class="card-link" target="_blank" rel="noopener noreferrer">${cleanUrl}</a>${suffix}`;
-    });
+
+      const escapedUrl = escapeHTML(url);
+      parts.push(`<a href="${escapedUrl}" class="card-link" target="_blank" rel="noopener noreferrer">${escapedUrl}</a>${suffix}`);
+
+      lastIndex = URL_REGEX.lastIndex;
+    }
+
+    // Escape and add any remaining text
+    const remaining = text.substring(lastIndex);
+    if (remaining) parts.push(escapeHTML(remaining));
+
+    return parts.join('');
   }
 
   // -- Truncate helper --
