@@ -436,6 +436,7 @@
       const suffix = ` (${suggestions.length} left)`;
       const prefix = action === 'approve' ? '✓ Approved' :
                      action === 'reject'  ? '✗ Rejected'  : '↩ Deferred';
+      // Performance: Use high-performance escapeHTML instead of DOM-based escaping.
       // Safety: Escape title before including in HTML toast
       const escapedTitle = escapeHTML(truncate(suggestionTitle));
       showToast(`${prefix}: ${escapedTitle}${suffix} <button class="undo-btn">Undo <kbd>U</kbd></button>`, action, 3000, true);
