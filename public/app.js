@@ -436,10 +436,9 @@
       const suffix = ` (${suggestions.length} left)`;
       const prefix = action === 'approve' ? '✓ Approved' :
                      action === 'reject'  ? '✗ Rejected'  : '↩ Deferred';
-      // Safety: Escape title before including in HTML toast
-      const escapedTitle = document.createElement('div');
-      escapedTitle.textContent = truncate(suggestionTitle);
-      showToast(`${prefix}: ${escapedTitle.innerHTML}${suffix} <button class="undo-btn">Undo <kbd>U</kbd></button>`, action, 3000, true);
+      // Performance: Use high-performance escapeHTML instead of DOM-based escaping.
+      const escapedTitle = escapeHTML(truncate(suggestionTitle));
+      showToast(`${prefix}: ${escapedTitle}${suffix} <button class="undo-btn">Undo <kbd>U</kbd></button>`, action, 3000, true);
     }
 
     renderCard();
