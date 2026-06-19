@@ -101,3 +101,7 @@
 ## 2026-06-18 - [Accessible Timed Content & Gated Shortcuts]
 **Learning:** For transient notifications like toasts, implementing "Pause on Hover/Focus" is a critical accessibility requirement (WCAG 2.2.1) that ensures users have sufficient time to read or interact with the content (e.g., clicking an "Undo" button). Furthermore, global keyboard shortcuts (like `Enter` for approval) must be explicitly gated against *all* interactive elements—including dynamically linkified `<a>` tags—to prevent unintended primary actions when a user is attempting to navigate content.
 **Action:** Always implement pause/resume logic for timed notifications; ensure global keyboard listeners exclude all focused interactive elements (buttons, links, summaries) from triggering shortcuts.
+
+## 2026-06-19 - [Micro-Markdown & Discoverability Alignment]
+**Learning:** For agent-generated content, supporting a "micro-subset" of Markdown (bold, inline code) provides significant semantic value without the overhead of a full renderer. Additionally, "hidden" keyboard shortcuts (implemented in code but not advertised) create a frustrating "secret handshake" vibe; explicitly aligning `aria-keyshortcuts`, `title` attributes, and help UIs with the actual event listeners ensures the interface is both powerful and discoverable.
+**Action:** Implement light-weight regex-based formatting for high-impact content areas; audit all event listeners to ensure every shortcut is advertised in at least one accessible UI element.
