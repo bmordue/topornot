@@ -48,6 +48,10 @@
   const URL_REGEX = /https?:\/\/[^\s<"']+/g;
   const TRAILING_PUNCTUATION = /[.,;:]+$/;
 
+  // Performance: Hoist escape regular expressions and use a non-global test regex for fast-path.
+  const ESCAPE_REGEX = /[&<>"']/g;
+  const ESCAPE_TEST_REGEX = /[&<>"']/;
+
   // Performance: High-performance string-based escaping.
   // Significantly faster than creating a DOM element (document.createElement('div'))
   // and setting textContent on every render.
@@ -59,7 +63,9 @@
     "'": '&#39;'
   };
   function escapeHTML(text) {
-    return text.replace(/[&<>"']/g, s => ESCAPE_MAP[s]);
+    // Performance: Fast-path for clean strings to avoid expensive replace() operations.
+    if (!ESCAPE_TEST_REGEX.test(text)) return text;
+    return text.replace(ESCAPE_REGEX, s => ESCAPE_MAP[s]);
   }
 
   function showHelp() {
