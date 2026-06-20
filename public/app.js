@@ -35,6 +35,8 @@
   const cardPos      = document.getElementById('card-pos');
   const cardProgress = document.getElementById('card-progress');
   const toastEl      = document.getElementById('toast');
+  const toastContent = document.getElementById('toast-content');
+  const toastProgress = document.getElementById('toast-progress');
   const hintApprove  = document.getElementById('hint-approve');
   const hintReject   = document.getElementById('hint-reject');
   const hintDefer    = document.getElementById('hint-defer');
@@ -96,16 +98,29 @@
   function showToast(msg, type = 'info', duration = 3000, isHTML = false) {
     clearTimeout(toastTimer);
     lastToastDuration = duration;
-    if (isHTML) {
-      toastEl.innerHTML = msg;
-    } else {
-      toastEl.textContent = msg;
-    }
-    toastEl.classList.remove('toast-approve', 'toast-reject', 'toast-defer', 'toast-info');
+    if (isHTML) toastContent.innerHTML = msg;
+    else toastContent.textContent = msg;
+    toastEl.classList.remove('toast-approve', 'toast-reject', 'toast-defer', 'toast-info', 'paused');
     toastEl.classList.add('show', `toast-${type}`);
-    // Performance: Avoid setTimeout if duration is 0 (keep shown until interaction)
+    toastProgress.style.animation = 'none';
+    void toastProgress.offsetWidth;
     if (duration > 0) {
+      toastProgress.style.animation = `toast-shrink ${duration}ms linear forwards`;
       toastTimer = setTimeout(() => toastEl.classList.remove('show'), duration);
+    } else toastProgress.style.animation = 'none';
+  }
+
+  function pauseToast() {
+    clearTimeout(toastTimer);
+    toastEl.classList.add('paused');
+  }
+
+  function resumeToast() {
+    if (toastEl.classList.contains('show') && lastToastDuration > 0) {
+      toastEl.classList.remove('paused');
+      clearTimeout(toastTimer);
+      const matrix = new DOMMatrix(window.getComputedStyle(toastProgress).transform);
+      toastTimer = setTimeout(() => toastEl.classList.remove('show'), lastToastDuration * matrix.a);
     }
   }
 
@@ -545,15 +560,6 @@
     }
   });
 
-  const pauseToast = () => clearTimeout(toastTimer);
-  const resumeToast = () => {
-    if (toastEl.classList.contains('show') && lastToastDuration > 0) {
-      clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => {
-        toastEl.classList.remove('show', 'toast-approve', 'toast-reject', 'toast-defer', 'toast-info');
-      }, lastToastDuration);
-    }
-  };
   toastEl.addEventListener('mouseenter', pauseToast);
   toastEl.addEventListener('focusin', pauseToast);
   toastEl.addEventListener('mouseleave', resumeToast);

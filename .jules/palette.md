@@ -105,3 +105,7 @@
 ## 2026-06-19 - [Micro-Markdown & Discoverability Alignment]
 **Learning:** For agent-generated content, supporting a "micro-subset" of Markdown (bold, inline code) provides significant semantic value without the overhead of a full renderer. Additionally, "hidden" keyboard shortcuts (implemented in code but not advertised) create a frustrating "secret handshake" vibe; explicitly aligning `aria-keyshortcuts`, `title` attributes, and help UIs with the actual event listeners ensures the interface is both powerful and discoverable.
 **Action:** Implement light-weight regex-based formatting for high-impact content areas; audit all event listeners to ensure every shortcut is advertised in at least one accessible UI element.
+
+## 2026-06-21 - [Visual Timers for Notification Predictability]
+**Learning:** For transient, auto-dismissing notifications (toasts), a text-only display lacks affordance regarding *when* the information will disappear. Implementing a visual progress bar that shrinks over the notification's lifetime provides a clear "time-to-live" signal, reducing user anxiety. Furthermore, synchronizing this visual timer with "Pause on Hover/Focus" behavior using CSS `animation-play-state` and JS `DOMMatrix` for remaining-time calculation ensures the UI remains truthful and accessible.
+**Action:** Always pair auto-dismissing notifications with a visual progress indicator; use `DOMMatrix` to accurately resume JS timers from CSS animation states.

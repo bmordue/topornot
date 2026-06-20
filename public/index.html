@@ -15,7 +15,7 @@
   <header class="app-header">
     <h1>topornot</h1>
     <div class="header-actions">
-      <button class="btn-header-help" id="btn-header-help" aria-label="Help" aria-keyshortcuts="?" title="Help (?, /)">
+      <button class="btn-header-help" id="btn-header-help" aria-label="Help" aria-keyshortcuts="? H" title="Help (?, /, H)">
         <span aria-hidden="true">ⓘ</span>
         <kbd aria-hidden="true">?</kbd>
       </button>
@@ -98,7 +98,10 @@
     </nav>
   </main>
 
-  <div class="toast" id="toast" role="status" aria-live="polite" tabindex="0" title="Click to dismiss"></div>
+  <div class="toast" id="toast" role="status" aria-live="polite" tabindex="0" title="Click to dismiss">
+    <div id="toast-content"></div>
+    <div id="toast-progress" class="toast-progress"></div>
+  </div>
 
   <script src="/app.js"></script>
 </body>
