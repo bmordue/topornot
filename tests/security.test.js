@@ -224,12 +224,16 @@ describe('API Error Handling', () => {
     warnSpy.mockRestore();
   });
 
-  it('should return plain text 404 for non-existent non-API routes and set no-store', async () => {
+  it('should return plain text 404 for non-existent non-API routes, log audit entry and set no-store', async () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
     const res = await request(app).get('/non-existent-route');
     expect(res.status).toBe(404);
     expect(res.headers['content-type']).toMatch(/text\/plain/);
     expect(res.text).toBe('404 Not Found');
     expect(res.headers['cache-control']).toBe('no-store, max-age=0');
+
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringMatching(/\[audit\] NOT_FOUND: GET \/non-existent-route user=dev-user ip=[a-f\d\.:]+/));
+    warnSpy.mockRestore();
   });
 
   it('should reject non-numeric IDs in PATCH route', async () => {
@@ -491,13 +495,13 @@ describe('API Error Handling', () => {
     expect(next).toHaveBeenCalled();
   });
 
-  it('should sanitize Unicode Variation Selectors (unit test)', () => {
+  it('should sanitize Unicode Variation Selectors and Khmer Vowel Inherent (unit test)', () => {
     const req = {
       method: 'GET',
       path: '/api/suggestions',
       headers: {
-        'remote-user': 'alice\uFE00vs1', // Variation Selector-1
-        'remote-groups': 'admin\uFE0Fvs16', // Variation Selector-16
+        'remote-user': 'alice\uFE00vs1\u17B4khmer', // Variation Selector-1 + Khmer
+        'remote-groups': 'admin\uFE0Fvs16\u17B5khmer', // Variation Selector-16 + Khmer
         'remote-email': 'alice@example.com',
         'remote-name': 'Alice'
       }
@@ -507,8 +511,8 @@ describe('API Error Handling', () => {
 
     authMiddleware(req, res, next);
 
-    expect(req.identity.user).toBe('alice_vs1');
-    expect(req.identity.groups).toBe('admin_vs16');
+    expect(req.identity.user).toBe('alice_vs1_khmer');
+    expect(req.identity.groups).toBe('admin_vs16_khmer');
     expect(next).toHaveBeenCalled();
   });
 
