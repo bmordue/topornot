@@ -47,6 +47,10 @@
   // We match http/https URLs and stop at common delimiters.
   const URL_REGEX = /https?:\/\/[^\s<"']+/g;
   const TRAILING_PUNCTUATION = /[.,;:]+$/;
+  const CODE_REGEX = /`([^`]+)`/g;
+  const BOLD_REGEX = /\*\*([^*]+)\*\*/g;
+  const ESCAPE_REGEX = /[&<>"']/g;
+  const ESCAPE_TEST_REGEX = /[&<>"']/;
 
   // Performance: High-performance string-based escaping.
   // Significantly faster than creating a DOM element (document.createElement('div'))
@@ -59,7 +63,9 @@
     "'": '&#39;'
   };
   function escapeHTML(text) {
-    return text.replace(/[&<>"']/g, s => ESCAPE_MAP[s]);
+    // Performance: Fast-path for strings that do not require escaping.
+    // .test() is significantly faster than .replace() on clean strings.
+    return ESCAPE_TEST_REGEX.test(text) ? text.replace(ESCAPE_REGEX, s => ESCAPE_MAP[s]) : text;
   }
 
   function showHelp() {
@@ -785,10 +791,10 @@
     let html = escapeHTML(text);
 
     // Support for inline code: `code`
-    html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+    html = html.replace(CODE_REGEX, '<code>$1</code>');
 
     // Support for bold: **bold**
-    html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(BOLD_REGEX, '<strong>$1</strong>');
 
     return html.replace(URL_REGEX, (url) => {
       // Clean up trailing punctuation that might be part of the sentence but not the URL
