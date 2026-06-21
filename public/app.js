@@ -45,7 +45,9 @@
 
   // Performance: Hoist regular expressions to avoid redundant compilation in every linkify call.
   // We match http/https URLs and stop at common delimiters.
-  const URL_REGEX = /https?:\/\/[^\s<"']+/g;
+  // Security: Use a negative lookahead to prevent matching across escaped HTML entities like &quot;
+  // which would otherwise allow XSS attribute breakout in href.
+  const URL_REGEX = /https?:\/\/(?:(?!&(?:quot|#39);)[^\s<"'])+/g;
   const TRAILING_PUNCTUATION = /[.,;:]+$/;
 
   // Performance: High-performance string-based escaping.
