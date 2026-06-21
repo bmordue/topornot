@@ -430,7 +430,7 @@
     }
 
     if (suggestions.length === 0) {
-      showToast('🎉 All caught up! <button class="undo-btn">Undo <kbd>U</kbd></button>', 'info', 3000, true);
+      showToast('🎉 All caught up! <button class="undo-btn" aria-keyshortcuts="U">Undo <kbd>U</kbd></button>', 'info', 3000, true);
       if (navigator.vibrate) navigator.vibrate([50, 30, 50, 30, 80]);
     } else {
       const suffix = ` (${suggestions.length} left)`;
@@ -439,7 +439,7 @@
       // Performance: Use high-performance escapeHTML instead of DOM-based escaping.
       // Safety: Escape title before including in HTML toast
       const escapedTitle = escapeHTML(truncate(suggestionTitle));
-      showToast(`${prefix}: ${escapedTitle}${suffix} <button class="undo-btn">Undo <kbd>U</kbd></button>`, action, 3000, true);
+      showToast(`${prefix}: ${escapedTitle}${suffix} <button class="undo-btn" aria-keyshortcuts="U">Undo <kbd>U</kbd></button>`, action, 3000, true);
     }
 
     renderCard();
@@ -485,9 +485,11 @@
 
       label.textContent = 'Copied!';
       icon.textContent = '✓';
+      btn.classList.add('btn-success');
       setTimeout(() => {
         label.innerHTML = originalLabel;
         icon.textContent = originalIcon;
+        btn.classList.remove('btn-success');
       }, 1500);
     }).catch(err => {
       console.error('Failed to copy: ', err);
@@ -777,7 +779,7 @@
     if (!text) return '';
 
     // Performance: Fast-path for strings that do not contain URLs or formatting.
-    if (!text.includes('http') && !text.includes('`') && !text.includes('*')) {
+    if (!text.includes('http') && !text.includes('`') && !text.includes('*') && !text.includes('_') && !text.includes('~')) {
       return escapeHTML(text);
     }
 
@@ -789,6 +791,12 @@
 
     // Support for bold: **bold**
     html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+
+    // Support for italic: *italic* or _italic_
+    html = html.replace(/(\*|_)([^*_]+)\1/g, '<em>$2</em>');
+
+    // Support for strikethrough: ~~strikethrough~~
+    html = html.replace(/~~([^~]+)~~/g, '<s>$1</s>');
 
     return html.replace(URL_REGEX, (url) => {
       // Clean up trailing punctuation that might be part of the sentence but not the URL
