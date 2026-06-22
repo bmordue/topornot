@@ -1,0 +1,7 @@
+
+> topornot@1.0.0 start
+> node server.js
+
+topornot server running on http://127.0.0.1:3000
+[audit] AUTH_SUCCESS: GET /some-random-404-route user=dev-user ip=127.0.0.1
+[audit] NOT_FOUND: GET /some-random-404-route user=dev-user ip=127.0.0.1

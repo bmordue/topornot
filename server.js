@@ -246,6 +246,9 @@ app.use('/api', (req, res) => {
 
 // Global 404 handler for non-API routes to prevent leaking Express default HTML error pages
 app.use((req, res) => {
+  // Security: Log global 404s to detect probing/scanning outside of /api.
+  // Forensic Depth: Limit originalUrl to 1024 chars for audit logs.
+  console.warn(`[audit] NOT_FOUND: ${sanitize(req.method)} ${sanitize(req.originalUrl, 1024)} user=${req.identity?.user || 'anonymous'} ip=${sanitize(req.ip)}`);
   res.setHeader('Cache-Control', 'no-store, max-age=0');
   res.status(404).type('text/plain').send('404 Not Found');
 });
