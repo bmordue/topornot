@@ -650,8 +650,31 @@ kbd {
   transform: translateX(-50%) translateY(0);
 }
 
-.toast:hover {
+.toast.toast-has-timer::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 4px;
+  width: 100%;
+  background: currentColor;
+  opacity: 0.3;
+  transform-origin: left;
+  animation: toast-progress var(--duration, 3s) linear forwards;
+  border-radius: 0 0 24px 24px;
+}
+
+.toast:hover, .toast:focus-within {
   filter: brightness(1.1);
+}
+
+.toast:hover::after, .toast:focus-within::after {
+  animation-play-state: paused;
+}
+
+@keyframes toast-progress {
+  from { transform: scaleX(1); }
+  to   { transform: scaleX(0); }
 }
 
 .undo-btn {
