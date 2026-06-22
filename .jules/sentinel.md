@@ -163,3 +163,8 @@
 **Vulnerability:** Global rate limiting positioned before authentication logic lacks principal context, resulting in audit logs that cannot attribute volumetric attacks or probing to specific users, and preventing fair resource allocation in shared IP (NAT) environments.
 **Learning:** Decoupling authentication into identity extraction (passive) and enforcement (active) allows identity context to be established early in the middleware stack. This enables subsequent security layers like rate limiters to operate with full principal awareness while still maintaining a "fail-closed" posture for protected resources.
 **Prevention:** Always extract and sanitize identity identifiers as the first step after security headers, then use these identifiers for rate limiting keys and audit log metadata before enforcing access control.
+
+## 2026-06-21 - Linkification XSS and Markdown Regression
+**Vulnerability:** XSS attribute breakout in `linkify` occurred because the URL regex matched across escaped HTML entities (like `&quot;`) in dynamic content.
+**Learning:** Attempting to add Markdown-lite features (like underscores for italics) alongside linkification can mangle URLs that contain those characters (e.g., underscores in API paths). Regex-based linkification on already-escaped HTML requires strict boundary checks to avoid re-introducing vulnerabilities.
+**Prevention:** Use a negative lookahead `(?:(?!&(?:quot|#39);)[^\s<"'])+` in URL regexes to prevent matching across escaped quotes. Keep Markdown implementations simple and be wary of character overlaps between formatting syntax and common URL characters like underscores.
