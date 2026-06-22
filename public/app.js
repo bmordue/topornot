@@ -92,19 +92,26 @@
 
   // -- Toast --
   let toastTimer;
-  let lastToastDuration = 0;
+  let toastRemaining = 0;
+  let toastStartTime = 0;
   function showToast(msg, type = 'info', duration = 3000, isHTML = false) {
     clearTimeout(toastTimer);
-    lastToastDuration = duration;
+    toastRemaining = duration;
+    toastStartTime = Date.now();
+
     if (isHTML) {
       toastEl.innerHTML = msg;
     } else {
       toastEl.textContent = msg;
     }
-    toastEl.classList.remove('toast-approve', 'toast-reject', 'toast-defer', 'toast-info');
+
+    toastEl.classList.remove('toast-approve', 'toast-reject', 'toast-defer', 'toast-info', 'toast-has-timer');
     toastEl.classList.add('show', `toast-${type}`);
+
     // Performance: Avoid setTimeout if duration is 0 (keep shown until interaction)
     if (duration > 0) {
+      toastEl.style.setProperty('--duration', `${duration}ms`);
+      toastEl.classList.add('toast-has-timer');
       toastTimer = setTimeout(() => toastEl.classList.remove('show'), duration);
     }
   }
@@ -545,14 +552,19 @@
     }
   });
 
-  const pauseToast = () => clearTimeout(toastTimer);
+  const pauseToast = () => {
+    if (!toastEl.classList.contains('show') || toastRemaining <= 0) return;
+    clearTimeout(toastTimer);
+    toastRemaining -= (Date.now() - toastStartTime);
+  };
+
   const resumeToast = () => {
-    if (toastEl.classList.contains('show') && lastToastDuration > 0) {
-      clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => {
-        toastEl.classList.remove('show', 'toast-approve', 'toast-reject', 'toast-defer', 'toast-info');
-      }, lastToastDuration);
-    }
+    if (!toastEl.classList.contains('show') || toastRemaining <= 0) return;
+    clearTimeout(toastTimer);
+    toastStartTime = Date.now();
+    toastTimer = setTimeout(() => {
+      toastEl.classList.remove('show', 'toast-approve', 'toast-reject', 'toast-defer', 'toast-info', 'toast-has-timer');
+    }, toastRemaining);
   };
   toastEl.addEventListener('mouseenter', pauseToast);
   toastEl.addEventListener('focusin', pauseToast);
