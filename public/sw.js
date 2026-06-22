@@ -37,8 +37,10 @@ self.addEventListener('fetch', (event) => {
           status: 503,
           headers: {
             'Content-Type': 'application/json',
+            'Cache-Control': 'no-store, max-age=0',
             'X-Content-Type-Options': 'nosniff',
             'X-Frame-Options': 'DENY',
+            'X-DNS-Prefetch-Control': 'off',
             'X-Permitted-Cross-Domain-Policies': 'none',
             'X-XSS-Protection': '0',
             'X-Robots-Tag': 'noindex, nofollow',

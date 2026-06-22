@@ -224,12 +224,16 @@ describe('API Error Handling', () => {
     warnSpy.mockRestore();
   });
 
-  it('should return plain text 404 for non-existent non-API routes and set no-store', async () => {
+  it('should return plain text 404 for non-existent non-API routes, set no-store, and log an audit entry', async () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
     const res = await request(app).get('/non-existent-route');
     expect(res.status).toBe(404);
     expect(res.headers['content-type']).toMatch(/text\/plain/);
     expect(res.text).toBe('404 Not Found');
     expect(res.headers['cache-control']).toBe('no-store, max-age=0');
+
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringMatching(/\[audit\] NOT_FOUND: GET \/non-existent-route user=dev-user ip=[a-f\d\.:]+/));
+    warnSpy.mockRestore();
   });
 
   it('should reject non-numeric IDs in PATCH route', async () => {
