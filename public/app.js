@@ -58,8 +58,11 @@
     '"': '&quot;',
     "'": '&#39;'
   };
+  const ESCAPE_REGEX = /[&<>"']/g;
+  const ESCAPE_TEST_REGEX = /[&<>"']/;
   function escapeHTML(text) {
-    return text.replace(/[&<>"']/g, s => ESCAPE_MAP[s]);
+    // Performance: Fast-path for clean strings (test() is faster than replace() and avoids new string allocation).
+    return ESCAPE_TEST_REGEX.test(text) ? text.replace(ESCAPE_REGEX, s => ESCAPE_MAP[s]) : text;
   }
 
   function showHelp() {
