@@ -164,6 +164,11 @@
 **Learning:** Decoupling authentication into identity extraction (passive) and enforcement (active) allows identity context to be established early in the middleware stack. This enables subsequent security layers like rate limiters to operate with full principal awareness while still maintaining a "fail-closed" posture for protected resources.
 **Prevention:** Always extract and sanitize identity identifiers as the first step after security headers, then use these identifiers for rate limiting keys and audit log metadata before enforcing access control.
 
+## 2026-12-05 - High-Plane Unicode Sanitization and Permissions-Policy Hardening
+**Vulnerability:** Sanitization that only targets BMP (Basic Multilingual Plane) characters leaves the application vulnerable to visual spoofing and log injection via high-plane format controls (e.g., Tags, Variation Selectors Supplement). Additionally, unused modern browser features (e.g., smart-card, web-printing) remained enabled, increasing the client-side attack surface.
+**Learning:** Standard regexes without the `u` flag do not correctly handle surrogate pairs or high-plane Unicode characters, potentially allowing malicious non-BMP characters to bypass filters. Furthermore, `Permissions-Policy` must be kept up-to-date with evolving browser APIs to maintain a minimal-privilege posture.
+**Prevention:** Always use the `u` (unicode) flag in security-critical regexes and explicitly disable all modern browser features not required by the application via a comprehensive `Permissions-Policy` header.
+
 ## 2026-06-21 - Linkification XSS and Markdown Regression
 **Vulnerability:** XSS attribute breakout in `linkify` occurred because the URL regex matched across escaped HTML entities (like `&quot;`) in dynamic content.
 **Learning:** Attempting to add Markdown-lite features (like underscores for italics) alongside linkification can mangle URLs that contain those characters (e.g., underscores in API paths). Regex-based linkification on already-escaped HTML requires strict boundary checks to avoid re-introducing vulnerabilities.
