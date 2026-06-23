@@ -27,6 +27,12 @@ describe('Security Headers', () => {
     expect(res.headers['x-permitted-cross-domain-policies']).toBe('none');
     expect(res.headers['referrer-policy']).toBe('no-referrer');
     expect(res.headers['permissions-policy']).toBe(PERMISSIONS_POLICY);
+    expect(res.headers['permissions-policy']).toMatch(/digital-credentials-get=\(\)/);
+    expect(res.headers['permissions-policy']).toMatch(/keyboard-focus=\(\)/);
+    expect(res.headers['permissions-policy']).toMatch(/local-network-access=\(\)/);
+    expect(res.headers['permissions-policy']).toMatch(/smart-card=\(\)/);
+    expect(res.headers['permissions-policy']).toMatch(/usb-choice=\(\)/);
+    expect(res.headers['permissions-policy']).toMatch(/web-printing=\(\)/);
     expect(res.headers['x-robots-tag']).toBe('noindex, nofollow');
 
     const csp = res.headers['content-security-policy'];
@@ -560,6 +566,48 @@ describe('API Error Handling', () => {
     // Note: NFKC normalization converts various space-like characters (e.g., \u2000, \u3000)
     // to standard spaces (\u0020) before the CONTROL_CHARS regex is applied.
     expect(req.identity.user).toBe('alice quad_filler ideographic_cj');
+    expect(next).toHaveBeenCalled();
+  });
+
+  it('should sanitize Khmer Vowel Inherent and high-plane format controls (unit test)', () => {
+    const dangerous = 'khmer\u17B4\u17B5tag\u{E0020}vs\u{E0100}';
+    const req = {
+      method: 'GET',
+      path: '/api/suggestions',
+      headers: {
+        'remote-user': dangerous,
+        'remote-groups': 'dev',
+        'remote-email': 'dev@example.com',
+        'remote-name': 'Developer'
+      }
+    };
+    const res = {};
+    const next = jest.fn();
+
+    authMiddleware(req, res, next);
+
+    expect(req.identity.user).toBe('khmer__tag_vs_');
+    expect(next).toHaveBeenCalled();
+  });
+
+  it('should sanitize shorthand format control and annotation characters (unit test)', () => {
+    const dangerous = 'shorthand\u{110BD}annotation\uFFF9\uFFFA\uFFFBobject\uFFFC';
+    const req = {
+      method: 'GET',
+      path: '/api/suggestions',
+      headers: {
+        'remote-user': dangerous,
+        'remote-groups': 'dev',
+        'remote-email': 'dev@example.com',
+        'remote-name': 'Developer'
+      }
+    };
+    const res = {};
+    const next = jest.fn();
+
+    authMiddleware(req, res, next);
+
+    expect(req.identity.user).toBe('shorthand_annotation___object_');
     expect(next).toHaveBeenCalled();
   });
 });
