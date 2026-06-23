@@ -50,6 +50,12 @@
   const URL_REGEX = /https?:\/\/(?:(?!&(?:quot|#39);)[^\s<"'])+/g;
   const TRAILING_PUNCTUATION = /[.,;:]+$/;
 
+  // Performance: Hoist Markdown regexes to avoid redundant compilation in every linkify call.
+  const MD_CODE_REGEX = /`([^`]+)`/g;
+  const MD_BOLD_REGEX = /\*\*([^*]+)\*\*/g;
+  const MD_ITALIC_REGEX = /(\*|_)([^*_]+)\1/g;
+  const MD_STRIKE_REGEX = /~~([^~]+)~~/g;
+
   // Performance: High-performance string-based escaping.
   // Significantly faster than creating a DOM element (document.createElement('div'))
   // and setting textContent on every render.
@@ -804,16 +810,16 @@
     let html = escapeHTML(text);
 
     // Support for inline code: `code`
-    html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+    html = html.replace(MD_CODE_REGEX, '<code>$1</code>');
 
     // Support for bold: **bold**
-    html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(MD_BOLD_REGEX, '<strong>$1</strong>');
 
     // Support for italic: *italic* or _italic_
-    html = html.replace(/(\*|_)([^*_]+)\1/g, '<em>$2</em>');
+    html = html.replace(MD_ITALIC_REGEX, '<em>$2</em>');
 
     // Support for strikethrough: ~~strikethrough~~
-    html = html.replace(/~~([^~]+)~~/g, '<s>$1</s>');
+    html = html.replace(MD_STRIKE_REGEX, '<s>$1</s>');
 
     return html.replace(URL_REGEX, (url) => {
       // Clean up trailing punctuation that might be part of the sentence but not the URL
