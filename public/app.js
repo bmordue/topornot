@@ -231,9 +231,17 @@
       const statsEl = document.getElementById('session-stats');
       if (statsEl) {
         if (sessionCount > 0) {
-          statsEl.textContent = `You've reviewed ${sessionCount} item${sessionCount === 1 ? '' : 's'} this session (${sessionApproved} approved, ${sessionRejected} rejected)!`;
+          const undoHtml = lastAction ? `<button class="undo-btn" id="btn-empty-undo" aria-keyshortcuts="U">Undo last action <kbd>U</kbd></button>` : '';
+          statsEl.innerHTML = `
+            <div>You've reviewed ${sessionCount} item${sessionCount === 1 ? '' : 's'} this session:</div>
+            <div style="display: flex; gap: 8px; justify-content: center;">
+              <span class="card-agent" style="background: var(--color-approve); color: white;">✓ ${sessionApproved}</span>
+              <span class="card-agent" style="background: var(--color-reject); color: white;">✗ ${sessionRejected}</span>
+            </div>
+            ${undoHtml}
+          `;
         } else {
-          statsEl.textContent = '';
+          statsEl.innerHTML = '';
         }
       }
 
@@ -442,7 +450,7 @@
     }
 
     if (suggestions.length === 0) {
-      showToast('🎉 All caught up! <button class="undo-btn" aria-keyshortcuts="U">Undo <kbd>U</kbd></button>', 'info', 3000, true);
+      showToast('🎉 All caught up! <button class="undo-btn" aria-keyshortcuts="U">Undo <kbd>U</kbd></button>', 'info', 5000, true);
       if (navigator.vibrate) navigator.vibrate([50, 30, 50, 30, 80]);
     } else {
       const suffix = ` (${suggestions.length} left)`;
@@ -531,6 +539,11 @@
     copyToClipboard();
   });
   document.getElementById('btn-refresh').addEventListener('click', refreshHandler);
+  emptyEl.addEventListener('click', (e) => {
+    if (e.target.closest('.undo-btn')) {
+      undoLastAction();
+    }
+  });
   document.getElementById('btn-header-refresh').addEventListener('click', refreshHandler);
   document.getElementById('btn-header-help').addEventListener('click', () => {
     flashButton('btn-header-help');
