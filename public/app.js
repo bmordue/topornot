@@ -157,6 +157,11 @@
     for (const action of actions) {
       try {
         const res = await fetch(`/api/suggestions/${action.id}/${action.action}`, { method: 'PATCH' });
+        if (res.status === 401) {
+          clearLocalState();
+          renderCard();
+          return;
+        }
         if (!res.ok) remaining.push(action);
       } catch {
         remaining.push(action);
@@ -308,6 +313,25 @@
     cardProgress.setAttribute('aria-valuetext', `Item ${currentPos} of ${pendingCount}`);
   }
 
+  /**
+   * Security: Clears local cache and session state on authentication failure.
+   * Prevents leaking sensitive suggestion data from previous sessions on shared devices.
+   */
+  function clearLocalState() {
+    localStorage.removeItem('cachedSuggestions');
+    localStorage.removeItem('suggestionsEtag');
+    localStorage.removeItem('pendingActions');
+    sessionStorage.removeItem('sessionCount');
+    sessionStorage.removeItem('sessionApproved');
+    sessionStorage.removeItem('sessionRejected');
+    suggestions = [];
+    sessionCount = 0;
+    sessionApproved = 0;
+    sessionRejected = 0;
+    currentIndex = 0;
+    lastAction = null;
+  }
+
   // -- Load suggestions from server (or cache) --
   async function loadSuggestions() {
     // Performance: Immediate cache-first load to eliminate loading screen
@@ -330,6 +354,14 @@
       const etag = localStorage.getItem('suggestionsEtag');
       const headers = etag ? { 'If-None-Match': etag } : {};
       const res = await fetch('/api/suggestions', { headers });
+
+      if (res.status === 401) {
+        // Security: Clear cache if unauthorized to prevent leaking data to different users.
+        clearLocalState();
+        loading = false;
+        renderCard();
+        return;
+      }
 
       if (res.status === 304) {
         // Performance: Data hasn't changed, skip parsing and re-rendering.
@@ -475,6 +507,12 @@
     if (navigator.onLine) {
       try {
         const res = await fetch(`/api/suggestions/${s.id}/${action}`, { method: 'PATCH' });
+        if (res.status === 401) {
+          // Security: Clear cache if unauthorized.
+          clearLocalState();
+          renderCard();
+          return;
+        }
         if (!res.ok) throw new Error();
         const updated = await res.json();
         // Reconcile local copy
