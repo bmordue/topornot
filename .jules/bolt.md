@@ -109,3 +109,7 @@
 ## 2025-06-18 - [Memoizing String Representations of Dates]
 **Learning:** Even with memoized Date objects, repeatedly calling expensive formatting methods like `toLocaleString()` and `toISOString()` during UI updates (e.g., card renders or timer ticks) adds significant CPU overhead.
 **Action:** Memoize the resulting formatted strings alongside the Date object on the first access to ensure O(1) rendering performance for time-related fields.
+
+## 2026-06-24 - [Pre-computed Padding for Manual Timestamps]
+**Learning:** Even with second-level caching, high-frequency timestamp generation using manual string construction can be improved by replacing per-update closures and conditional logic with a module-scoped lookup table. A pre-computed `PADDED` array (0-59) eliminates the overhead of small string allocations and branch mispredictions in padding logic.
+**Action:** Use pre-computed lookup tables for fixed-range numeric padding in high-frequency string formatting tasks to minimize CPU cycles and GC pressure.

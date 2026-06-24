@@ -21,6 +21,9 @@ const SAVE_INTERVAL = 1000; // 1 second batching
 // Timestamp caching for performance
 let _lastNow = 0;
 let _lastNowStr = '';
+// Performance: Pre-computed lookup table for zero-padding (0-59).
+// Eliminates redundant string concatenations and conditional logic in _getNow.
+const PADDED = Array.from({ length: 60 }, (_, i) => i < 10 ? '0' + i : String(i));
 
 // Result caches to avoid repeated O(N) conversions
 let _cachePending = null;
@@ -228,20 +231,21 @@ function getSuggestionById(id) {
  * to avoid the overhead of toISOString() and regex string manipulation.
  */
 function _getNow() {
-  const now = Math.floor(Date.now() / 1000);
-  if (now === _lastNow) return _lastNowStr;
+  const nowMs = Date.now();
+  const nowSec = Math.floor(nowMs / 1000);
+  if (nowSec === _lastNow) return _lastNowStr;
 
-  _lastNow = now;
+  _lastNow = nowSec;
   // Performance: Manual string construction is ~3x faster than toISOString().replace().slice().
-  // We use UTC methods to maintain parity with the previous toISOString() implementation.
-  const d = new Date();
-  const pad = (n) => n < 10 ? '0' + n : n;
+  // Using a pre-computed lookup table (PADDED) and reusing the timestamp for the Date object
+  // improves throughput by eliminating per-update closures and redundant padding logic.
+  const d = new Date(nowMs);
   _lastNowStr = d.getUTCFullYear() + '-' +
-    pad(d.getUTCMonth() + 1) + '-' +
-    pad(d.getUTCDate()) + ' ' +
-    pad(d.getUTCHours()) + ':' +
-    pad(d.getUTCMinutes()) + ':' +
-    pad(d.getUTCSeconds());
+    PADDED[d.getUTCMonth() + 1] + '-' +
+    PADDED[d.getUTCDate()] + ' ' +
+    PADDED[d.getUTCHours()] + ':' +
+    PADDED[d.getUTCMinutes()] + ':' +
+    PADDED[d.getUTCSeconds()];
   return _lastNowStr;
 }
 
