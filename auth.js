@@ -93,15 +93,29 @@ function identityMiddleware(req, res, next) {
     }
   }
 
-  const user = req.headers[IDENTITY_HEADERS.user];
+  // user is eager as it's required for rate limiting and audit logging.
+  const user = sanitize(req.headers[IDENTITY_HEADERS.user]);
 
-  // Attach parsed identity to the request for downstream handlers.
-  // Groups are typically longer (comma-separated), so we allow 1024 chars.
+  // Performance: Use lazy getters for optional identity fields to avoid redundant
+  // sanitization overhead on every request (especially for static assets).
   req.identity = {
-    user:   sanitize(user),
-    groups: sanitize(req.headers[IDENTITY_HEADERS.groups], 1024),
-    email:  sanitize(req.headers[IDENTITY_HEADERS.email]),
-    name:   sanitize(req.headers[IDENTITY_HEADERS.name]),
+    user,
+    get groups() {
+      // Memoize the sanitized result by replacing the getter with a data property.
+      const val = sanitize(req.headers[IDENTITY_HEADERS.groups], 1024);
+      Object.defineProperty(this, 'groups', { value: val, enumerable: true, configurable: true, writable: true });
+      return val;
+    },
+    get email() {
+      const val = sanitize(req.headers[IDENTITY_HEADERS.email]);
+      Object.defineProperty(this, 'email', { value: val, enumerable: true, configurable: true, writable: true });
+      return val;
+    },
+    get name() {
+      const val = sanitize(req.headers[IDENTITY_HEADERS.name]);
+      Object.defineProperty(this, 'name', { value: val, enumerable: true, configurable: true, writable: true });
+      return val;
+    }
   };
 
   next();
