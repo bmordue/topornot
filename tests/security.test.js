@@ -44,6 +44,8 @@ describe('Security Headers', () => {
     expect(csp).toMatch(/manifest-src 'self'/);
     expect(csp).toMatch(/worker-src 'self'/);
     expect(csp).toMatch(/font-src 'none'/);
+    expect(csp).toMatch(/media-src 'none'/);
+    expect(csp).toMatch(/child-src 'none'/);
     expect(csp).toMatch(/script-src-attr 'none'/);
     expect(csp).toMatch(/frame-ancestors 'none'/);
     expect(csp).toMatch(/base-uri 'none'/);
@@ -175,6 +177,8 @@ describe('Rate Limiting', () => {
 
     expect(tooManyRequests).toBeDefined();
     expect(tooManyRequests.headers['cache-control']).toBe('no-store, max-age=0');
+    expect(tooManyRequests.headers['permissions-policy']).toBe(PERMISSIONS_POLICY);
+    expect(tooManyRequests.headers['x-robots-tag']).toBe('noindex, nofollow');
     expect(tooManyRequests.body.error).toMatch(/Too many suggestions/);
 
     // Verify audit log
