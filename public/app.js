@@ -77,13 +77,13 @@
     if (navigator.vibrate) navigator.vibrate(10);
     const helpHtml = `
       <div style="display:grid;grid-template-columns:repeat(2, 1fr);gap:10px;text-align:left;font-size:0.8rem;">
-        <div><kbd>A</kbd> <kbd>Enter</kbd> <kbd>→</kbd> Approve</div>
-        <div><kbd>Z</kbd> <kbd>X</kbd> <kbd>←</kbd> Reject</div>
-        <div><kbd>D</kbd> <kbd>↑</kbd> Defer</div>
-        <div><kbd>C</kbd> <kbd>↓</kbd> Context / <kbd>S</kbd> Copy</div>
-        <div><kbd>U</kbd> Undo / <kbd>R</kbd> Refresh</div>
-        <div><kbd>?</kbd> <kbd>/</kbd> <kbd>H</kbd> Help</div>
-        <div><kbd>Esc</kbd> Close</div>
+        <div><kbd aria-hidden="true">A</kbd> <kbd aria-hidden="true">Enter</kbd> <kbd aria-hidden="true">→</kbd> Approve</div>
+        <div><kbd aria-hidden="true">Z</kbd> <kbd aria-hidden="true">X</kbd> <kbd aria-hidden="true">←</kbd> Reject</div>
+        <div><kbd aria-hidden="true">D</kbd> <kbd aria-hidden="true">↑</kbd> Defer</div>
+        <div><kbd aria-hidden="true">C</kbd> <kbd aria-hidden="true">↓</kbd> Context / <kbd aria-hidden="true">S</kbd> Copy</div>
+        <div><kbd aria-hidden="true">U</kbd> Undo / <kbd aria-hidden="true">R</kbd> Refresh</div>
+        <div><kbd aria-hidden="true">?</kbd> <kbd aria-hidden="true">/</kbd> <kbd aria-hidden="true">H</kbd> Help</div>
+        <div><kbd aria-hidden="true">Esc</kbd> Close</div>
         <div style="grid-column: span 2; border-top: 1px solid color-mix(in srgb, currentColor, transparent 85%); padding-top: 4px; font-style: italic;">
           Gestures: Swipe Right (Approve), Left (Reject), Up (Defer)
         </div>
@@ -239,15 +239,23 @@
       actionBar.hidden = true;
       emptyEl.hidden = false;
 
+      // Randomize celebratory icon and message
+      const icons = ['✓', '🎉', '✨', '🥳', '🏆'];
+      const messages = ['All caught up!', 'Queue cleared!', 'Great work!', 'Everything reviewed!'];
+      const iconEl = emptyEl.querySelector('.empty-icon');
+      const msgEl = emptyEl.querySelector('p');
+      if (iconEl) iconEl.textContent = icons[Math.floor(Math.random() * icons.length)];
+      if (msgEl) msgEl.textContent = messages[Math.floor(Math.random() * messages.length)];
+
       const statsEl = document.getElementById('session-stats');
       if (statsEl) {
         if (sessionCount > 0) {
-          const undoHtml = lastAction ? `<button class="undo-btn" id="btn-empty-undo" aria-keyshortcuts="U">Undo last action <kbd>U</kbd></button>` : '';
+          const undoHtml = lastAction ? `<button class="undo-btn" id="btn-empty-undo" aria-keyshortcuts="U">Undo last action <kbd aria-hidden="true">U</kbd></button>` : '';
           statsEl.innerHTML = `
             <div>You've reviewed ${sessionCount} item${sessionCount === 1 ? '' : 's'} this session:</div>
             <div style="display: flex; gap: 8px; justify-content: center;">
-              <span class="card-agent" style="background: var(--color-approve); color: white;">✓ ${sessionApproved}</span>
-              <span class="card-agent" style="background: var(--color-reject); color: white;">✗ ${sessionRejected}</span>
+              <span class="card-agent" style="background: var(--color-approve);" aria-label="${sessionApproved} approved">✓ ${sessionApproved}</span>
+              <span class="card-agent" style="background: var(--color-reject);" aria-label="${sessionRejected} rejected">✗ ${sessionRejected}</span>
             </div>
             ${undoHtml}
           `;
@@ -488,7 +496,7 @@
     }
 
     if (suggestions.length === 0) {
-      showToast('🎉 All caught up! <button class="undo-btn" aria-keyshortcuts="U">Undo <kbd>U</kbd></button>', 'info', 5000, true);
+      showToast('🎉 All caught up! <button class="undo-btn" aria-keyshortcuts="U">Undo <kbd aria-hidden="true">U</kbd></button>', 'info', 5000, true);
       if (navigator.vibrate) navigator.vibrate([50, 30, 50, 30, 80]);
     } else {
       const suffix = ` (${suggestions.length} left)`;
@@ -497,7 +505,7 @@
       // Performance: Use high-performance escapeHTML instead of DOM-based escaping.
       // Safety: Escape title before including in HTML toast
       const escapedTitle = escapeHTML(truncate(suggestionTitle));
-      showToast(`${prefix}: ${escapedTitle}${suffix} <button class="undo-btn" aria-keyshortcuts="U">Undo <kbd>U</kbd></button>`, action, 3000, true);
+      showToast(`${prefix}: ${escapedTitle}${suffix} <button class="undo-btn" aria-keyshortcuts="U">Undo <kbd aria-hidden="true">U</kbd></button>`, action, 3000, true);
     }
 
     renderCard();
@@ -600,7 +608,7 @@
     });
   }
   toastEl.addEventListener('click', (e) => {
-    // Check if the click was on the undo button or any of its children (like <kbd>)
+    // Check if the click was on the undo button or any of its children (like <kbd aria-hidden="true">)
     const undoBtn = e.target.closest('.undo-btn');
     if (undoBtn) {
       undoLastAction();
