@@ -26,6 +26,8 @@ app.use(helmet({
       "manifest-src": ["'self'"],
       "worker-src": ["'self'"],
       "font-src": ["'none'"],
+      "media-src": ["'none'"],
+      "child-src": ["'none'"],
       "script-src-attr": ["'none'"],
       "object-src": ["'none'"],
       "frame-ancestors": ["'none'"],
@@ -58,6 +60,8 @@ const globalLimiter = rateLimit({
   handler: (req, res, next, options) => {
     console.warn(`[audit] RATE_LIMIT_EXCEEDED: ${sanitize(req.method)} ${sanitize(req.originalUrl, 1024)} user=${req.identity?.user || 'anonymous'} ip=${sanitize(req.ip)}`);
     res.setHeader('Cache-Control', 'no-store, max-age=0');
+    res.setHeader('Permissions-Policy', PERMISSIONS_POLICY);
+    res.setHeader('X-Robots-Tag', 'noindex, nofollow');
     res.status(options.statusCode).send(options.message);
   }
 });
@@ -91,6 +95,8 @@ const rateLimitHandler = (req, res, next, options) => {
   // Forensic Depth: Limit originalUrl to 1024 chars for audit logs.
   console.warn(`[audit] RATE_LIMIT_EXCEEDED: ${sanitize(req.method)} ${sanitize(req.originalUrl, 1024)} user=${req.identity?.user || 'anonymous'} ip=${sanitize(req.ip)}`);
   res.setHeader('Cache-Control', 'no-store, max-age=0');
+  res.setHeader('Permissions-Policy', PERMISSIONS_POLICY);
+  res.setHeader('X-Robots-Tag', 'noindex, nofollow');
   res.status(options.statusCode).send(options.message);
 };
 

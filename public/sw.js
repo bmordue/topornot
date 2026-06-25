@@ -46,7 +46,7 @@ self.addEventListener('fetch', (event) => {
             'X-Robots-Tag': 'noindex, nofollow',
             'Referrer-Policy': 'no-referrer',
             'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
-            'Content-Security-Policy': "default-src 'none'; object-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'; upgrade-insecure-requests",
+            'Content-Security-Policy': "default-src 'none'; media-src 'none'; child-src 'none'; object-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'; upgrade-insecure-requests",
             'Cross-Origin-Opener-Policy': 'same-origin',
             'Cross-Origin-Embedder-Policy': 'require-corp',
             'Cross-Origin-Resource-Policy': 'same-origin',
