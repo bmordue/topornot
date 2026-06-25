@@ -23,6 +23,7 @@
   const cardEl       = document.getElementById('current-card');
   const loadingEl    = document.getElementById('loading-state');
   const emptyEl      = document.getElementById('empty-state');
+  const emptyIcon    = emptyEl.querySelector('.empty-icon');
   const actionBar    = document.getElementById('action-bar');
   const queueCount   = document.getElementById('queue-count');
   const cardAgent    = document.getElementById('card-agent');
@@ -250,7 +251,8 @@
       const statsEl = document.getElementById('session-stats');
       if (statsEl) {
         if (sessionCount > 0) {
-          const undoHtml = lastAction ? `<button class="undo-btn" id="btn-empty-undo" aria-keyshortcuts="U">Undo last action <kbd aria-hidden="true">U</kbd></button>` : '';
+          // Accessibility: Improve discoverability with title
+          const undoHtml = lastAction ? `<button class="undo-btn" id="btn-empty-undo" aria-keyshortcuts="U" title="Undo (U)">Undo last action <kbd>U</kbd></button>` : '';
           statsEl.innerHTML = `
             <div>You've reviewed ${sessionCount} item${sessionCount === 1 ? '' : 's'} this session:</div>
             <div style="display: flex; gap: 8px; justify-content: center;">
