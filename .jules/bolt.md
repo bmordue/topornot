@@ -113,3 +113,7 @@
 ## 2026-06-24 - [Pre-computed Padding for Manual Timestamps]
 **Learning:** Even with second-level caching, high-frequency timestamp generation using manual string construction can be improved by replacing per-update closures and conditional logic with a module-scoped lookup table. A pre-computed `PADDED` array (0-59) eliminates the overhead of small string allocations and branch mispredictions in padding logic.
 **Action:** Use pre-computed lookup tables for fixed-range numeric padding in high-frequency string formatting tasks to minimize CPU cycles and GC pressure.
+
+## 2026-06-25 - [Symbol-based Memoization for Frontend State]
+**Learning:** Using underscored properties (e.g. `_htmlDesc`) for memoization on objects that are serialized to `localStorage` causes them to leak into persistent state. This leads to serialization bloat and potential deserialization bugs (e.g. `Date` objects becoming strings). Symbols are ignored by `JSON.stringify`, providing a safe and efficient way to store internal UI state without affecting persistence or causing O(N) re-indexing.
+**Action:** Use Symbols for all non-persistent internal metadata and memoization on objects that may be serialized.

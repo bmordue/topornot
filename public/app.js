@@ -12,6 +12,14 @@
   let sessionApproved = parseInt(sessionStorage.getItem('sessionApproved') || '0', 10);
   let sessionRejected = parseInt(sessionStorage.getItem('sessionRejected') || '0', 10);
 
+  // Performance: Use Symbols for internal UI state to avoid leaking memoized
+  // properties into localStorage serialization (bloat and deserialization bugs).
+  const SYM_DATE      = Symbol('date');
+  const SYM_LOCAL     = Symbol('local');
+  const SYM_ISO       = Symbol('iso');
+  const SYM_HTML_DESC = Symbol('htmlDesc');
+  const SYM_HTML_CTX  = Symbol('htmlCtx');
+
   // Performance: Track reduced motion preference to skip animations/delays
   let prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', e => {
@@ -183,17 +191,17 @@
    * and its expensive string representations for better performance.
    */
   function getSuggestionDate(s) {
-    if (!s._date) {
+    if (!s[SYM_DATE]) {
       const dateStr = s.created_at.includes('Z') ? s.created_at : s.created_at.replace(' ', 'T') + 'Z';
       const d = new Date(dateStr);
-      s._date = d;
+      s[SYM_DATE] = d;
       // Performance: Memoize expensive formatting results on the first call.
       // This eliminates redundant work during frequent card renders.
       const isValid = !isNaN(d);
-      s._local = isValid ? d.toLocaleString() : '';
-      s._iso = isValid ? d.toISOString() : '';
+      s[SYM_LOCAL] = isValid ? d.toLocaleString() : '';
+      s[SYM_ISO] = isValid ? d.toISOString() : '';
     }
-    return s._date;
+    return s[SYM_DATE];
   }
 
   // Performance: Accept a Date object instead of a string to avoid redundant parsing.
@@ -297,18 +305,18 @@
     cardAgent.textContent = s.agent || 'agent';
     cardTime.textContent  = relativeTime(date);
     // Performance: Use memoized date strings to avoid redundant O(N) formatting.
-    cardTime.title = s._local;
-    if (s._iso) cardTime.setAttribute('datetime', s._iso);
+    cardTime.title = s[SYM_LOCAL];
+    if (s[SYM_ISO]) cardTime.setAttribute('datetime', s[SYM_ISO]);
     cardTitle.textContent = s.title;
 
     // Performance: Memoize linkified HTML on the suggestion object to eliminate
     // redundant processing and regex scanning on subsequent renders of the same card.
-    if (!s._htmlDesc) s._htmlDesc = linkify(s.description);
-    cardDesc.innerHTML = s._htmlDesc;
+    if (!s[SYM_HTML_DESC]) s[SYM_HTML_DESC] = linkify(s.description);
+    cardDesc.innerHTML = s[SYM_HTML_DESC];
 
     if (s.context) {
-      if (!s._htmlCtx) s._htmlCtx = linkify(s.context);
-      cardCtx.innerHTML = s._htmlCtx;
+      if (!s[SYM_HTML_CTX]) s[SYM_HTML_CTX] = linkify(s.context);
+      cardCtx.innerHTML = s[SYM_HTML_CTX];
       cardCtxWrap.hidden = false;
     } else {
       cardCtxWrap.hidden = true;
