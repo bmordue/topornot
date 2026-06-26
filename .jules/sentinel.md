@@ -173,3 +173,8 @@
 **Vulnerability:** XSS attribute breakout in `linkify` occurred because the URL regex matched across escaped HTML entities (like `&quot;`) in dynamic content.
 **Learning:** Attempting to add Markdown-lite features (like underscores for italics) alongside linkification can mangle URLs that contain those characters (e.g., underscores in API paths). Regex-based linkification on already-escaped HTML requires strict boundary checks to avoid re-introducing vulnerabilities.
 **Prevention:** Use a negative lookahead `(?:(?!&(?:quot|#39);)[^\s<"'])+` in URL regexes to prevent matching across escaped quotes. Keep Markdown implementations simple and be wary of character overlaps between formatting syntax and common URL characters like underscores.
+
+## 2026-12-10 - Expanding Permissions-Policy and Mongolian Variation Selector Sanitization
+**Vulnerability:** Evolving browser APIs (like Direct Sockets and Private Aggregation) and overlooked invisible Unicode characters (Mongolian Free Variation Selectors) can respectively increase the attack surface and facilitate homograph/visual spoofing attacks.
+**Learning:** Security hardening is an iterative process. As browser capabilities expand, the `Permissions-Policy` must be proactively updated. Similarly, Unicode sanitization must cover all variation selectors, not just the standard ones (U+FE00-U+FE0F), to ensure robust input handling.
+**Prevention:** Regularly audit the `Permissions-Policy` against the latest browser features and ensure Unicode sanitization filters are comprehensive, specifically including the Mongolian-specific variation block (U+180B-U+180D).

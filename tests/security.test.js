@@ -30,8 +30,11 @@ describe('Security Headers', () => {
     expect(res.headers['permissions-policy']).toMatch(/digital-credentials-get=\(\)/);
     expect(res.headers['permissions-policy']).toMatch(/keyboard-focus=\(\)/);
     expect(res.headers['permissions-policy']).toMatch(/local-network-access=\(\)/);
+    expect(res.headers['permissions-policy']).toMatch(/direct-sockets=\(\)/);
+    expect(res.headers['permissions-policy']).toMatch(/private-aggregation=\(\)/);
     expect(res.headers['permissions-policy']).toMatch(/smart-card=\(\)/);
     expect(res.headers['permissions-policy']).toMatch(/usb-choice=\(\)/);
+    expect(res.headers['permissions-policy']).toMatch(/usb-confirmation=\(\)/);
     expect(res.headers['permissions-policy']).toMatch(/web-printing=\(\)/);
     expect(res.headers['x-robots-tag']).toBe('noindex, nofollow');
 
@@ -570,6 +573,27 @@ describe('API Error Handling', () => {
     // Note: NFKC normalization converts various space-like characters (e.g., \u2000, \u3000)
     // to standard spaces (\u0020) before the CONTROL_CHARS regex is applied.
     expect(req.identity.user).toBe('alice quad_filler ideographic_cj');
+    expect(next).toHaveBeenCalled();
+  });
+
+  it('should sanitize Mongolian Free Variation Selectors (unit test)', () => {
+    const dangerous = 'mongolian\u180Bvs1\u180Cvs2\u180Dvs3';
+    const req = {
+      method: 'GET',
+      path: '/api/suggestions',
+      headers: {
+        'remote-user': dangerous,
+        'remote-groups': 'dev',
+        'remote-email': 'dev@example.com',
+        'remote-name': 'Developer'
+      }
+    };
+    const res = {};
+    const next = jest.fn();
+
+    authMiddleware(req, res, next);
+
+    expect(req.identity.user).toBe('mongolian_vs1_vs2_vs3');
     expect(next).toHaveBeenCalled();
   });
 
