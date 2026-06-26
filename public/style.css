@@ -410,6 +410,15 @@ body {
   border-radius: 4px;
 }
 
+.card-link::after {
+  content: '↗';
+  display: inline-block;
+  margin-left: 4px;
+  font-size: 0.85em;
+  opacity: 0.7;
+  text-decoration: none;
+}
+
 .card-context {
   font-family: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
   font-size: 0.8rem;
