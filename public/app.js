@@ -56,6 +56,7 @@
   const MD_BOLD_REGEX = /\*\*([^*]+)\*\*/g;
   const MD_ITALIC_REGEX = /(\*|_)([^*_]+)\1/g;
   const MD_STRIKE_REGEX = /~~([^~]+)~~/g;
+  const MD_LINK_REGEX = /\[([^\]]+)\]\((https?:\/\/(?:(?!&(?:quot|#39);)[^\s<"'])+)\)/g;
 
   // Performance: High-performance string-based escaping.
   // Significantly faster than creating a DOM element (document.createElement('div'))
@@ -85,7 +86,7 @@
         <div><kbd aria-hidden="true">U</kbd> Undo / <kbd aria-hidden="true">R</kbd> Refresh</div>
         <div><kbd aria-hidden="true">?</kbd> <kbd aria-hidden="true">/</kbd> <kbd aria-hidden="true">H</kbd> Help</div>
         <div><kbd aria-hidden="true">Esc</kbd> Close</div>
-        <div style="grid-column: span 2; border-top: 1px solid color-mix(in srgb, currentColor, transparent 85%); padding-top: 4px; font-style: italic;">
+        <div style="grid-column: span 2; border-top: 1px solid color-mix(in srgb, currentColor, transparent 85%); padding-top: 8px; margin-top: 4px; font-style: italic;">
           Gestures: Swipe Right (Approve), Left (Reject), Up (Defer)
         </div>
       </div>
@@ -498,7 +499,7 @@
     }
 
     if (suggestions.length === 0) {
-      showToast('🎉 All caught up! <button class="undo-btn" aria-keyshortcuts="U">Undo <kbd aria-hidden="true">U</kbd></button>', 'info', 5000, true);
+      showToast('🎉 All caught up! <button class="undo-btn" aria-keyshortcuts="U" title="Undo (U)" aria-label="Undo last action">Undo <kbd aria-hidden="true">U</kbd></button>', 'info', 5000, true);
       if (navigator.vibrate) navigator.vibrate([50, 30, 50, 30, 80]);
     } else {
       const suffix = ` (${suggestions.length} left)`;
@@ -507,7 +508,7 @@
       // Performance: Use high-performance escapeHTML instead of DOM-based escaping.
       // Safety: Escape title before including in HTML toast
       const escapedTitle = escapeHTML(truncate(suggestionTitle));
-      showToast(`${prefix}: ${escapedTitle}${suffix} <button class="undo-btn" aria-keyshortcuts="U">Undo <kbd aria-hidden="true">U</kbd></button>`, action, 3000, true);
+      showToast(`${prefix}: ${escapedTitle}${suffix} <button class="undo-btn" aria-keyshortcuts="U" title="Undo (U)" aria-label="Undo last action">Undo <kbd aria-hidden="true">U</kbd></button>`, action, 3000, true);
     }
 
     renderCard();
@@ -554,7 +555,7 @@
 
     const text = `Suggestion from ${s.agent || 'agent'}:\n\n${s.title}\n${s.description}${s.context ? '\n\nContext:\n' + s.context : ''}`;
     navigator.clipboard.writeText(text).then(() => {
-      showToast(`Copied: ${truncate(s.title)}`, 'info');
+      showToast(`📋 Copied: ${truncate(s.title)}`, 'info');
       if (navigator.vibrate) navigator.vibrate(10);
 
       label.textContent = 'Copied!';
@@ -863,7 +864,7 @@
     if (!text) return '';
 
     // Performance: Fast-path for strings that do not contain URLs or formatting.
-    if (!text.includes('http') && !text.includes('`') && !text.includes('*') && !text.includes('_') && !text.includes('~')) {
+    if (!text.includes('http') && !text.includes('`') && !text.includes('*') && !text.includes('_') && !text.includes('~') && !text.includes('[')) {
       return escapeHTML(text);
     }
 
@@ -882,7 +883,16 @@
     // Support for strikethrough: ~~strikethrough~~
     html = html.replace(MD_STRIKE_REGEX, '<s>$1</s>');
 
-    return html.replace(URL_REGEX, (url) => {
+    // Support for Markdown links: [text](url)
+    // Use a placeholder strategy to prevent bare URL linkification from double-wrapping MD links.
+    const placeholders = [];
+    html = html.replace(MD_LINK_REGEX, (match, label, url) => {
+      const id = `__MD_LINK_${placeholders.length}__`;
+      placeholders.push(`<a href="${url}" class="card-link" target="_blank" rel="noopener noreferrer">${label}</a>`);
+      return id;
+    });
+
+    html = html.replace(URL_REGEX, (url) => {
       // Clean up trailing punctuation that might be part of the sentence but not the URL
       let cleanUrl = url;
       const match = url.match(TRAILING_PUNCTUATION);
@@ -893,6 +903,13 @@
       }
       return `<a href="${cleanUrl}" class="card-link" target="_blank" rel="noopener noreferrer">${cleanUrl}</a>${suffix}`;
     });
+
+    // Restore Markdown links
+    placeholders.forEach((p, i) => {
+      html = html.replace(`__MD_LINK_${i}__`, p);
+    });
+
+    return html;
   }
 
   // -- Truncate helper --
