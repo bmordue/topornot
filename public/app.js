@@ -51,6 +51,7 @@
   const btnApprove   = document.getElementById('btn-approve');
   const btnReject    = document.getElementById('btn-reject');
   const btnDefer     = document.getElementById('btn-defer');
+  const btnCopy      = document.getElementById('btn-copy');
 
   // Performance: Hoist regular expressions to avoid redundant compilation in every linkify call.
   // We match http/https URLs and stop at common delimiters.
@@ -261,7 +262,11 @@
       if (statsEl) {
         if (sessionCount > 0) {
           // Accessibility: Improve discoverability with title
-          const undoHtml = lastAction ? `<button class="undo-btn" id="btn-empty-undo" aria-keyshortcuts="U" title="Undo (U)">Undo last action <kbd>U</kbd></button>` : '';
+          let undoHtml = '';
+          if (lastAction) {
+            const undoLabel = `Undo ${lastAction.action} '${truncate(lastAction.suggestion.title)}'`;
+            undoHtml = `<button class="undo-btn" id="btn-empty-undo" aria-keyshortcuts="U" title="${undoLabel} (U)" aria-label="${undoLabel}">Undo last action <kbd aria-hidden="true">U</kbd></button>`;
+          }
           statsEl.innerHTML = `
             <div>You've reviewed ${sessionCount} item${sessionCount === 1 ? '' : 's'} this session:</div>
             <div style="display: flex; gap: 8px; justify-content: center;">
@@ -308,6 +313,17 @@
     cardTime.title = s[SYM_LOCAL];
     if (s[SYM_ISO]) cardTime.setAttribute('datetime', s[SYM_ISO]);
     cardTitle.textContent = s.title;
+
+    // Accessibility: Set contextual labels for primary actions
+    const truncatedTitle = truncate(s.title);
+    btnApprove.title = `Approve '${truncatedTitle}' (A, Enter, →)`;
+    btnApprove.setAttribute('aria-label', `Approve '${truncatedTitle}'`);
+    btnReject.title = `Reject '${truncatedTitle}' (Z, X, ←)`;
+    btnReject.setAttribute('aria-label', `Reject '${truncatedTitle}'`);
+    btnDefer.title = `Defer '${truncatedTitle}' (D, ↑)`;
+    btnDefer.setAttribute('aria-label', `Defer '${truncatedTitle}'`);
+    btnCopy.title = `Copy '${truncatedTitle}' (S)`;
+    btnCopy.setAttribute('aria-label', `Copy '${truncatedTitle}'`);
 
     // Performance: Memoize linkified HTML on the suggestion object to eliminate
     // redundant processing and regex scanning on subsequent renders of the same card.
@@ -506,8 +522,9 @@
       }
     }
 
+    const undoLabel = `Undo ${action} '${truncate(suggestionTitle)}'`;
     if (suggestions.length === 0) {
-      showToast('🎉 All caught up! <button class="undo-btn" aria-keyshortcuts="U" title="Undo (U)" aria-label="Undo last action">Undo <kbd aria-hidden="true">U</kbd></button>', 'info', 5000, true);
+      showToast(`🎉 All caught up! <button class="undo-btn" aria-keyshortcuts="U" title="${undoLabel} (U)" aria-label="${undoLabel}">Undo <kbd aria-hidden="true">U</kbd></button>`, 'info', 5000, true);
       if (navigator.vibrate) navigator.vibrate([50, 30, 50, 30, 80]);
     } else {
       const suffix = ` (${suggestions.length} left)`;
@@ -516,7 +533,7 @@
       // Performance: Use high-performance escapeHTML instead of DOM-based escaping.
       // Safety: Escape title before including in HTML toast
       const escapedTitle = escapeHTML(truncate(suggestionTitle));
-      showToast(`${prefix}: ${escapedTitle}${suffix} <button class="undo-btn" aria-keyshortcuts="U" title="Undo (U)" aria-label="Undo last action">Undo <kbd aria-hidden="true">U</kbd></button>`, action, 3000, true);
+      showToast(`${prefix}: ${escapedTitle}${suffix} <button class="undo-btn" aria-keyshortcuts="U" title="${undoLabel} (U)" aria-label="${undoLabel}">Undo <kbd aria-hidden="true">U</kbd></button>`, action, 3000, true);
     }
 
     renderCard();
@@ -555,7 +572,7 @@
   function copyToClipboard() {
     const s = suggestions[currentIndex % suggestions.length];
     if (!s) return;
-    const btn = document.getElementById('btn-copy');
+    const btn = btnCopy;
     const label = btn.querySelector('.btn-label');
     const icon = btn.querySelector('.btn-icon');
     const originalLabel = label.innerHTML;
@@ -852,8 +869,18 @@
   }
 
   document.addEventListener('visibilitychange', () => {
-    if (document.hidden) stopUpdateTimer();
-    else startUpdateTimer();
+    if (document.hidden) {
+      stopUpdateTimer();
+    } else {
+      // Performance: Immediate refresh on focus so timestamps are always accurate
+      if (suggestions.length > 0) {
+        const s = suggestions[currentIndex % suggestions.length];
+        if (s && !cardEl.hidden) {
+          cardTime.textContent = relativeTime(getSuggestionDate(s));
+        }
+      }
+      startUpdateTimer();
+    }
   });
 
   if (!document.hidden) startUpdateTimer();
