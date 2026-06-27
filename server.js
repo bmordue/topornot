@@ -9,7 +9,7 @@ const app = express();
 
 // Security: Restrict unnecessary browser features via Permissions-Policy.
 // Explicitly disable features that the application does not require to reduce browser attack surface.
-const PERMISSIONS_POLICY = 'accelerometer=(), attribution-reporting=(), autoplay=(), bluetooth=(), browsing-topics=(), camera=(), captured-surface-control=(), clipboard-read=(), clipboard-write=(self), compute-pressure=(), digital-credentials-get=(), direct-sockets=(), display-capture=(), document-domain=(), fenced-frame-api=(), fullscreen=(), gamepad=(), geolocation=(), gyroscope=(), hid=(), identity-credentials-get=(), idle-detection=(), interest-cohort=(), join-ad-interest-group=(), keyboard-focus=(), keyboard-map=(), local-fonts=(), local-network-access=(), magnetometer=(), microphone=(), midi=(), otp-credentials=(), payment=(), picture-in-picture=(), private-aggregation=(), private-state-token-issuance=(), private-state-token-redemption=(), publickey-credentials-get=(), run-ad-auction=(), screen-wake-lock=(), serial=(), smart-card=(), speaker-selection=(), storage-access=(), sync-xhr=(), usb=(), usb-choice=(), usb-confirmation=(), web-printing=(), web-share=(), window-management=(), xr-spatial-tracking=()';
+const PERMISSIONS_POLICY = 'accelerometer=(), ambient-light-sensor=(), aria-notify=(), attribution-reporting=(), autoplay=(), bluetooth=(), browsing-topics=(), camera=(), captured-surface-control=(), ch-ua-high-entropy-values=(), clipboard-read=(), clipboard-write=(self), compute-pressure=(), cross-origin-isolated=(), deferred-fetch=(), deferred-fetch-minimal=(), digital-credentials-get=(), direct-sockets=(), display-capture=(), document-domain=(), encrypted-media=(), fenced-frame-api=(), fullscreen=(), gamepad=(), geolocation=(), gyroscope=(), hid=(), identity-credentials-get=(), idle-detection=(), interest-cohort=(), join-ad-interest-group=(), keyboard-focus=(), keyboard-map=(), language-detector=(), local-fonts=(), local-network=(), local-network-access=(), loopback-network=(), magnetometer=(), microphone=(), midi=(), on-device-speech-recognition=(), otp-credentials=(), payment=(), picture-in-picture=(), private-aggregation=(), private-state-token-issuance=(), private-state-token-redemption=(), publickey-credentials-create=(), publickey-credentials-get=(), run-ad-auction=(), screen-wake-lock=(), serial=(), smart-card=(), speaker-selection=(), storage-access=(), summarizer=(), sync-xhr=(), translator=(), usb=(), usb-choice=(), usb-confirmation=(), web-printing=(), web-share=(), window-management=(), xr-spatial-tracking=()';
 
 // Trust the first proxy in front of us
 app.set('trust proxy', 1);
@@ -47,6 +47,13 @@ app.use(helmet({
   },
 }));
 
+// Security: Apply restrictive Permissions-Policy and prevent indexing by search engines.
+app.use((req, res, next) => {
+  res.setHeader('Permissions-Policy', PERMISSIONS_POLICY);
+  res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+  next();
+});
+
 // Security: Global rate limiter to provide defense-in-depth against DoS.
 // Applies to all requests, including static files and authentication layer.
 const globalLimiter = rateLimit({
@@ -69,13 +76,6 @@ const globalLimiter = rateLimit({
 app.use(identityMiddleware);
 
 app.use(globalLimiter);
-
-// Security: Apply restrictive Permissions-Policy and prevent indexing by search engines.
-app.use((req, res, next) => {
-  res.setHeader('Permissions-Policy', PERMISSIONS_POLICY);
-  res.setHeader('X-Robots-Tag', 'noindex, nofollow');
-  next();
-});
 
 // Proxy-based identity – enforce authentication after rate limiting.
 app.use(requireAuth);
@@ -263,6 +263,8 @@ app.use((req, res) => {
 app.use((err, req, res, next) => {
   // Security: Prevent caching of error responses.
   res.setHeader('Cache-Control', 'no-store, max-age=0');
+  res.setHeader('Permissions-Policy', PERMISSIONS_POLICY);
+  res.setHeader('X-Robots-Tag', 'noindex, nofollow');
 
   // If it's a JSON parsing error from express.json()
   if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {

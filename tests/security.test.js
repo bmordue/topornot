@@ -36,6 +36,7 @@ describe('Security Headers', () => {
     expect(res.headers['permissions-policy']).toMatch(/usb-choice=\(\)/);
     expect(res.headers['permissions-policy']).toMatch(/usb-confirmation=\(\)/);
     expect(res.headers['permissions-policy']).toMatch(/web-printing=\(\)/);
+    expect(res.headers['permissions-policy']).toMatch(/publickey-credentials-create=\(\)/);
     expect(res.headers['x-robots-tag']).toBe('noindex, nofollow');
 
     const csp = res.headers['content-security-policy'];
