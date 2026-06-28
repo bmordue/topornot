@@ -65,6 +65,8 @@
   const MD_ITALIC_REGEX = /(\*|_)([^*_]+)\1/g;
   const MD_STRIKE_REGEX = /~~([^~]+)~~/g;
   const MD_LINK_REGEX = /\[([^\]]+)\]\((https?:\/\/(?:(?!&(?:quot|#39);)[^\s<"'])+)\)/g;
+  // Performance: Hoist restore regex to avoid redundant compilation and enable O(N) replacement.
+  const MD_RESTORE_REGEX = /__MD_LINK_(\d+)__/g;
 
   // Performance: High-performance string-based escaping.
   // Significantly faster than creating a DOM element (document.createElement('div'))
@@ -913,9 +915,11 @@
     });
 
     // Restore Markdown links
-    placeholders.forEach((p, i) => {
-      html = html.replace(`__MD_LINK_${i}__`, p);
-    });
+    // Performance: Using a single regex-based replacement with a callback is O(N)
+    // where N is the number of placeholders, compared to O(N^2) for a loop of replaces.
+    if (placeholders.length > 0) {
+      html = html.replace(MD_RESTORE_REGEX, (match, index) => placeholders[index]);
+    }
 
     return html;
   }

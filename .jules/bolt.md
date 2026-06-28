@@ -117,3 +117,7 @@
 ## 2026-06-25 - [Symbol-based Memoization for Frontend State]
 **Learning:** Using underscored properties (e.g. `_htmlDesc`) for memoization on objects that are serialized to `localStorage` causes them to leak into persistent state. This leads to serialization bloat and potential deserialization bugs (e.g. `Date` objects becoming strings). Symbols are ignored by `JSON.stringify`, providing a safe and efficient way to store internal UI state without affecting persistence or causing O(N) re-indexing.
 **Action:** Use Symbols for all non-persistent internal metadata and memoization on objects that may be serialized.
+
+## 2026-06-26 - [O(N) Placeholder Restoration via Single-Pass Replace]
+**Learning:** Using a loop with `string.replace(string, string)` to restore placeholders in a large string is $O(N \times M)$ where $N$ is the number of placeholders and $M$ is the string length. Switching to a single `string.replace(regex, callback)` call with a hoisted global regex reduces the complexity to $O(M)$ linear time and eliminates redundant regex compilation.
+**Action:** Always favor single-pass regex replacement with a callback over loops of string replacements for batch substitutions in high-frequency rendering paths.
