@@ -27,12 +27,23 @@ describe('Security Headers', () => {
     expect(res.headers['x-permitted-cross-domain-policies']).toBe('none');
     expect(res.headers['referrer-policy']).toBe('no-referrer');
     expect(res.headers['permissions-policy']).toBe(PERMISSIONS_POLICY);
+    expect(res.headers['permissions-policy']).toMatch(/ambient-light-sensor=\(\)/);
+    expect(res.headers['permissions-policy']).toMatch(/aria-notify=\(\)/);
+    expect(res.headers['permissions-policy']).toMatch(/ch-ua-high-entropy-values=\(\)/);
+    expect(res.headers['permissions-policy']).toMatch(/cross-origin-isolated=\(\)/);
+    expect(res.headers['permissions-policy']).toMatch(/deferred-fetch=\(\)/);
+    expect(res.headers['permissions-policy']).toMatch(/deferred-fetch-minimal=\(\)/);
     expect(res.headers['permissions-policy']).toMatch(/digital-credentials-get=\(\)/);
     expect(res.headers['permissions-policy']).toMatch(/keyboard-focus=\(\)/);
+    expect(res.headers['permissions-policy']).toMatch(/language-detector=\(\)/);
     expect(res.headers['permissions-policy']).toMatch(/local-network-access=\(\)/);
     expect(res.headers['permissions-policy']).toMatch(/direct-sockets=\(\)/);
+    expect(res.headers['permissions-policy']).toMatch(/on-device-speech-recognition=\(\)/);
     expect(res.headers['permissions-policy']).toMatch(/private-aggregation=\(\)/);
+    expect(res.headers['permissions-policy']).toMatch(/publickey-credentials-create=\(\)/);
     expect(res.headers['permissions-policy']).toMatch(/smart-card=\(\)/);
+    expect(res.headers['permissions-policy']).toMatch(/summarizer=\(\)/);
+    expect(res.headers['permissions-policy']).toMatch(/translator=\(\)/);
     expect(res.headers['permissions-policy']).toMatch(/usb-choice=\(\)/);
     expect(res.headers['permissions-policy']).toMatch(/usb-confirmation=\(\)/);
     expect(res.headers['permissions-policy']).toMatch(/web-printing=\(\)/);
@@ -232,6 +243,8 @@ describe('API Error Handling', () => {
     expect(res.headers['content-type']).toMatch(/json/);
     expect(res.body.error).toBe('API endpoint not found');
     expect(res.headers['cache-control']).toBe('no-store, max-age=0');
+    expect(res.headers['permissions-policy']).toBe(PERMISSIONS_POLICY);
+    expect(res.headers['x-robots-tag']).toBe('noindex, nofollow');
 
     expect(warnSpy).toHaveBeenCalledWith(expect.stringMatching(/\[audit\] API_NOT_FOUND: GET \/api\/non-existent-route user=dev-user ip=[a-f\d\.:]+/));
     warnSpy.mockRestore();
@@ -244,6 +257,8 @@ describe('API Error Handling', () => {
     expect(res.headers['content-type']).toMatch(/text\/plain/);
     expect(res.text).toBe('404 Not Found');
     expect(res.headers['cache-control']).toBe('no-store, max-age=0');
+    expect(res.headers['permissions-policy']).toBe(PERMISSIONS_POLICY);
+    expect(res.headers['x-robots-tag']).toBe('noindex, nofollow');
 
     expect(warnSpy).toHaveBeenCalledWith(expect.stringMatching(/\[audit\] NOT_FOUND: GET \/non-existent-route user=dev-user ip=[a-f\d\.:]+/));
     warnSpy.mockRestore();
@@ -752,5 +767,25 @@ describe('Audit Logging', () => {
       .send({ title: largeTitle });
 
     expect(warnSpy).toHaveBeenCalledWith(expect.stringMatching(/\[audit\] PAYLOAD_TOO_LARGE: POST \/api\/suggestions user=dev-user ip=[a-f\d\.:]+/));
+  });
+
+  it('should set security headers on 500 errors', async () => {
+    // Force an error by passing something that causes a crash in a late middleware or handler
+    // In server.js, createSuggestion calls db.createSuggestion.
+    // If we can make db.createSuggestion throw, we get a 500.
+    const db = require('../db');
+    const original = db.createSuggestion;
+    db.createSuggestion = () => { throw new Error('Database Error'); };
+
+    const res = await request(app)
+      .post('/api/suggestions')
+      .send({ title: 'Crash', description: 'Me' });
+
+    expect(res.status).toBe(500);
+    expect(res.headers['permissions-policy']).toBe(PERMISSIONS_POLICY);
+    expect(res.headers['x-robots-tag']).toBe('noindex, nofollow');
+    expect(res.headers['cache-control']).toBe('no-store, max-age=0');
+
+    db.createSuggestion = original;
   });
 });
