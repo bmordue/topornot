@@ -14,6 +14,7 @@
   --color-text: #1e293b;
   --color-text-muted: #475569;
   --color-border: #e2e8f0;
+  --agent-l: 35%;
   --radius: 16px;
   --shadow: 0 4px 24px rgba(0,0,0,0.10);
   --shadow-sm: 0 2px 8px rgba(0,0,0,0.06);
@@ -30,6 +31,7 @@
     --color-reject: #f87171;
     --color-defer: #fbbf24;
     --color-border: #334155;
+    --agent-l: 80%;
     --shadow: 0 4px 24px rgba(0,0,0,0.4);
     --shadow-sm: 0 2px 8px rgba(0,0,0,0.2);
   }
@@ -335,17 +337,19 @@ body {
 .card-agent {
   font-size: 0.78rem;
   font-weight: 600;
-  background: var(--color-primary);
+  background: hsl(var(--agent-h, 243), 70%, var(--agent-l));
   color: white;
   padding: 3px 10px;
   border-radius: 12px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  transition: background 0.3s ease;
 }
 
 @media (prefers-color-scheme: dark) {
   .card-agent {
     color: #0f172a;
+    font-weight: 700;
   }
 }
 
@@ -720,6 +724,11 @@ kbd {
   transform: scale(0.95);
 }
 
+.undo-btn:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
 .undo-btn kbd {
   background: color-mix(in srgb, black, transparent 90%);
   border-color: color-mix(in srgb, currentColor, transparent 70%);
@@ -890,8 +899,8 @@ kbd {
 }
 
 
-@media (prefers-color-scheme: dark) {
-  .toast:focus-visible {
-    outline-color: white;
-  }
+.toast:focus-visible {
+  outline: 2px solid var(--color-bg);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px var(--color-text);
 }

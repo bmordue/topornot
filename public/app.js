@@ -302,7 +302,9 @@
     const s = suggestions[currentIndex % pendingCount];
     const date = getSuggestionDate(s);
 
-    cardAgent.textContent = s.agent || 'agent';
+    const agentName = s.agent || 'agent';
+    cardAgent.textContent = agentName;
+    cardAgent.style.setProperty('--agent-h', getAgentHue(agentName));
     cardTime.textContent  = relativeTime(date);
     // Performance: Use memoized date strings to avoid redundant O(N) formatting.
     cardTime.title = s[SYM_LOCAL];
@@ -924,6 +926,18 @@
   function truncate(str, max = 40) {
     if (!str || str.length <= max) return str;
     return str.substring(0, max - 3) + '...';
+  }
+
+  /**
+   * Deterministic hue generator for agent badges.
+   */
+  function getAgentHue(name) {
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+      hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    // Spread hues more widely for similar names
+    return Math.abs((hash * 137) % 360);
   }
 
   // -- Init --
