@@ -65,6 +65,8 @@
   const MD_ITALIC_REGEX = /(\*|_)([^*_]+)\1/g;
   const MD_STRIKE_REGEX = /~~([^~]+)~~/g;
   const MD_LINK_REGEX = /\[([^\]]+)\]\((https?:\/\/(?:(?!&(?:quot|#39);)[^\s<"'])+)\)/g;
+  // Performance: Hoist the restoration regex for Markdown link placeholders.
+  const MD_RESTORE_REGEX = /__MD_LINK_(\d+)__/g;
 
   // Performance: High-performance string-based escaping.
   // Significantly faster than creating a DOM element (document.createElement('div'))
@@ -912,10 +914,12 @@
       return `<a href="${cleanUrl}" class="card-link" target="_blank" rel="noopener noreferrer">${cleanUrl}</a>${suffix}`;
     });
 
-    // Restore Markdown links
-    placeholders.forEach((p, i) => {
-      html = html.replace(`__MD_LINK_${i}__`, p);
-    });
+    // Performance: Use a single replace call with a callback to restore placeholders.
+    // This reduces the restoration cost from O(M * N) to O(N) where M is the number
+    // of links and N is the string length, ensuring linear-time substitution.
+    // We use a nullish coalescing operator to ensure that if a sentinel is matched
+    // without a corresponding placeholder, the original match is preserved.
+    html = html.replace(MD_RESTORE_REGEX, (match, i) => placeholders[i] ?? match);
 
     return html;
   }
