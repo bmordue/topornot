@@ -9,7 +9,7 @@ const app = express();
 
 // Security: Restrict unnecessary browser features via Permissions-Policy.
 // Explicitly disable features that the application does not require to reduce browser attack surface.
-const PERMISSIONS_POLICY = 'accelerometer=(), attribution-reporting=(), autoplay=(), bluetooth=(), browsing-topics=(), camera=(), captured-surface-control=(), clipboard-read=(), clipboard-write=(self), compute-pressure=(), digital-credentials-get=(), direct-sockets=(), display-capture=(), document-domain=(), fenced-frame-api=(), fullscreen=(), gamepad=(), geolocation=(), gyroscope=(), hid=(), identity-credentials-get=(), idle-detection=(), interest-cohort=(), join-ad-interest-group=(), keyboard-focus=(), keyboard-map=(), local-fonts=(), local-network-access=(), magnetometer=(), microphone=(), midi=(), otp-credentials=(), payment=(), picture-in-picture=(), private-aggregation=(), private-state-token-issuance=(), private-state-token-redemption=(), publickey-credentials-get=(), run-ad-auction=(), screen-wake-lock=(), serial=(), smart-card=(), speaker-selection=(), storage-access=(), sync-xhr=(), usb=(), usb-choice=(), usb-confirmation=(), web-printing=(), web-share=(), window-management=(), xr-spatial-tracking=()';
+const PERMISSIONS_POLICY = 'accelerometer=(), attribution-reporting=(), autoplay=(), bluetooth=(), browsing-topics=(), camera=(), captured-surface-control=(), clipboard-read=(), clipboard-write=(self), compute-pressure=(), digital-credentials-get=(), direct-sockets=(), display-capture=(), document-domain=(), fenced-frame-api=(), fullscreen=(), gamepad=(), geolocation=(), gyroscope=(), hid=(), identity-credentials-get=(), idle-detection=(), interest-cohort=(), join-ad-interest-group=(), keyboard-focus=(), keyboard-map=(), local-fonts=(), local-network-access=(), magnetometer=(), microphone=(), midi=(), otp-credentials=(), payment=(), picture-in-picture=(), private-aggregation=(), private-state-token-issuance=(), private-state-token-redemption=(), publickey-credentials-create=(), publickey-credentials-get=(), run-ad-auction=(), screen-wake-lock=(), serial=(), smart-card=(), speaker-selection=(), storage-access=(), sync-xhr=(), usb=(), usb-choice=(), usb-confirmation=(), web-printing=(), web-share=(), window-management=(), xr-spatial-tracking=()';
 
 // Trust the first proxy in front of us
 app.set('trust proxy', 1);
@@ -47,24 +47,36 @@ app.use(helmet({
   },
 }));
 
+// Security: Use authenticated user for rate limiting key if available.
+// When fallback to IP, it defaults to Express's req.ip.
+// Performance: req.identity.user is already sanitized by authMiddleware.
+const rateLimitKey = (req) => req.identity?.user || sanitize(req.ip);
+
+// Custom rate limit handler to ensure security headers are set on 429 responses.
+const rateLimitHandler = (req, res, next, options) => {
+  // Security: Log rate limit events for auditability.
+  // Use originalUrl to ensure the full path is logged even when mounted on a prefix.
+  // Forensic Depth: Limit originalUrl to 1024 chars for audit logs.
+  console.warn(`[audit] RATE_LIMIT_EXCEEDED: ${sanitize(req.method)} ${sanitize(req.originalUrl, 1024)} user=${req.identity?.user || 'anonymous'} ip=${sanitize(req.ip)}`);
+  res.setHeader('Cache-Control', 'no-store, max-age=0');
+  res.setHeader('Permissions-Policy', PERMISSIONS_POLICY);
+  res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+  res.status(options.statusCode).send(options.message);
+};
+
 // Security: Global rate limiter to provide defense-in-depth against DoS.
 // Applies to all requests, including static files and authentication layer.
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   limit: 1000, // Limit each IP/principal to 1000 requests per `window`
-  keyGenerator: (req) => req.identity?.user || sanitize(req.ip),
+  keyGenerator: rateLimitKey,
   validate: { keyGeneratorIpFallback: false },
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many requests' },
-  handler: (req, res, next, options) => {
-    console.warn(`[audit] RATE_LIMIT_EXCEEDED: ${sanitize(req.method)} ${sanitize(req.originalUrl, 1024)} user=${req.identity?.user || 'anonymous'} ip=${sanitize(req.ip)}`);
-    res.setHeader('Cache-Control', 'no-store, max-age=0');
-    res.setHeader('Permissions-Policy', PERMISSIONS_POLICY);
-    res.setHeader('X-Robots-Tag', 'noindex, nofollow');
-    res.status(options.statusCode).send(options.message);
-  }
+  handler: rateLimitHandler
 });
+
 // Security: Extract identity early to enable identity-aware rate limiting.
 app.use(identityMiddleware);
 
@@ -82,23 +94,6 @@ app.use(requireAuth);
 
 // Security: Prevent access to dotfiles in public directory.
 app.use(express.static(path.join(__dirname, 'public'), { dotfiles: 'deny' }));
-
-// Security: Use authenticated user for rate limiting key if available.
-// When fallback to IP, it defaults to Express's req.ip.
-// Performance: req.identity.user is already sanitized by authMiddleware.
-const rateLimitKey = (req) => req.identity?.user || sanitize(req.ip);
-
-// Custom rate limit handler to ensure security headers are set on 429 responses.
-const rateLimitHandler = (req, res, next, options) => {
-  // Security: Log rate limit events for auditability.
-  // Use originalUrl to ensure the full path is logged even when mounted on a prefix.
-  // Forensic Depth: Limit originalUrl to 1024 chars for audit logs.
-  console.warn(`[audit] RATE_LIMIT_EXCEEDED: ${sanitize(req.method)} ${sanitize(req.originalUrl, 1024)} user=${req.identity?.user || 'anonymous'} ip=${sanitize(req.ip)}`);
-  res.setHeader('Cache-Control', 'no-store, max-age=0');
-  res.setHeader('Permissions-Policy', PERMISSIONS_POLICY);
-  res.setHeader('X-Robots-Tag', 'noindex, nofollow');
-  res.status(options.statusCode).send(options.message);
-};
 
 // General rate limiter for all API routes
 const apiLimiter = rateLimit({
