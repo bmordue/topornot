@@ -335,7 +335,8 @@ body {
 .card-agent {
   font-size: 0.78rem;
   font-weight: 600;
-  background: var(--color-primary);
+  --agent-lightness: 35%;
+  background: hsl(var(--agent-hue, 239), 65%, var(--agent-lightness));
   color: white;
   padding: 3px 10px;
   border-radius: 12px;
@@ -345,6 +346,8 @@ body {
 
 @media (prefers-color-scheme: dark) {
   .card-agent {
+    --agent-lightness: 80%;
+    font-weight: 700;
     color: #0f172a;
   }
 }

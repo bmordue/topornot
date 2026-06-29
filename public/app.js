@@ -83,6 +83,18 @@
     return ESCAPE_TEST_REGEX.test(text) ? text.replace(ESCAPE_REGEX, s => ESCAPE_MAP[s]) : text;
   }
 
+  /**
+   * Generates a deterministic hue (0-360) for a given string.
+   * Performance: Uses a simple additive hash and a 137 multiplier.
+   */
+  function getAgentHue(name) {
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+      hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return Math.abs(hash * 137) % 360;
+  }
+
   function showHelp() {
     if (navigator.vibrate) navigator.vibrate(10);
     const helpHtml = `
@@ -261,7 +273,13 @@
       if (statsEl) {
         if (sessionCount > 0) {
           // Accessibility: Improve discoverability with title
-          const undoHtml = lastAction ? `<button class="undo-btn" id="btn-empty-undo" aria-keyshortcuts="U" title="Undo (U)">Undo last action <kbd>U</kbd></button>` : '';
+          let undoHtml = '';
+          if (lastAction) {
+            const { action, suggestion } = lastAction;
+            const sTitle = suggestion.title || suggestion.name || 'item';
+            const undoTitle = `Undo ${action.charAt(0).toUpperCase() + action.slice(1)} '${escapeHTML(truncate(sTitle))}' (U)`;
+            undoHtml = `<button class="undo-btn" id="btn-empty-undo" aria-keyshortcuts="U" title="${undoTitle}" aria-label="Undo last action">Undo last action <kbd aria-hidden="true">U</kbd></button>`;
+          }
           statsEl.innerHTML = `
             <div>You've reviewed ${sessionCount} item${sessionCount === 1 ? '' : 's'} this session:</div>
             <div style="display: flex; gap: 8px; justify-content: center;">
@@ -303,6 +321,7 @@
     const date = getSuggestionDate(s);
 
     cardAgent.textContent = s.agent || 'agent';
+    cardAgent.style.setProperty('--agent-hue', getAgentHue(s.agent || 'agent'));
     cardTime.textContent  = relativeTime(date);
     // Performance: Use memoized date strings to avoid redundant O(N) formatting.
     cardTime.title = s[SYM_LOCAL];
@@ -457,7 +476,8 @@
     processing = true;
     const currentIdx = currentIndex % suggestions.length;
     const s = suggestions[currentIdx];
-    const suggestionTitle = s.title || '';
+    // Fallback logic for title to ensure robust feedback strings
+    const suggestionTitle = s.title || s.name || 'item';
 
     // Store for undo
     lastAction = {
@@ -507,7 +527,8 @@
     }
 
     if (suggestions.length === 0) {
-      showToast('🎉 All caught up! <button class="undo-btn" aria-keyshortcuts="U" title="Undo (U)" aria-label="Undo last action">Undo <kbd aria-hidden="true">U</kbd></button>', 'info', 5000, true);
+      const undoTitle = `Undo ${action.charAt(0).toUpperCase() + action.slice(1)} '${escapeHTML(truncate(suggestionTitle))}' (U)`;
+      showToast(`🎉 All caught up! <button class="undo-btn" aria-keyshortcuts="U" title="${undoTitle}" aria-label="Undo last action">Undo <kbd aria-hidden="true">U</kbd></button>`, 'info', 5000, true);
       if (navigator.vibrate) navigator.vibrate([50, 30, 50, 30, 80]);
     } else {
       const suffix = ` (${suggestions.length} left)`;
@@ -515,8 +536,10 @@
                      action === 'reject'  ? '✗ Rejected'  : '↩ Deferred';
       // Performance: Use high-performance escapeHTML instead of DOM-based escaping.
       // Safety: Escape title before including in HTML toast
-      const escapedTitle = escapeHTML(truncate(suggestionTitle));
-      showToast(`${prefix}: ${escapedTitle}${suffix} <button class="undo-btn" aria-keyshortcuts="U" title="Undo (U)" aria-label="Undo last action">Undo <kbd aria-hidden="true">U</kbd></button>`, action, 3000, true);
+      const truncatedTitle = truncate(suggestionTitle);
+      const escapedTitle = escapeHTML(truncatedTitle);
+      const undoTitle = `Undo ${action.charAt(0).toUpperCase() + action.slice(1)} '${escapedTitle}' (U)`;
+      showToast(`${prefix}: ${escapedTitle}${suffix} <button class="undo-btn" aria-keyshortcuts="U" title="${undoTitle}" aria-label="Undo last action">Undo <kbd aria-hidden="true">U</kbd></button>`, action, 3000, true);
     }
 
     renderCard();
