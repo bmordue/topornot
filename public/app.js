@@ -12,6 +12,9 @@
   let sessionApproved = parseInt(sessionStorage.getItem('sessionApproved') || '0', 10);
   let sessionRejected = parseInt(sessionStorage.getItem('sessionRejected') || '0', 10);
 
+  // Performance: Cache for deterministic hue generation to avoid redundant hash calculations.
+  const agentHueCache = new Map();
+
   // Performance: Use Symbols for internal UI state to avoid leaking memoized
   // properties into localStorage serialization (bloat and deserialization bugs).
   const SYM_DATE      = Symbol('date');
@@ -88,13 +91,19 @@
   /**
    * Generates a deterministic hue (0-360) for a given string.
    * Performance: Uses a simple additive hash and a 137 multiplier.
+   * Results are memoized to avoid redundant CPU work for repeated names.
    */
   function getAgentHue(name) {
+    let hue = agentHueCache.get(name);
+    if (hue !== undefined) return hue;
+
     let hash = 0;
     for (let i = 0; i < name.length; i++) {
       hash = name.charCodeAt(i) + ((hash << 5) - hash);
     }
-    return Math.abs(hash * 137) % 360;
+    hue = Math.abs(hash * 137) % 360;
+    agentHueCache.set(name, hue);
+    return hue;
   }
 
   function showHelp() {
@@ -905,44 +914,63 @@
     let html = escapeHTML(text);
 
     // Support for inline code: `code`
-    html = html.replace(MD_CODE_REGEX, '<code>$1</code>');
+    if (html.includes('`')) {
+      html = html.replace(MD_CODE_REGEX, '<code>$1</code>');
+    }
 
     // Support for bold: **bold**
-    html = html.replace(MD_BOLD_REGEX, '<strong>$1</strong>');
+    if (html.includes('**')) {
+      html = html.replace(MD_BOLD_REGEX, '<strong>$1</strong>');
+    }
 
     // Support for italic: *italic* or _italic_
-    html = html.replace(MD_ITALIC_REGEX, '<em>$2</em>');
+    if (html.includes('*') || html.includes('_')) {
+      html = html.replace(MD_ITALIC_REGEX, '<em>$2</em>');
+    }
 
     // Support for strikethrough: ~~strikethrough~~
-    html = html.replace(MD_STRIKE_REGEX, '<s>$1</s>');
+    if (html.includes('~~')) {
+      html = html.replace(MD_STRIKE_REGEX, '<s>$1</s>');
+    }
 
     // Support for Markdown links: [text](url)
     // Use a placeholder strategy to prevent bare URL linkification from double-wrapping MD links.
     const placeholders = [];
-    html = html.replace(MD_LINK_REGEX, (match, label, url) => {
-      const id = `__MD_LINK_${placeholders.length}__`;
-      placeholders.push(`<a href="${url}" class="card-link" target="_blank" rel="noopener noreferrer">${label}</a>`);
-      return id;
-    });
+    if (html.includes('[')) {
+      html = html.replace(MD_LINK_REGEX, (match, label, url) => {
+        const id = `__MD_LINK_${placeholders.length}__`;
+        placeholders.push(`<a href="${url}" class="card-link" target="_blank" rel="noopener noreferrer">${label}</a>`);
+        return id;
+      });
+    }
 
-    html = html.replace(URL_REGEX, (url) => {
-      // Clean up trailing punctuation that might be part of the sentence but not the URL
-      let cleanUrl = url;
-      const match = url.match(TRAILING_PUNCTUATION);
-      let suffix = '';
-      if (match) {
-        cleanUrl = url.substring(0, url.length - match[0].length);
-        suffix = match[0];
-      }
-      return `<a href="${cleanUrl}" class="card-link" target="_blank" rel="noopener noreferrer">${cleanUrl}</a>${suffix}`;
-    });
+    if (html.includes('http')) {
+      html = html.replace(URL_REGEX, (url) => {
+        // Clean up trailing punctuation that might be part of the sentence but not the URL.
+        // Performance: Fast-path for URLs not ending in punctuation to avoid regex scanning.
+        const lastChar = url[url.length - 1];
+        if (lastChar === '.' || lastChar === ',' || lastChar === ';' || lastChar === ':') {
+          let cleanUrl = url;
+          const match = url.match(TRAILING_PUNCTUATION);
+          let suffix = '';
+          if (match) {
+            cleanUrl = url.substring(0, url.length - match[0].length);
+            suffix = match[0];
+          }
+          return `<a href="${cleanUrl}" class="card-link" target="_blank" rel="noopener noreferrer">${cleanUrl}</a>${suffix}`;
+        }
+        return `<a href="${url}" class="card-link" target="_blank" rel="noopener noreferrer">${url}</a>`;
+      });
+    }
 
     // Performance: Use a single replace call with a callback to restore placeholders.
     // This reduces the restoration cost from O(M * N) to O(N) where M is the number
     // of links and N is the string length, ensuring linear-time substitution.
     // We use a nullish coalescing operator to ensure that if a sentinel is matched
     // without a corresponding placeholder, the original match is preserved.
-    html = html.replace(MD_RESTORE_REGEX, (match, i) => placeholders[i] ?? match);
+    if (placeholders.length > 0) {
+      html = html.replace(MD_RESTORE_REGEX, (match, i) => placeholders[i] ?? match);
+    }
 
     return html;
   }
