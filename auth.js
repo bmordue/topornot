@@ -32,11 +32,12 @@ const DEV_DEFAULTS = {
 // Robustly handles array inputs from Express headers.
 
 // C0/C1 control characters, DEL, soft hyphen, and Unicode BiDi/zero-width/separator formatting characters.
-// Includes Mongolian Vowel Separator, Mongolian Free Variation Selectors, Variation Selectors,
-// Hangul fillers, Braille blank, Combining Grapheme Joiner, Khmer Vowel Inherent,
-// and the full General Punctuation invisible block.
+// Includes Mongolian Vowel Separator, Mongolian Free Variation Selectors (including MVS4),
+// Variation Selectors, Shorthand and Musical Symbol format controls, Hangul fillers,
+// Braille blank, Combining Grapheme Joiner, Khmer Vowel Inherent, and the full
+// General Punctuation invisible block.
 // Hoisted to module scope for performance.
-const CONTROL_CHARS = /[\x00-\x1F\x7F-\x9F\u00AD\u034F\u{110BD}\u115F\u1160\u17B4\u17B5\u180B-\u180D\u180E\u2000-\u200F\u2028-\u202E\u202F\u205F\u2060-\u206F\u2800\u3000\u3164\uFE00-\uFE0F\uFEFF\uFFA0\uFFF9-\uFFFC\u{E0000}-\u{E007F}\u{E0100}-\u{E01EF}]/u;
+const CONTROL_CHARS = /[\x00-\x1F\x7F-\x9F\u00AD\u034F\u{110BD}\u115F\u1160\u17B4\u17B5\u180B-\u180F\u2000-\u200F\u2028-\u202E\u202F\u205F\u2060-\u206F\u2800\u3000\u3164\uFE00-\uFE0F\uFEFF\uFFA0\uFFF9-\uFFFC\u{1BCA0}-\u{1BCA3}\u{1D173}-\u{1D17A}\u{E0000}-\u{E007F}\u{E0100}-\u{E01EF}]/u;
 const CONTROL_CHARS_G = new RegExp(CONTROL_CHARS.source, 'gu');
 
 // Performance: Fast-path for printable ASCII characters.
