@@ -660,6 +660,27 @@ describe('API Error Handling', () => {
     expect(req.identity.user).toBe('shorthand_annotation___object_');
     expect(next).toHaveBeenCalled();
   });
+
+  it('should sanitize Arabic Letter Mark and additional Shorthand format controls (unit test)', () => {
+    const dangerous = 'arabic\u061Clmshorthand\u{110BB}\u{110BC}';
+    const req = {
+      method: 'GET',
+      path: '/api/suggestions',
+      headers: {
+        'remote-user': dangerous,
+        'remote-groups': 'dev',
+        'remote-email': 'dev@example.com',
+        'remote-name': 'Developer'
+      }
+    };
+    const res = {};
+    const next = jest.fn();
+
+    authMiddleware(req, res, next);
+
+    expect(req.identity.user).toBe('arabic_lmshorthand__');
+    expect(next).toHaveBeenCalled();
+  });
 });
 
 describe('Database File Security', () => {
