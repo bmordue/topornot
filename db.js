@@ -74,6 +74,23 @@ function _load() {
 }
 
 /**
+ * Returns a pre-stringified JSON fragment for a suggestion.
+ * Performance: Leverages the fragment cache to avoid redundant O(N) serialization
+ * in the request-response cycle for write operations.
+ */
+function getSuggestionJson(suggestion) {
+  if (!suggestion) return 'null';
+  const fIdx = suggestion[FRAGMENT_INDEX];
+  if (fIdx !== undefined) {
+    if (_fragments[fIdx] === null) {
+      _fragments[fIdx] = JSON.stringify(suggestion);
+    }
+    return _fragments[fIdx];
+  }
+  return JSON.stringify(suggestion);
+}
+
+/**
  * Forces a write of any pending data to disk.
  * Performance: Batches multiple writes into a single synchronous I/O operation.
  */
@@ -365,4 +382,4 @@ function updateStatus(id, status, user) {
   return suggestion;
 }
 
-module.exports = { flush, closeDb, getVersion, getPendingSuggestions, getAllSuggestions, getPendingSuggestionsJson, getAllSuggestionsJson, getSuggestionById, createSuggestion, updateStatus };
+module.exports = { flush, closeDb, getVersion, getPendingSuggestions, getAllSuggestions, getPendingSuggestionsJson, getAllSuggestionsJson, getSuggestionById, getSuggestionJson, createSuggestion, updateStatus };

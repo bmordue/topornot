@@ -202,7 +202,9 @@ app.post('/api/suggestions', suggestionLimiter, express.json({ limit: '10kb' }),
   });
   // Security: Audit log for new suggestion
   console.log(`[audit] SUGGESTION_CREATE: ${sanitize(req.method)} ${sanitize(req.originalUrl, 1024)} id=${suggestion.id} user=${req.identity.user} ip=${sanitize(req.ip)}`);
-  res.status(201).json(suggestion);
+  // Performance: Use pre-stringified JSON to avoid redundant serialization.
+  res.set('Content-Type', 'application/json');
+  res.status(201).send(db.getSuggestionJson(suggestion));
 });
 
 // PATCH to update status: approve, reject, defer
@@ -231,7 +233,9 @@ app.patch('/api/suggestions/:id/:action', actionLimiter, (req, res) => {
   }
   // Security: Audit log for status change
   console.log(`[audit] SUGGESTION_UPDATE: ${sanitize(req.method)} ${sanitize(req.originalUrl, 1024)} id=${suggestion.id} action=${sanitize(action)} user=${req.identity.user} ip=${sanitize(req.ip)} status=${suggestion.status}`);
-  res.json(suggestion);
+  // Performance: Use pre-stringified JSON to avoid redundant serialization.
+  res.set('Content-Type', 'application/json');
+  res.send(db.getSuggestionJson(suggestion));
 });
 
 // Catch-all 404 for API routes to prevent leaking Express default HTML error pages

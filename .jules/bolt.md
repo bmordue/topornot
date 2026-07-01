@@ -117,3 +117,7 @@
 ## 2026-06-25 - [Symbol-based Memoization for Frontend State]
 **Learning:** Using underscored properties (e.g. `_htmlDesc`) for memoization on objects that are serialized to `localStorage` causes them to leak into persistent state. This leads to serialization bloat and potential deserialization bugs (e.g. `Date` objects becoming strings). Symbols are ignored by `JSON.stringify`, providing a safe and efficient way to store internal UI state without affecting persistence or causing O(N) re-indexing.
 **Action:** Use Symbols for all non-persistent internal metadata and memoization on objects that may be serialized.
+
+## 2026-06-26 - [Bypassing Redundant Serialization in API Write Paths]
+**Learning:** In write-active systems where the database already maintains pre-stringified fragments for persistence, using `res.json(obj)` in API handlers introduces a redundant O(N) serialization cost. Exporting a helper like `db.getSuggestionJson(obj)` to retrieve the fragment and using `res.send()` with manual `Content-Type` headers eliminates this overhead, providing a clean performance win for high-frequency write endpoints.
+**Action:** Always leverage existing fragment caches in API response paths to avoid redundant serialization of the same data objects.
