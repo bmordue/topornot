@@ -289,7 +289,7 @@
             const { action, suggestion } = lastAction;
             const sTitle = suggestion.title || suggestion.name || 'item';
             const undoTitle = `Undo ${action.charAt(0).toUpperCase() + action.slice(1)} '${escapeHTML(truncate(sTitle))}' (U)`;
-            undoHtml = `<button class="undo-btn" id="btn-empty-undo" aria-keyshortcuts="U" title="${undoTitle}" aria-label="Undo last action">Undo last action <kbd aria-hidden="true">U</kbd></button>`;
+            undoHtml = `<button class="undo-btn" id="btn-empty-undo" aria-keyshortcuts="U" title="${undoTitle}" aria-label="${undoTitle}">Undo last action <kbd aria-hidden="true">U</kbd></button>`;
           }
           statsEl.innerHTML = `
             <div>You've reviewed ${sessionCount} item${sessionCount === 1 ? '' : 's'} this session:</div>
@@ -539,7 +539,7 @@
 
     if (suggestions.length === 0) {
       const undoTitle = `Undo ${action.charAt(0).toUpperCase() + action.slice(1)} '${escapeHTML(truncate(suggestionTitle))}' (U)`;
-      showToast(`🎉 All caught up! <button class="undo-btn" aria-keyshortcuts="U" title="${undoTitle}" aria-label="Undo last action">Undo <kbd aria-hidden="true">U</kbd></button>`, 'info', 5000, true);
+      showToast(`🎉 All caught up! <button class="undo-btn" aria-keyshortcuts="U" title="${undoTitle}" aria-label="${undoTitle}">Undo <kbd aria-hidden="true">U</kbd></button>`, 'info', 5000, true);
       if (navigator.vibrate) navigator.vibrate([50, 30, 50, 30, 80]);
     } else {
       const suffix = ` (${suggestions.length} left)`;
@@ -550,7 +550,7 @@
       const truncatedTitle = truncate(suggestionTitle);
       const escapedTitle = escapeHTML(truncatedTitle);
       const undoTitle = `Undo ${action.charAt(0).toUpperCase() + action.slice(1)} '${escapedTitle}' (U)`;
-      showToast(`${prefix}: ${escapedTitle}${suffix} <button class="undo-btn" aria-keyshortcuts="U" title="${undoTitle}" aria-label="Undo last action">Undo <kbd aria-hidden="true">U</kbd></button>`, action, 3000, true);
+      showToast(`${prefix}: ${escapedTitle}${suffix} <button class="undo-btn" aria-keyshortcuts="U" title="${undoTitle}" aria-label="${undoTitle}">Undo <kbd aria-hidden="true">U</kbd></button>`, action, 3000, true);
     }
 
     renderCard();
