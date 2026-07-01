@@ -232,14 +232,22 @@ body {
 
 .card-stack.has-next::before {
   opacity: 0.6;
-  transform: translateY(8px) scale(0.96);
+  transform: translateY(8px) scale(0.96) rotate(-1.5deg);
   z-index: -1;
 }
 
 .card-stack.has-many::after {
   opacity: 0.3;
-  transform: translateY(16px) scale(0.92);
+  transform: translateY(16px) scale(0.92) rotate(1.2deg);
   z-index: -2;
+}
+
+.card-stack:hover.has-next::before {
+  transform: translateY(12px) scale(0.97) rotate(-2.5deg);
+}
+
+.card-stack:hover.has-many::after {
+  transform: translateY(24px) scale(0.94) rotate(2deg);
 }
 
 /* Card */
