@@ -178,3 +178,8 @@
 **Vulnerability:** Evolving browser APIs (like Direct Sockets and Private Aggregation) and overlooked invisible Unicode characters (Mongolian Free Variation Selectors) can respectively increase the attack surface and facilitate homograph/visual spoofing attacks.
 **Learning:** Security hardening is an iterative process. As browser capabilities expand, the `Permissions-Policy` must be proactively updated. Similarly, Unicode sanitization must cover all variation selectors, not just the standard ones (U+FE00-U+FE0F), to ensure robust input handling.
 **Prevention:** Regularly audit the `Permissions-Policy` against the latest browser features and ensure Unicode sanitization filters are comprehensive, specifically including the Mongolian-specific variation block (U+180B-U+180D).
+
+## 2027-02-15 - Hardening against BiDi Obfuscation and Browser Attack Surface Reduction
+**Vulnerability:** Invisible Unicode characters like the Arabic Letter Mark (U+061C) and additional Shorthand Format Controls (U+110BB-U+110BC) can be used to obfuscate identifiers or spoof audit logs. Furthermore, unused browser features like `ambient-light-sensor` and `encrypted-media` increase the available attack surface.
+**Learning:** Sanitization filters must be continuously updated as new "confusable" or "invisible" characters are identified. Defense-in-depth via `Permissions-Policy` should always target the most restrictive configuration possible, explicitly disabling all modern browser APIs not required by the application.
+**Prevention:** Include Arabic Letter Mark and all Shorthand format controls in Unicode sanitization regexes, and proactively disable `ambient-light-sensor` and `encrypted-media` in the global `Permissions-Policy`.
