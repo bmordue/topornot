@@ -113,3 +113,7 @@
 ## 2026-06-21 - [Organic Depth & Descriptive Reversibility]
 **Learning:** High-velocity review queues benefit from "organic" visual depth; using slightly asymmetric rotations (e.g., -1.5deg vs 1.2deg) for background cards creates a more tactile, less "rigid" feel than perfectly aligned stacks. Furthermore, in modal or transient feedback loops, "Undo" actions must explicitly state *what* they are undoing in their ARIA labels (e.g., "Undo Approve 'Title'") to bridge the gap between visual memory and screen reader focus, ensuring users don't have to guess the state being restored.
 **Action:** Use asymmetric CSS rotations to simulate physical material depth; always bind dynamic item titles to the ARIA labels of reversibility actions (Undo/Redo).
+
+## 2026-07-02 - [Contextual Metadata & Skeleton Synchronization]
+**Learning:** Adding secondary metadata like "reading time" helps users prioritize tasks in a high-volume queue, reducing cognitive friction. When introducing such metadata, it's critical to synchronize the loading state by adding corresponding skeleton placeholders; otherwise, the layout "jumps" when the data arrives, breaking visual continuity. Furthermore, using `aria-label` to provide verbose context for abbreviated metadata (e.g., "Suggested by: [Agent]") ensures a premium experience for screen reader users.
+**Action:** Always pair new metadata with synchronized skeleton placeholders to maintain layout stability; use descriptive ARIA labels to expand on abbreviated UI elements.
