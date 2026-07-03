@@ -9,13 +9,14 @@ const app = express();
 
 // Security: Restrict unnecessary browser features via Permissions-Policy.
 // Explicitly disable features that the application does not require to reduce browser attack surface.
-const PERMISSIONS_POLICY = 'accelerometer=(), ambient-light-sensor=(), attribution-reporting=(), autoplay=(), bluetooth=(), browsing-topics=(), camera=(), captured-surface-control=(), clipboard-read=(), clipboard-write=(self), compute-pressure=(), digital-credentials-get=(), direct-sockets=(), display-capture=(), document-domain=(), encrypted-media=(), fenced-frame-api=(), fullscreen=(), gamepad=(), geolocation=(), gyroscope=(), hid=(), identity-credentials-get=(), idle-detection=(), interest-cohort=(), join-ad-interest-group=(), keyboard-focus=(), keyboard-map=(), local-fonts=(), local-network-access=(), magnetometer=(), microphone=(), midi=(), otp-credentials=(), payment=(), picture-in-picture=(), private-aggregation=(), private-state-token-issuance=(), private-state-token-redemption=(), publickey-credentials-create=(), publickey-credentials-get=(), run-ad-auction=(), screen-wake-lock=(), serial=(), shared-storage=(), shared-storage-select-url=(), smart-card=(), speaker-selection=(), storage-access=(), sync-xhr=(), usb=(), usb-choice=(), usb-confirmation=(), web-printing=(), web-share=(), window-management=(), xr-spatial-tracking=()';
+const PERMISSIONS_POLICY = 'accelerometer=(), ambient-light-sensor=(), attribution-reporting=(), autoplay=(), bluetooth=(), browsing-topics=(), camera=(), captured-surface-control=(), clipboard-read=(), clipboard-write=(self), compute-pressure=(), digital-credentials-get=(), direct-sockets=(), display-capture=(), document-domain=(), encrypted-media=(), fenced-frame-api=(), fullscreen=(), gamepad=(), geolocation=(), gyroscope=(), hid=(), identity-credentials-get=(), idle-detection=(), interest-cohort=(), join-ad-interest-group=(), keyboard-focus=(), keyboard-map=(), local-fonts=(), local-network-access=(), magnetometer=(), microphone=(), midi=(), nfc=(), otp-credentials=(), payment=(), picture-in-picture=(), private-aggregation=(), private-state-token-issuance=(), private-state-token-redemption=(), publickey-credentials-create=(), publickey-credentials-get=(), run-ad-auction=(), screen-wake-lock=(), serial=(), shared-storage=(), shared-storage-select-url=(), smart-card=(), speaker-selection=(), storage-access=(), sync-xhr=(), usb=(), usb-choice=(), usb-confirmation=(), web-printing=(), web-share=(), window-management=(), xr-spatial-tracking=()';
 
 // Trust the first proxy in front of us
 app.set('trust proxy', 1);
 
 // Security headers
 app.use(helmet({
+  xssFilter: false,
   contentSecurityPolicy: {
     directives: {
       "default-src": ["'none'"],
@@ -40,6 +41,8 @@ app.use(helmet({
   referrerPolicy: { policy: 'no-referrer' },
   permittedCrossDomainPolicies: { policy: 'none' },
   crossOriginEmbedderPolicy: true,
+  crossOriginResourcePolicy: { policy: 'same-origin' },
+  crossOriginOpenerPolicy: { policy: 'same-origin' },
   hsts: {
     maxAge: 31536000,
     includeSubDomains: true,
@@ -52,15 +55,33 @@ app.use(helmet({
 // Performance: req.identity.user is already sanitized by authMiddleware.
 const rateLimitKey = (req) => req.identity?.user || sanitize(req.ip);
 
+/**
+ * Shared helper to apply a consistent baseline of security headers to error and rate-limit responses.
+ * Ensures that responses failing to hit the main middleware chain still carry protection.
+ */
+function applySecurityHeaders(res, options = {}) {
+  res.setHeader('Cache-Control', 'no-store, max-age=0');
+  res.setHeader('Permissions-Policy', PERMISSIONS_POLICY);
+  res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '0');
+  res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+  res.setHeader('Referrer-Policy', 'no-referrer');
+
+  // Apply a restrictive CSP by default for error/API-like responses
+  const csp = options.csp || "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'";
+  res.setHeader('Content-Security-Policy', csp);
+}
+
 // Custom rate limit handler to ensure security headers are set on 429 responses.
 const rateLimitHandler = (req, res, next, options) => {
   // Security: Log rate limit events for auditability.
   // Use originalUrl to ensure the full path is logged even when mounted on a prefix.
   // Forensic Depth: Limit originalUrl to 1024 chars for audit logs.
   console.warn(`[audit] RATE_LIMIT_EXCEEDED: ${sanitize(req.method)} ${sanitize(req.originalUrl, 1024)} user=${req.identity?.user || 'anonymous'} ip=${sanitize(req.ip)}`);
-  res.setHeader('Cache-Control', 'no-store, max-age=0');
-  res.setHeader('Permissions-Policy', PERMISSIONS_POLICY);
-  res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+  applySecurityHeaders(res);
   res.status(options.statusCode).send(options.message);
 };
 
@@ -86,6 +107,7 @@ app.use(globalLimiter);
 app.use((req, res, next) => {
   res.setHeader('Permissions-Policy', PERMISSIONS_POLICY);
   res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+  res.setHeader('X-XSS-Protection', '0');
   next();
 });
 
@@ -133,6 +155,15 @@ const actionLimiter = rateLimit({
 
 // Apply general limiter to all /api routes
 app.use('/api', apiLimiter);
+
+// Security: Implement restrictive Content Security Policy for all API routes.
+// Since API responses are intended for machine consumption, we disable all
+// browser-side script execution and resource loading to prevent XSS if the
+// response is accidentally rendered as HTML.
+app.use('/api', (req, res, next) => {
+  res.setHeader('Content-Security-Policy', "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'");
+  next();
+});
 
 // GET pending suggestions (used by the UI)
 app.get('/api/suggestions', (req, res) => {
@@ -244,8 +275,7 @@ app.use('/api', (req, res) => {
   // Use originalUrl to ensure the full path is logged even when mounted on a prefix.
   // Forensic Depth: Limit originalUrl to 1024 chars for audit logs.
   console.warn(`[audit] API_NOT_FOUND: ${sanitize(req.method)} ${sanitize(req.originalUrl, 1024)} user=${req.identity?.user || 'anonymous'} ip=${sanitize(req.ip)}`);
-  // Security: Prevent caching of error responses to avoid leaking info.
-  res.setHeader('Cache-Control', 'no-store, max-age=0');
+  applySecurityHeaders(res);
   res.status(404).json({ error: 'API endpoint not found' });
 });
 
@@ -254,14 +284,13 @@ app.use((req, res) => {
   // Security: Log global 404s to detect probing/scanning outside of /api.
   // Forensic Depth: Limit originalUrl to 1024 chars for audit logs.
   console.warn(`[audit] NOT_FOUND: ${sanitize(req.method)} ${sanitize(req.originalUrl, 1024)} user=${req.identity?.user || 'anonymous'} ip=${sanitize(req.ip)}`);
-  res.setHeader('Cache-Control', 'no-store, max-age=0');
+  applySecurityHeaders(res, { csp: "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'" });
   res.status(404).type('text/plain').send('404 Not Found');
 });
 
 // Global error handler to prevent stack trace leaks
 app.use((err, req, res, next) => {
-  // Security: Prevent caching of error responses.
-  res.setHeader('Cache-Control', 'no-store, max-age=0');
+  applySecurityHeaders(res);
 
   // If it's a JSON parsing error from express.json()
   if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {

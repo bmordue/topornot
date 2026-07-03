@@ -30,6 +30,7 @@ describe('Security Headers', () => {
     expect(res.headers['permissions-policy']).toMatch(/digital-credentials-get=\(\)/);
     expect(res.headers['permissions-policy']).toMatch(/keyboard-focus=\(\)/);
     expect(res.headers['permissions-policy']).toMatch(/local-network-access=\(\)/);
+    expect(res.headers['permissions-policy']).toMatch(/nfc=\(\)/);
     expect(res.headers['permissions-policy']).toMatch(/direct-sockets=\(\)/);
     expect(res.headers['permissions-policy']).toMatch(/private-aggregation=\(\)/);
     expect(res.headers['permissions-policy']).toMatch(/publickey-credentials-create=\(\)/);
@@ -56,8 +57,30 @@ describe('Security Headers', () => {
     expect(csp).toMatch(/form-action 'none'/);
   });
 
+  it('should have additional hardening headers (COOP, CORP, XSS-Protection)', async () => {
+    const res = await request(app).get('/');
+    expect(res.headers['cross-origin-opener-policy']).toBe('same-origin');
+    expect(res.headers['cross-origin-resource-policy']).toBe('same-origin');
+    expect(res.headers['x-xss-protection']).toBe('0');
+  });
+
   it('should trust proxy', () => {
     expect(app.get('trust proxy')).toBe(1);
+  });
+});
+
+describe('API Security Hardening', () => {
+  it('should set restrictive CSP on /api/suggestions', async () => {
+    const res = await request(app).get('/api/suggestions');
+    expect(res.headers['content-security-policy']).toBe("default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'");
+  });
+
+  it('should set restrictive CSP on API 404 responses', async () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
+    const res = await request(app).get('/api/non-existent');
+    expect(res.status).toBe(404);
+    expect(res.headers['content-security-policy']).toBe("default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'");
+    warnSpy.mockRestore();
   });
 });
 
