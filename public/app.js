@@ -38,6 +38,7 @@
   const actionBar    = document.getElementById('action-bar');
   const queueCount   = document.getElementById('queue-count');
   const cardAgent    = document.getElementById('card-agent');
+  const cardReadingTime = document.getElementById('card-reading-time');
   const cardTime     = document.getElementById('card-time');
   const cardTitle    = document.getElementById('card-title');
   const cardDesc     = document.getElementById('card-description');
@@ -333,6 +334,12 @@
 
     cardAgent.textContent = s.agent || 'agent';
     cardAgent.style.setProperty('--agent-hue', getAgentHue(s.agent || 'agent'));
+
+    const words = (s.title + ' ' + (s.description || '') + ' ' + (s.context || '')).trim().split(/\s+/).length;
+    const readingMinutes = Math.max(1, Math.ceil(words / 200));
+    cardReadingTime.textContent = `${readingMinutes} min read`;
+    cardReadingTime.setAttribute('aria-label', `${readingMinutes} minute read`);
+
     cardTime.textContent  = relativeTime(date);
     // Performance: Use memoized date strings to avoid redundant O(N) formatting.
     cardTime.title = s[SYM_LOCAL];

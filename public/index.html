@@ -32,7 +32,10 @@
       <div class="loading" id="loading-state" role="status" hidden>
         <div class="loading-card">
           <div class="card-header">
-            <div class="skeleton skeleton-agent"></div>
+            <div class="skeleton-meta">
+              <div class="skeleton skeleton-agent"></div>
+              <div class="skeleton skeleton-reading-time"></div>
+            </div>
             <div class="skeleton skeleton-time"></div>
           </div>
           <div class="skeleton skeleton-title"></div>
@@ -61,7 +64,10 @@
         <div class="swipe-hint swipe-hint-left" id="hint-reject" aria-hidden="true">✗ REJECT</div>
         <div class="swipe-hint swipe-hint-top" id="hint-defer" aria-hidden="true">↩ DEFER</div>
         <div class="card-header">
-          <span class="card-agent" id="card-agent"></span>
+          <div class="card-meta">
+            <span class="card-agent" id="card-agent"></span>
+            <span class="card-reading-time" id="card-reading-time"></span>
+          </div>
           <time class="card-time" id="card-time"></time>
         </div>
         <h2 class="card-title" id="card-title" tabindex="-1"></h2>
