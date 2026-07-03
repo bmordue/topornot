@@ -183,3 +183,8 @@
 **Vulnerability:** Invisible Unicode characters like the Arabic Letter Mark (U+061C) and additional Shorthand Format Controls (U+110BB-U+110BC) can be used to obfuscate identifiers or spoof audit logs. Furthermore, unused browser features like `ambient-light-sensor` and `encrypted-media` increase the available attack surface.
 **Learning:** Sanitization filters must be continuously updated as new "confusable" or "invisible" characters are identified. Defense-in-depth via `Permissions-Policy` should always target the most restrictive configuration possible, explicitly disabling all modern browser APIs not required by the application.
 **Prevention:** Include Arabic Letter Mark and all Shorthand format controls in Unicode sanitization regexes, and proactively disable `ambient-light-sensor` and `encrypted-media` in the global `Permissions-Policy`.
+
+## 2027-07-03 - Centralized Security Hardening for API and Error Responses
+**Vulnerability:** API routes and error responses often lacked consistent security headers, and API JSON responses were vulnerable to XSS if accidentally rendered as HTML.
+**Learning:** Standard middleware chains (like Helmet) are often bypassed by custom error handlers or rate limiters. Centralizing security header application into a shared helper ensures that even "out-of-band" responses (like 429s or 500s) maintain the same hardened posture as success responses.
+**Prevention:** Implement a restrictive `default-src 'none'` CSP specifically for all API routes, and use a shared helper function to apply a baseline of security headers (Permissions-Policy, X-Robots-Tag, HSTS, etc.) to all error and rate-limit handlers.
